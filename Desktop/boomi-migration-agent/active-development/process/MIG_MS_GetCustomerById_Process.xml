@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bns:Component xmlns:bns="http://api.platform.boomi.com/"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               componentId="cfa487e2-4546-412c-806a-f1d5776b8393" name="MIG_MS_GetCustomerById_Process"
+               type="process" folderId="Rjo4NTYzMTMw">
+  <bns:encryptedValues/>
+  <bns:description>built with boomi-companion v1.0.0</bns:description><bns:object>
+    <process allowSimultaneous="true" enableUserLog="false" processLogOnErrorOnly="false" purgeDataImmediately="false" updateRunDates="false" workload="general">
+      <shapes>
+
+        <!-- WSS Listener: GET /ws/simple/queryCustomerById?id=123 -->
+        <shape image="start" name="shape1" shapetype="start" userlabel="" x="48.0" y="46.0">
+          <configuration>
+            <connectoraction actionType="Listen" allowDynamicCredentials="NONE" connectorType="wss" hideSettings="true" operationId="ee946cc4-9232-4140-9af6-65c14b826f1a">
+              <parameters/>
+              <dynamicProperties/>
+            </connectoraction>
+          </configuration>
+          <dragpoints>
+            <dragpoint name="shape1.dragpoint1" toShape="shape2" x="224.0" y="56.0"/>
+          </dragpoints>
+        </shape>
+
+        <!-- Message: build DB query input {"id": <query_id DPP>} -->
+        <shape image="message_icon" name="shape2" shapetype="message" userlabel="Build id param" x="240.0" y="46.0">
+          <configuration>
+            <message combined="false">
+              <msgTxt>'{"id": '{1}'}'</msgTxt>
+              <msgParameters>
+                <parametervalue key="1" valueType="process">
+                  <processparameter processproperty="query_id" processpropertydefaultvalue="0"/>
+                </parametervalue>
+              </msgParameters>
+            </message>
+          </configuration>
+          <dragpoints>
+            <dragpoint name="shape2.dragpoint1" toShape="shape3" x="416.0" y="56.0"/>
+          </dragpoints>
+        </shape>
+
+        <!-- DB GET: SELECT customer WHERE id = $id -->
+        <shape image="connectoraction_icon" name="shape3" shapetype="connectoraction" userlabel="DB: Get Customer By ID" x="432.0" y="46.0">
+          <configuration>
+            <connectoraction actionType="GET" allowDynamicCredentials="NONE" connectionId="0815e48b-507d-46f2-b885-4ec8a8c42909" connectorType="officialboomi-X3979C-dbv2da-prod" hideSettings="false" operationId="9351f231-b90b-4eac-a5ad-7ebfa22fd04f" parameter-profile="3c53d6f6-b89d-4e80-9172-f14be385da50">
+              <parameters/>
+              <dynamicProperties/>
+            </connectoraction>
+          </configuration>
+          <dragpoints>
+            <dragpoint name="shape3.dragpoint1" toShape="shape4" x="608.0" y="56.0"/>
+          </dragpoints>
+        </shape>
+
+        <!-- Groovy: return 404 JSON if no rows, else pass through -->
+        <shape image="dataprocess_icon" name="shape4" shapetype="dataprocess" userlabel="Handle not found" x="624.0" y="46.0">
+          <configuration>
+            <dataprocess>
+              <step index="1" key="1" name="Custom Scripting" processtype="12">
+                <dataprocessscript language="groovy2" useCache="true">
+                  <script>import java.util.Properties;
+import java.io.InputStream;
+import java.io.ByteArrayInputStream;
+
+int count = dataContext.getDataCount();
+if (count == 0) {
+    String notFound = "{\"error\": \"Customer not found\", \"code\": 404}";
+    dataContext.storeStream(new ByteArrayInputStream(notFound.getBytes("UTF-8")), new Properties());
+} else {
+    for (int i = 0; i &lt; count; i++) {
+        InputStream is = dataContext.getStream(i);
+        Properties props = dataContext.getProperties(i);
+        dataContext.storeStream(is, props);
+    }
+}</script>
+                </dataprocessscript>
+              </step>
+            </dataprocess>
+          </configuration>
+          <dragpoints>
+            <dragpoint name="shape4.dragpoint1" toShape="shape5" x="800.0" y="56.0"/>
+          </dragpoints>
+        </shape>
+
+        <!-- Map: DB Row -> Customer API response -->
+        <shape image="map_icon" name="shape5" shapetype="map" userlabel="Map DB Row to API Response" x="816.0" y="46.0">
+          <configuration>
+            <map mapId="ea8c30bb-aa6c-4d57-bc44-38c021317cb5"/>
+          </configuration>
+          <dragpoints>
+            <dragpoint name="shape5.dragpoint1" toShape="shape6" x="992.0" y="56.0"/>
+          </dragpoints>
+        </shape>
+
+        <!-- Return Documents -->
+        <shape image="return_icon" name="shape6" shapetype="returndocuments" userlabel="" x="1008.0" y="46.0">
+          <configuration>
+            <returndocuments/>
+          </configuration>
+          <dragpoints/>
+        </shape>
+
+      </shapes>
+    </process>
+  </bns:object>
+  <bns:processOverrides/>
+</bns:Component>

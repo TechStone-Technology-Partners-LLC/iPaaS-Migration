@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bns:Component xmlns:bns="http://api.platform.boomi.com/"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               componentId="711856bf-8255-4aa8-a537-0fdc50d88849" name="MIG_MS_GetCustomers_Process"
+               type="process" folderId="Rjo4NTYzMTMw">
+  <bns:encryptedValues/>
+  <bns:description>built with boomi-companion v1.0.0</bns:description><bns:object>
+    <process allowSimultaneous="true" enableUserLog="false" processLogOnErrorOnly="false" purgeDataImmediately="false" updateRunDates="false" workload="general">
+      <shapes>
+
+        <!-- WSS Listener: GET /ws/simple/queryCustomers?status=ACTIVE -->
+        <shape image="start" name="shape1" shapetype="start" userlabel="" x="48.0" y="46.0">
+          <configuration>
+            <connectoraction actionType="Listen" allowDynamicCredentials="NONE" connectorType="wss" hideSettings="true" operationId="086aacf7-f2b9-4c18-ac98-2073d9ddb722">
+              <parameters/>
+              <dynamicProperties/>
+            </connectoraction>
+          </configuration>
+          <dragpoints>
+            <dragpoint name="shape1.dragpoint1" toShape="shape2" x="224.0" y="56.0"/>
+          </dragpoints>
+        </shape>
+
+        <!-- Message: build DB query input {"status": "<query_status DPP>"} -->
+        <shape image="message_icon" name="shape2" shapetype="message" userlabel="Build status param" x="240.0" y="46.0">
+          <configuration>
+            <message combined="false">
+              <msgTxt>'{"status": "'{1}'"}'</msgTxt>
+              <msgParameters>
+                <parametervalue key="1" valueType="process">
+                  <processparameter processproperty="query_status" processpropertydefaultvalue="ACTIVE"/>
+                </parametervalue>
+              </msgParameters>
+            </message>
+          </configuration>
+          <dragpoints>
+            <dragpoint name="shape2.dragpoint1" toShape="shape3" x="416.0" y="56.0"/>
+          </dragpoints>
+        </shape>
+
+        <!-- DB GET: SELECT customers WHERE status = $status -->
+        <shape image="connectoraction_icon" name="shape3" shapetype="connectoraction" userlabel="DB: Get Customers" x="432.0" y="46.0">
+          <configuration>
+            <connectoraction actionType="GET" allowDynamicCredentials="NONE" connectionId="0815e48b-507d-46f2-b885-4ec8a8c42909" connectorType="officialboomi-X3979C-dbv2da-prod" hideSettings="false" operationId="156b7f63-b1c0-4b40-8628-98ffdba73af0" parameter-profile="da364f82-9328-42d0-a16e-329356ad758e">
+              <parameters/>
+              <dynamicProperties/>
+            </connectoraction>
+          </configuration>
+          <dragpoints>
+            <dragpoint name="shape3.dragpoint1" toShape="shape4" x="608.0" y="56.0"/>
+          </dragpoints>
+        </shape>
+
+        <!-- Map: DB Row -> Customer API response (snake_case -> camelCase) -->
+        <shape image="map_icon" name="shape4" shapetype="map" userlabel="Map DB Row to API Response" x="624.0" y="46.0">
+          <configuration>
+            <map mapId="ea8c30bb-aa6c-4d57-bc44-38c021317cb5"/>
+          </configuration>
+          <dragpoints>
+            <dragpoint name="shape4.dragpoint1" toShape="shape5" x="800.0" y="56.0"/>
+          </dragpoints>
+        </shape>
+
+        <!-- Groovy: combine all customer documents into a JSON array -->
+        <shape image="dataprocess_icon" name="shape5" shapetype="dataprocess" userlabel="Combine into JSON array" x="816.0" y="46.0">
+          <configuration>
+            <dataprocess>
+              <step index="1" key="1" name="Custom Scripting" processtype="12">
+                <dataprocessscript language="groovy2" useCache="true">
+                  <script>import java.util.Properties;
+import java.io.InputStream;
+import java.io.ByteArrayInputStream;
+
+StringBuilder sb = new StringBuilder("[");
+int count = dataContext.getDataCount();
+for (int i = 0; i &lt; count; i++) {
+    InputStream is = dataContext.getStream(i);
+    Properties props = dataContext.getProperties(i);
+    String doc = new String(is.bytes, "UTF-8");
+    if (i &gt; 0) sb.append(",");
+    sb.append(doc.trim());
+}
+sb.append("]");
+dataContext.storeStream(new ByteArrayInputStream(sb.toString().getBytes("UTF-8")), new Properties());</script>
+                </dataprocessscript>
+              </step>
+            </dataprocess>
+          </configuration>
+          <dragpoints>
+            <dragpoint name="shape5.dragpoint1" toShape="shape6" x="992.0" y="56.0"/>
+          </dragpoints>
+        </shape>
+
+        <!-- Return Documents: send JSON array response to caller -->
+        <shape image="return_icon" name="shape6" shapetype="returndocuments" userlabel="" x="1008.0" y="46.0">
+          <configuration>
+            <returndocuments/>
+          </configuration>
+          <dragpoints/>
+        </shape>
+
+      </shapes>
+    </process>
+  </bns:object>
+  <bns:processOverrides/>
+</bns:Component>

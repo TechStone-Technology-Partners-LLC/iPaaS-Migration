@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bns:Component xmlns:bns="http://api.platform.boomi.com/"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               componentId="85a3c272-ec0a-4876-bc26-5cd211fff73d" name="MIG_MS_CreateCustomer_Process"
+               type="process" folderId="Rjo4NTYzMTMw">
+  <bns:encryptedValues/>
+  <bns:description>built with boomi-companion v1.0.0</bns:description><bns:object>
+    <process allowSimultaneous="true" enableUserLog="false" processLogOnErrorOnly="false" purgeDataImmediately="false" updateRunDates="false" workload="general">
+      <shapes>
+
+        <!-- WSS Listener: POST /ws/simple/createCustomer with JSON body -->
+        <shape image="start" name="shape1" shapetype="start" userlabel="" x="48.0" y="46.0">
+          <configuration>
+            <connectoraction actionType="Listen" allowDynamicCredentials="NONE" connectorType="wss" hideSettings="true" operationId="8013c804-2dab-433f-b549-7fc28be45e52">
+              <parameters/>
+              <dynamicProperties/>
+            </connectoraction>
+          </configuration>
+          <dragpoints>
+            <dragpoint name="shape1.dragpoint1" toShape="shape2" x="224.0" y="56.0"/>
+          </dragpoints>
+        </shape>
+
+        <!-- Map: CreateRequest (camelCase) -> InsertInput (snake_case) -->
+        <shape image="map_icon" name="shape2" shapetype="map" userlabel="Map Request to DB Input" x="240.0" y="46.0">
+          <configuration>
+            <map mapId="2475185d-3a00-4b6d-b5f9-f538801a0149"/>
+          </configuration>
+          <dragpoints>
+            <dragpoint name="shape2.dragpoint1" toShape="shape3" x="416.0" y="56.0"/>
+          </dragpoints>
+        </shape>
+
+        <!-- DB INSERT: INSERT INTO customers -->
+        <shape image="connectoraction_icon" name="shape3" shapetype="connectoraction" userlabel="DB: Insert Customer" x="432.0" y="46.0">
+          <configuration>
+            <connectoraction actionType="CREATE" allowDynamicCredentials="NONE" connectionId="0815e48b-507d-46f2-b885-4ec8a8c42909" connectorType="officialboomi-X3979C-dbv2da-prod" hideSettings="false" operationId="14744191-9b04-4638-b960-c566e4975290" parameter-profile="0d3cb3b4-a936-4048-b516-ce2750c2cd5c">
+              <parameters/>
+              <dynamicProperties/>
+            </connectoraction>
+          </configuration>
+          <dragpoints>
+            <dragpoint name="shape3.dragpoint1" toShape="shape4" x="608.0" y="56.0"/>
+          </dragpoints>
+        </shape>
+
+        <!-- Message: return success response -->
+        <shape image="message_icon" name="shape4" shapetype="message" userlabel="Success Response" x="624.0" y="46.0">
+          <configuration>
+            <message combined="false">
+              <msgTxt>'{"status": "created"}'</msgTxt>
+              <msgParameters/>
+            </message>
+          </configuration>
+          <dragpoints>
+            <dragpoint name="shape4.dragpoint1" toShape="shape5" x="800.0" y="56.0"/>
+          </dragpoints>
+        </shape>
+
+        <!-- Return Documents -->
+        <shape image="return_icon" name="shape5" shapetype="returndocuments" userlabel="" x="816.0" y="46.0">
+          <configuration>
+            <returndocuments/>
+          </configuration>
+          <dragpoints/>
+        </shape>
+
+      </shapes>
+    </process>
+  </bns:object>
+  <bns:processOverrides/>
+</bns:Component>
