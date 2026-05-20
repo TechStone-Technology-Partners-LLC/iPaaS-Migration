@@ -1,44 +1,91 @@
-# Boomi Migration Agent
+# Migration Agent
 
-This workspace is the **Boomi Migration Agent** — a platform-agnostic integration migration tool built on top of Boomi Companion. It analyzes source system integrations (MuleSoft, SAP, databases, flat files, etc.) and generates equivalent Boomi processes using the `boomi-integration` skill.
+This workspace is a **platform-agnostic integration migration agent**. It migrates integrations between any supported platforms — in any direction. Source and target can each be Boomi, MuleSoft, Workato, SAP, or any future platform. It is built on top of Boomi Companion for Boomi-side operations.
+
+## Supported Platforms
+
+| Role | Supported |
+|---|---|
+| Source (pull + analyze) | Boomi, MuleSoft |
+| Target (generate + push) | Workato, Boomi |
+| Future | Workato (source), SAP, Azure Logic Apps |
 
 ## Migration Agent Workflow
 
-Every migration follows three phases. Never skip phases.
+Every migration follows this pipeline. Never skip phases.
 
 ```
-PHASE 1 — ANALYZE      Run the analyzer script for the source system.
+PHASE 0 — PULL         (if source is a live platform)
+                       Boomi: boomi-component-search.sh + boomi-component-pull.sh
+                       MuleSoft: project files already on disk (no pull needed)
+
+PHASE 1 — ANALYZE      Run the analyzer for the source system.
                        Output: migration-specs/<project>.json
+                       This spec is platform-agnostic — it has no target-specific concepts.
 
-PHASE 2 — MAP          Read the spec + references/MIGRATION_THINKING.md
-                       + references/source-systems/<system>_mapping.md
-                       Identify Boomi equivalents for each flow and component.
-                       Note all gaps.
+PHASE 2 — GENERATE     Run the generator for the target system.
+                       One target artifact per source flow.
+```
 
-PHASE 3 — GENERATE     Use the boomi-integration skill to build Boomi
-                       components from the mapping decisions.
-                       Push-as-you-go. One Boomi process per source flow.
+### Single-command entry point
+
+For real-world usage, use `migrate.py` — it orchestrates all phases:
+
+```bash
+# Migrate a Boomi folder to Workato (pulls live from Boomi, generates in Workato)
+python migrate.py --from boomi --boomi-folder "My Folder Name" --to workato
+
+# Migrate a MuleSoft project to Workato
+python migrate.py --from mulesoft --source-dir samples/mulesoft/customer-api/ --to workato
+
+# Dry run (print Workato recipe JSON without pushing)
+python migrate.py --from boomi --boomi-folder "My Folder" --to workato --dry-run
+
+# Skip pull (analyze already-downloaded active-development/ files)
+python migrate.py --from boomi --source-dir active-development/ --to workato
 ```
 
 Always read `references/MIGRATION_THINKING.md` before starting any migration task.
 
-## Running the Analyzers
+## Running Individual Phases Manually
 
-**MuleSoft 4.x:**
+**Analyzers:**
 ```bash
+python analyzers/analyze_boomi.py active-development/ --project my-project
 python analyzers/analyze_mulesoft.py samples/mulesoft/customer-api/
-python analyzers/analyze_mulesoft.py <path-to-mulesoft-project-or-xml>
 python analyzers/analyze_mulesoft.py <path> --output migration-specs/myproject.json
 ```
 
-Output lands in `migration-specs/`. Always read the spec before generating.
+**Generators:**
+```bash
+python generators/generate_workato.py migration-specs/my-project.json --folder "My Folder"
+python generators/generate_workato.py migration-specs/my-project.json --dry-run
+```
+
+## Required Environment Variables
+
+**Boomi (for pull operations):** Already in `.env` from Boomi Companion setup.
+**Workato (for generate/push):** Add these to `.env`:
+```
+WORKATO_API_TOKEN=<your api token from Settings → API Tokens>
+WORKATO_EMAIL=<your workato account email>
+
+# Optional: PostgreSQL connection (for auto-creating DB connection in Workato)
+WORKATO_PG_HOST=db.internal
+WORKATO_PG_PORT=5432
+WORKATO_PG_DATABASE=crm
+WORKATO_PG_USERNAME=
+WORKATO_PG_PASSWORD=
+WORKATO_PG_CONN_ID=  # Set this to skip creation and use an existing connection
+```
 
 ## Reference Documentation
 
 - `references/MIGRATION_THINKING.md` — Core migration mental models (read first)
-- `references/migration_spec_schema.md` — Migration spec JSON schema and field definitions
-- `references/source-systems/mulesoft_mapping.md` — MuleSoft → Boomi component mapping table
-- `references/source-systems/sap_mapping.md` — SAP → Boomi (add when SAP support is built)
+- `references/migration_spec_schema.md` — Migration spec JSON schema
+- `references/source-systems/mulesoft_mapping.md` — MuleSoft → canonical spec mapping
+- `references/source-systems/boomi_mapping.md` — Boomi → canonical spec mapping
+- `references/target-systems/workato_mapping.md` — canonical spec → Workato mapping
 
 ## Sample Artifacts
 

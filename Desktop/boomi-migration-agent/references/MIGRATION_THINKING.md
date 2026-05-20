@@ -2,7 +2,30 @@
 
 ## The Migration Agent's Job
 
-This agent migrates integration logic — not code. The goal is to produce a Boomi integration that does the same thing as the source, not one that looks like the source. MuleSoft DataWeave becomes a Boomi Map. A MuleSoft choice router becomes a Boomi Decision or Route step. Don't try to port idioms; find the Boomi-native equivalent.
+This agent migrates integration logic — not code, and not in any fixed direction.
+The source and target can be any supported platform: Boomi, MuleSoft, Workato, SAP, etc.
+
+The goal is to produce a target platform integration that does the **same thing** as
+the source integration — not one that looks like it. MuleSoft DataWeave becomes a Boomi Map
+or a Workato formula. A Boomi Groovy script becomes a Workato custom step.
+Don't port idioms — find the target-native equivalent.
+
+### The Three Axes
+
+```
+Source platform  × Target platform  × Project
+  (Boomi)            (Workato)        (customer-api)
+  (MuleSoft)         (Boomi)
+  (Workato)          ...
+  ...
+```
+
+Any combination is valid. The pipeline always goes:
+```
+Source system artifacts → Analyzer → Platform-agnostic Spec → Generator → Target artifacts
+```
+
+The spec is the contract. It must not contain platform-specific concepts.
 
 ---
 
@@ -11,16 +34,28 @@ This agent migrates integration logic — not code. The goal is to produce a Boo
 Every migration follows the same three phases:
 
 ```
-ANALYZE → MAP → GENERATE
+PULL → ANALYZE → GENERATE
 ```
 
-**Phase 1 — Analyze**: Parse the source system artifacts into a normalized migration spec (`migration-spec.json`). The analyzer scripts handle this. The output is source-agnostic.
+**Phase 0 — Pull** (when source is a live platform):
+For live sources (Boomi, Workato), pull component artifacts first using the platform's API.
+- Boomi: `bash <skill-path>/scripts/boomi-component-search.sh --folder <name>` then `boomi-component-pull.sh`
+- MuleSoft: project files are already on disk (no pull step needed)
+The main entry point is `migrate.py` — it orchestrates pull + analyze + generate in one command.
 
-**Phase 2 — Map**: Read the migration spec and determine the Boomi equivalent for each component. Use `references/source-systems/<system>_mapping.md` and the boomi-integration skill's reference docs. Identify gaps (components that have no clean mapping) and note them.
+**Phase 1 — Analyze**: Parse the source system artifacts into a normalized migration spec (`migration-specs/<project>.json`). Use the appropriate analyzer script:
+- `analyzers/analyze_boomi.py <active-development/>`
+- `analyzers/analyze_mulesoft.py <source-dir/>`
+The output is source-agnostic JSON. Never generate without an analyzer-produced spec.
 
-**Phase 3 — Generate**: Use the boomi-integration skill to build the Boomi components from the mapping decisions. Follow the standard push-as-you-go workflow. One Boomi process per source flow.
+**Phase 2 — Generate**: Use the appropriate generator to produce target-platform artifacts:
+- `generators/generate_workato.py <spec.json>` → creates Workato recipes via API
+- Future: `generators/generate_boomi.py` → creates Boomi processes
+One target artifact (recipe/process) per source flow.
 
-Never skip to Phase 3 from a source artifact. Always go through the normalized spec.
+**Never skip to Generate from a source artifact.** Always go through the normalized spec.
+The spec is the single point of truth — it can be regenerated if the source changes,
+and it can feed multiple different generators (generate for Workato now, Boomi later).
 
 ---
 

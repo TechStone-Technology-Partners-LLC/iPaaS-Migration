@@ -1,120 +1,83 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bns:Component xmlns:bns="http://api.platform.boomi.com/"
                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-               componentId="d6680f28-69bc-4f26-8027-add747df63f6" name="MIG_MS_UpdateCustomer_Process"
-               type="process" folderId="Rjo4NTYzMTMw">
-  <bns:encryptedValues/>
-  <bns:description>built with boomi-companion v1.0.0</bns:description><bns:object>
-    <process allowSimultaneous="true" enableUserLog="false" processLogOnErrorOnly="false" purgeDataImmediately="false" updateRunDates="false" workload="general">
-      <shapes>
-
-        <!-- WSS Listener: POST /ws/simple/updateCustomer?id=123 with JSON body -->
-        <shape image="start" name="shape1" shapetype="start" userlabel="" x="48.0" y="46.0">
-          <configuration>
-            <connectoraction actionType="Listen" allowDynamicCredentials="NONE" connectorType="wss" hideSettings="true" operationId="803b90c7-eb9b-45f7-9c63-145af4f820fe">
-              <parameters/>
-              <dynamicProperties/>
-            </connectoraction>
-          </configuration>
-          <dragpoints>
-            <dragpoint name="shape1.dragpoint1" toShape="shape2" x="224.0" y="56.0"/>
-          </dragpoints>
-        </shape>
-
-        <!-- Set Properties: copy DPP query_id to DDP for Groovy access -->
-        <shape image="documentproperties_icon" name="shape2" shapetype="documentproperties" userlabel="Capture customer ID" x="240.0" y="46.0">
-          <configuration>
-            <documentproperties>
-              <documentproperty defaultValue="" isDynamicCredential="false" isTradingPartner="false" name="Dynamic Document Property - DDP_CUSTOMER_ID" persist="false" propertyId="dynamicdocument.DDP_CUSTOMER_ID" shouldEncrypt="false">
-                <sourcevalues>
-                  <parametervalue key="1" valueType="process">
-                    <processparameter processproperty="query_id" processpropertydefaultvalue="0"/>
-                  </parametervalue>
-                </sourcevalues>
-              </documentproperty>
-            </documentproperties>
-          </configuration>
-          <dragpoints>
-            <dragpoint name="shape2.dragpoint1" toShape="shape3" x="416.0" y="56.0"/>
-          </dragpoints>
-        </shape>
-
-        <!-- Groovy: parse CreateRequest body + DDP_CUSTOMER_ID -> UpdateInput JSON -->
-        <shape image="dataprocess_icon" name="shape3" shapetype="dataprocess" userlabel="Build UpdateInput JSON" x="432.0" y="46.0">
-          <configuration>
-            <dataprocess>
-              <step index="1" key="1" name="Custom Scripting" processtype="12">
-                <dataprocessscript language="groovy2" useCache="true">
-                  <script>import java.util.Properties;
-import java.io.InputStream;
-import java.io.ByteArrayInputStream;
-import groovy.json.JsonSlurper;
-
-for (int i = 0; i &lt; dataContext.getDataCount(); i++) {
-    InputStream is = dataContext.getStream(i);
-    Properties props = dataContext.getProperties(i);
-
-    String body = new String(is.bytes, "UTF-8");
-    String customerId = props.getProperty("document.dynamic.userdefined.DDP_CUSTOMER_ID", "0");
-
-    def parsed = new JsonSlurper().parseText(body);
-
-    String result = "{" +
-        "\"first_name\":\"" + (parsed.firstName ?: "") + "\"," +
-        "\"last_name\":\"" + (parsed.lastName ?: "") + "\"," +
-        "\"email\":\"" + (parsed.email ?: "") + "\"," +
-        "\"phone\":\"" + (parsed.phone ?: "") + "\"," +
-        "\"status\":\"" + (parsed.status ?: "ACTIVE") + "\"," +
-        "\"id\":" + customerId +
-        "}";
-
-    dataContext.storeStream(new ByteArrayInputStream(result.getBytes("UTF-8")), props);
-}</script>
-                </dataprocessscript>
-              </step>
-            </dataprocess>
-          </configuration>
-          <dragpoints>
-            <dragpoint name="shape3.dragpoint1" toShape="shape4" x="608.0" y="56.0"/>
-          </dragpoints>
-        </shape>
-
-        <!-- DB UPDATE: UPDATE customers SET ... WHERE id=$id -->
-        <shape image="connectoraction_icon" name="shape4" shapetype="connectoraction" userlabel="DB: Update Customer" x="624.0" y="46.0">
-          <configuration>
-            <connectoraction actionType="UPDATE" allowDynamicCredentials="NONE" connectionId="0815e48b-507d-46f2-b885-4ec8a8c42909" connectorType="officialboomi-X3979C-dbv2da-prod" hideSettings="false" operationId="01e7af71-1e19-4742-9895-5bd540285dbb" parameter-profile="667be93f-48bd-47b1-aba6-d45016da9256">
-              <parameters/>
-              <dynamicProperties/>
-            </connectoraction>
-          </configuration>
-          <dragpoints>
-            <dragpoint name="shape4.dragpoint1" toShape="shape5" x="800.0" y="56.0"/>
-          </dragpoints>
-        </shape>
-
-        <!-- Message: return success response -->
-        <shape image="message_icon" name="shape5" shapetype="message" userlabel="Success Response" x="816.0" y="46.0">
-          <configuration>
-            <message combined="false">
-              <msgTxt>'{"status": "updated"}'</msgTxt>
-              <msgParameters/>
-            </message>
-          </configuration>
-          <dragpoints>
-            <dragpoint name="shape5.dragpoint1" toShape="shape6" x="992.0" y="56.0"/>
-          </dragpoints>
-        </shape>
-
-        <!-- Return Documents -->
-        <shape image="return_icon" name="shape6" shapetype="returndocuments" userlabel="" x="1008.0" y="46.0">
-          <configuration>
-            <returndocuments/>
-          </configuration>
-          <dragpoints/>
-        </shape>
-
-      </shapes>
-    </process>
+               componentId="46ba6eef-5a41-44e6-8b07-2c1474777d67" name="MIG_MS_UpdateCustomer_Process"
+               type="process"
+               folderId="Rjo4NTYzMTMw">
+  <bns:encryptedValues>
+  </bns:encryptedValues>
+  <bns:description>generated by boomi-migration-agent</bns:description><bns:object>
+<process allowSimultaneous="true" enableUserLog="false" processLogOnErrorOnly="false"
+         purgeDataImmediately="false" updateRunDates="false" workload="general">
+  <shapes>
+    <shape image="start" name="shape1" shapetype="start" userlabel="" x="48.0" y="46.0">
+      <configuration>
+        <connectoraction actionType="Listen" allowDynamicCredentials="NONE"
+          connectorType="wss" hideSettings="true"
+          operationId="0c6f803a-411b-4536-b558-862058d12aa5">
+          <parameters/>
+          <dynamicProperties/>
+        </connectoraction>
+      </configuration>
+      <dragpoints>
+        <dragpoint name="shape1.dragpoint1" toShape="shape2" x="273.0" y="56.0"/>
+      </dragpoints>
+    </shape>
+    <shape image="dataprocess_icon" name="shape2" shapetype="dataprocess"
+      userlabel="[REVIEW REQUIRED] Capture customer ID" x="273.0" y="46.0">
+      <configuration>
+        <dataprocess>
+          <step index="1" key="1" name="Custom Scripting" processtype="12">
+            <dataprocessscript language="groovy2" useCache="true">
+              <script>// TODO: implement custom logic for [REVIEW REQUIRED] Capture customer ID</script>
+            </dataprocessscript>
+          </step>
+        </dataprocess>
+      </configuration>
+      <dragpoints>
+        <dragpoint name="shape2.dragpoint1" toShape="shape3" x="498.0" y="56.0"/>
+      </dragpoints>
+    </shape>
+    <shape image="dataprocess_icon" name="shape3" shapetype="dataprocess"
+      userlabel="[REVIEW REQUIRED] Build UpdateInput JSON" x="498.0" y="46.0">
+      <configuration>
+        <dataprocess>
+          <step index="1" key="1" name="Custom Scripting" processtype="12">
+            <dataprocessscript language="groovy2" useCache="true">
+              <script>// TODO: implement custom logic for [REVIEW REQUIRED] Build UpdateInput JSON</script>
+            </dataprocessscript>
+          </step>
+        </dataprocess>
+      </configuration>
+      <dragpoints>
+        <dragpoint name="shape3.dragpoint1" toShape="shape4" x="723.0" y="56.0"/>
+      </dragpoints>
+    </shape>
+    <shape image="connectoraction_icon" name="shape4" shapetype="connectoraction"
+      userlabel="Update rows" x="723.0" y="46.0">
+      <configuration>
+        <connectoraction actionType="GET" allowDynamicCredentials="NONE"
+          connectionId="26dcc40c-08c3-4e59-8819-8bcf44d22b1a"
+          connectorType="officialboomi-X3979C-dbv2da-prod"
+          hideSettings="false"
+          operationId="b12610b8-7351-42df-bf1a-6f98717bd963">
+          <parameters/>
+          <dynamicProperties/>
+        </connectoraction>
+      </configuration>
+      <dragpoints>
+        <dragpoint name="shape4.dragpoint1" toShape="shape5" x="948.0" y="56.0"/>
+      </dragpoints>
+    </shape>
+    <shape image="return_icon" name="shape5" shapetype="returndocuments"
+      userlabel="" x="948.0" y="46.0">
+      <configuration>
+        <returndocuments/>
+      </configuration>
+      <dragpoints/>
+    </shape>
+  </shapes>
+</process>
   </bns:object>
   <bns:processOverrides/>
 </bns:Component>
