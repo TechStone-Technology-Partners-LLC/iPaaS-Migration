@@ -117,6 +117,24 @@ def tag_ns(tag: str) -> str:
     return 'core', tag
 
 
+def _parse_children(el, skip_local=('error-handler',), seq_start=0):
+    """
+    Recursively parse direct children of `el` as steps.
+    Returns (steps_list, final_seq).
+    """
+    steps = []
+    seq = seq_start
+    for child in el:
+        _, local = tag_ns(child.tag)
+        if local in skip_local:
+            continue
+        step = classify_step(child)
+        seq += 1
+        step['sequence'] = seq
+        steps.append(step)
+    return steps, seq
+
+
 def attr(el: ET.Element, *names: str, default=None):
     """Return first matching attribute value from an element."""
     for name in names:
@@ -310,18 +328,71 @@ def classify_step(el: ET.Element) -> dict:
         elif local == 'flow-ref':
             step.update({'type': 'flow_ref', 'target_flow': attr(el, 'name')})
         elif local == 'choice':
-            whens = el.findall('{http://www.mulesoft.org/schema/mule/core}when')
+            CORE = 'http://www.mulesoft.org/schema/mule/core'
+            whens = el.findall(f'{{{CORE}}}when')
             count = len(whens)
-            step.update({'type': 'choice_router_multi' if count > 1 else 'choice_router', 'branch_count': count + 1})
+            # Extract condition and nested steps from first when-branch
+            condition = ""
+            true_steps = []
+            false_steps = []
+            if whens:
+                condition = attr(whens[0], 'expression', default='')
+                true_steps, _ = _parse_children(whens[0])
+            otherwise = el.find(f'{{{CORE}}}otherwise')
+            if otherwise is not None:
+                false_steps, _ = _parse_children(otherwise)
+            # Additional branches beyond the first
+            additional = []
+            for when_el in whens[1:]:
+                b_steps, _ = _parse_children(when_el)
+                additional.append({'condition': attr(when_el, 'expression', default=''), 'steps': b_steps})
+            step.update({
+                'type': 'choice_router_multi' if count > 1 else 'choice_router',
+                'branch_count': count + 1,
+                'condition': condition,
+                'true_steps': true_steps,
+                'false_steps': false_steps,
+                'additional_branches': additional,
+            })
         elif local == 'scatter-gather':
             routes = list(el)
-            step.update({'type': 'scatter_gather', 'route_count': len(routes)})
+            branch_steps_list = []
+            for route_el in routes:
+                b_steps, _ = _parse_children(route_el)
+                branch_steps_list.append(b_steps)
+            step.update({'type': 'scatter_gather', 'route_count': len(routes), 'branches': branch_steps_list})
             step['requires_review'] = True
             step['gap_note'] = 'scatter-gather is parallel in MuleSoft; Boomi Branch is sequential'
         elif local == 'foreach':
-            step.update({'type': 'foreach', 'collection': attr(el, 'collection'), 'batch_size': attr(el, 'batchSize')})
+            CORE = 'http://www.mulesoft.org/schema/mule/core'
+            loop_steps, _ = _parse_children(el, skip_local=('error-handler',))
+            step.update({
+                'type': 'foreach',
+                'collection': attr(el, 'collection'),
+                'batch_size': attr(el, 'batchSize'),
+                'loop_steps': loop_steps,
+            })
         elif local == 'try':
-            step.update({'type': 'try_scope'})
+            CORE = 'http://www.mulesoft.org/schema/mule/core'
+            monitored, _ = _parse_children(el, skip_local=('error-handler',))
+            # Parse error handler strategies
+            err_handler = el.find(f'{{{CORE}}}error-handler')
+            error_strategies = []
+            if err_handler is not None:
+                for strategy in err_handler:
+                    _, s_local = tag_ns(strategy.tag)
+                    err_type = attr(strategy, 'type', default='ANY')
+                    handler_steps, _ = _parse_children(strategy)
+                    error_strategies.append({
+                        'error_type': err_type,
+                        'strategy': 'propagate' if 'propagate' in s_local else 'continue',
+                        'handler_steps': handler_steps,
+                    })
+            step.update({
+                'type': 'try_scope',
+                'monitored_steps': monitored,
+                'error_strategies': error_strategies,
+            })
         elif local == 'async':
             step.update({'type': 'async_scope'})
             step['requires_review'] = True

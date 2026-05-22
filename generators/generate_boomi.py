@@ -27,11 +27,12 @@ from pathlib import Path
 from textwrap import dedent
 
 
-# ─── Constants ────────────────────────────────────────────────────────────────
+# ─── Connector type constants ─────────────────────────────────────────────────
 
-DB_CONNECTOR   = "officialboomi-X3979C-dbv2da-prod"
-REST_CONNECTOR = "officialboomi-X3979C-rest-prod"
-WSS_CONNECTOR  = "wss"
+DB_CONNECTOR          = "officialboomi-X3979C-dbv2da-prod"
+REST_CONNECTOR        = "officialboomi-X3979C-rest-prod"
+WSS_CONNECTOR         = "wss"
+SALESFORCE_CONNECTOR  = "salesforce"
 
 DB_OP_TYPES = {
     "db_select": ("GET",    "QUERY"),
@@ -48,10 +49,11 @@ WSS_HTTP_TO_OP = {
     "DELETE": "DELETE",
 }
 
-# Canvas layout: shapes spaced 225px apart horizontally
-X_START = 48.0
-X_STEP  = 225.0
-Y_ROW   = 46.0
+# Canvas layout constants
+X_START  = 48.0
+X_STEP   = 225.0
+Y_MAIN   = 46.0    # primary flow row
+Y_BRANCH = 246.0   # else / catch / false branch row
 
 
 # ─── Utilities ────────────────────────────────────────────────────────────────
@@ -61,7 +63,7 @@ def new_id():
 
 
 def safe_name(s):
-    return re.sub(r"[^\w]", "_", s).strip("_")
+    return re.sub(r"[^\w]", "_", s or "").strip("_") or "step"
 
 
 def xml_escape(s):
@@ -69,16 +71,10 @@ def xml_escape(s):
 
 
 def detect_folder_id():
-    """
-    Extract folderId from the first XML component found in active-development/.
-    Falls back to None if not found.
-    """
     pattern = os.path.join("active-development", "**", "*.xml")
     for fpath in glob.glob(pattern, recursive=True):
         try:
-            tree = ET.parse(fpath)
-            root = tree.getroot()
-            ns = {"bns": "http://api.platform.boomi.com/"}
+            root = ET.parse(fpath).getroot()
             fid = root.get("folderId")
             if fid:
                 return fid
@@ -88,7 +84,6 @@ def detect_folder_id():
 
 
 def find_skill_path():
-    """Locate boomi-integration skill scripts directory."""
     p = os.environ.get("BOOMI_SKILL_PATH")
     if p and os.path.isdir(p):
         return os.path.join(p, "scripts")
@@ -122,8 +117,7 @@ COMPONENT_WRAPPER = """\
 
 
 def wrap_component(component_id, name, comp_type, inner_xml,
-                   folder_id, sub_type=None, encrypted_values="",
-                   overrides=""):
+                   folder_id, sub_type=None, encrypted_values="", overrides=""):
     sub_type_attr = f'\n               subType="{sub_type}"' if sub_type else ""
     ov = "\n  <bns:processOverrides/>" if comp_type == "process" else ""
     return COMPONENT_WRAPPER.format(
@@ -162,7 +156,8 @@ def gen_wss_operation(component_id, name, folder_id, http_method, object_name):
 
 # ─── DB Connection ────────────────────────────────────────────────────────────
 
-def gen_db_connection(component_id, name, folder_id, jdbc_url="jdbc:postgresql://localhost:5432/db",
+def gen_db_connection(component_id, name, folder_id,
+                      jdbc_url="jdbc:postgresql://localhost:5432/db",
                       username="${db.user}", password="${db.password}"):
     inner = dedent(f"""\
     <GenericConnectionConfig>
@@ -200,7 +195,6 @@ def gen_db_operation(component_id, name, folder_id, step):
     custom_op, _ = DB_OP_TYPES.get(stype, ("GET", "QUERY"))
     table = step.get("table", "table")
     sql = xml_escape(step.get("sql", f"SELECT * FROM {table}"))
-
     inner = dedent(f"""\
     <Operation returnApplicationErrors="true" trackResponse="false">
       <Archiving directory="" enabled="false"/>
@@ -282,152 +276,507 @@ def gen_rest_operation(component_id, name, folder_id, step):
                           folder_id, sub_type=REST_CONNECTOR)
 
 
-# ─── Process XML Builder ──────────────────────────────────────────────────────
+# ─── Process Canvas Layout ────────────────────────────────────────────────────
+#
+# Layout algorithm:
+#   1. _plan_seq() walks steps recursively, assigns names and canvas positions,
+#      returns (main_nodes, extra_nodes, end_x).
+#      main_nodes  — nodes on the primary horizontal path at the given y.
+#      extra_nodes — branch/nested nodes (decision branches, stop shapes, etc.)
+#   2. _plan_all() assembles start + main_nodes + return, wires connections.
+#   3. _render_nodes() converts the flat node list into Boomi XML shapes.
+#
+# Node dict keys:
+#   name, x, y, shape_type, data
+#   next         — default (or true/default) outgoing connection target name
+#   true_next    — decision TRUE path target
+#   false_next   — decision FALSE / error path target
 
 class ProcessShapeBuilder:
-    """
-    Builds the sequence of <shape> elements for a Boomi process.
-    Shapes are laid out left-to-right with X_STEP spacing.
-    """
 
     def __init__(self, flow, wss_op_id, db_conn_id, db_op_ids,
                  rest_conn_id, rest_op_ids):
         self.flow = flow
         self.wss_op_id = wss_op_id
         self.db_conn_id = db_conn_id
-        self.db_op_ids = db_op_ids        # {sequence -> op_id}
+        self.db_op_ids = db_op_ids
         self.rest_conn_id = rest_conn_id
-        self.rest_op_ids = rest_op_ids    # {sequence -> op_id}
+        self.rest_op_ids = rest_op_ids
         self.notes = []
-        self._shape_num = 0
-        self._shapes = []
+        self._ctr = 0
+
+    def _next_name(self):
+        self._ctr += 1
+        return f"shape{self._ctr}"
 
     def build(self):
-        self._shape_num = 0
-        self._shapes = []
+        self._ctr = 0
+        nodes = self._plan_all()
+        return self._render_nodes(nodes), self.notes
+
+    # ── Planning phase ────────────────────────────────────────────────────────
+
+    def _plan_all(self):
+        trigger      = self.flow.get("trigger", {})
+        steps        = self.flow.get("steps", [])
+        ttype        = trigger.get("type", "")
+        trigger_shape = self._trigger_shape_type(trigger)
+        provider     = (trigger.get("workato_provider") or "").lower()
+
+        # For connector-triggered flows (Google Sheets, Dropbox, Salesforce, …)
+        # Workato's trigger BOTH triggers the recipe AND delivers the source data.
+        # In Boomi we must model that as an explicit read step right after the
+        # scheduled start.  Insert a synthetic placeholder step so the generated
+        # process is structurally equivalent.
+        effective_steps = list(steps)
+        if trigger_shape == "start_schedule" and ttype not in ("scheduler",):
+            t_label = trigger.get("label") or f"Read from {provider or 'source'}"
+            synthetic = {
+                "type":             "trigger_read",
+                "label":            t_label,
+                "sequence":         0,
+                "workato_provider": provider,
+                "workato_name":     trigger.get("workato_name", ""),
+                "requires_review":  True,
+            }
+            effective_steps.insert(0, synthetic)
+            self.notes.append(
+                f"Trigger '{t_label}' (provider: {provider}) -> "
+                f"configure HTTP GET connector to poll source data"
+            )
 
         # Start shape
-        trigger = self.flow.get("trigger", {})
-        self._add_trigger(trigger)
+        start_name = self._next_name()
+        start = {
+            "name": start_name, "x": X_START, "y": Y_MAIN,
+            "shape_type": trigger_shape,
+            "data": trigger, "next": None,
+        }
 
-        # Step shapes
-        steps = self.flow.get("steps", [])
+        # Plan the main sequence
+        main_nodes, extra_nodes, end_x = self._plan_seq(
+            effective_steps, X_START + X_STEP, Y_MAIN, Y_BRANCH
+        )
+
+        # End shape: API-triggered processes return a response;
+        # scheduled / connector-triggered processes end with Stop.
+        ret_name       = self._next_name()
+        end_shape_type = "return" if trigger_shape == "start_wss" else "stop"
+        ret = {
+            "name": ret_name, "x": end_x, "y": Y_MAIN,
+            "shape_type": end_shape_type, "data": {}, "next": None,
+        }
+
+        # Wire start -> first main step (or return if empty)
+        start["next"] = main_nodes[0]["name"] if main_nodes else ret_name
+
+        # Wire main nodes sequentially
+        for j, node in enumerate(main_nodes):
+            post = main_nodes[j + 1]["name"] if j + 1 < len(main_nodes) else ret_name
+            if node["shape_type"] == "decision":
+                # Wire the last true-branch node to the post-decision main node.
+                true_last = node.pop("_true_last_name", None)
+                if true_last:
+                    for en in extra_nodes:
+                        if en["name"] == true_last and en.get("next") is None:
+                            en["next"] = post
+                            break
+                # If false_steps was empty, wire false branch directly to post-decision
+                if node.pop("_false_needs_post", False):
+                    node["false_next"] = post
+            elif node["shape_type"] == "catcherrors":
+                # default_next (try path) -> post; already set to first monitored step
+                # The last monitored step connects to post via _tc_last_name
+                tc_last = node.pop("_tc_last_name", None)
+                if tc_last:
+                    for en in extra_nodes:
+                        if en["name"] == tc_last and en.get("next") is None:
+                            en["next"] = post
+                            break
+                if node.get("next") is None:
+                    node["next"] = post
+            else:
+                if node.get("next") is None:
+                    node["next"] = post
+
+        # Assemble flat list: start, main, extras, return
+        all_nodes = [start] + main_nodes + extra_nodes + [ret]
+        return all_nodes
+
+    def _plan_seq(self, steps, x_start, y, y_branch):
+        """
+        Plan a sequence of steps at y-level y.
+        Returns (main_nodes, extra_nodes, end_x).
+        main_nodes  — shapes on this y-level path
+        extra_nodes — branch/nested shapes at other y levels
+        end_x       — x position after the last main-level shape
+        """
+        main_nodes  = []
+        extra_nodes = []
+        x = x_start
+
         for step in steps:
-            self._add_step(step)
+            stype = step.get("type", "")
+            name  = self._next_name()
 
-        # Terminal shape (return or stop)
-        has_return = any(s.get("type") in ("return_response", "set_payload")
-                         for s in steps)
-        if not has_return:
-            self._add_return()
+            if stype == "choice_router":
+                true_steps  = step.get("true_steps",  [])
+                false_steps = step.get("false_steps", [])
+                branch_x = x + X_STEP
 
-        # Wire dragpoints
-        shapes_xml = self._build_shapes_xml()
-        return shapes_xml, self.notes
+                # True branch: same y level (continues the main visual line)
+                t_main, t_extra, t_end_x = self._plan_seq(
+                    true_steps, branch_x, y, y_branch + 200
+                )
+                self._wire_seq(t_main, t_extra)
 
-    # ── Private ───────────────────────────────────────────────────────────────
+                dec_node = {
+                    "name": name, "x": x, "y": y,
+                    "shape_type": "decision", "data": step,
+                    "next": None,
+                    "true_next":  t_main[0]["name"] if t_main else None,
+                    "false_next": None,   # resolved below
+                    "_true_last_name": t_main[-1]["name"] if t_main else None,
+                }
 
-    def _next(self):
-        self._shape_num += 1
-        x = X_START + (self._shape_num - 1) * X_STEP
-        return f"shape{self._shape_num}", x
+                main_nodes.append(dec_node)
+                extra_nodes.extend(t_main)
+                extra_nodes.extend(t_extra)
 
-    def _add_trigger(self, trigger):
-        name, x = self._next()
-        ttype = trigger.get("type", "")
+                if false_steps:
+                    # False branch has content: lay it out below main row
+                    f_main, f_extra, f_end_x = self._plan_seq(
+                        false_steps, branch_x, y_branch, y_branch + 200
+                    )
+                    self._wire_seq(f_main, f_extra)
+                    # False branch ends with a stop (its own path terminates)
+                    stop_x    = f_end_x
+                    stop_name = self._next_name()
+                    stop_node = {
+                        "name": stop_name, "x": stop_x, "y": y_branch,
+                        "shape_type": "stop", "data": {}, "next": None,
+                    }
+                    if f_main and f_main[-1].get("next") is None:
+                        f_main[-1]["next"] = stop_name
+                    dec_node["false_next"] = f_main[0]["name"]
+                    extra_nodes.extend(f_main)
+                    extra_nodes.extend(f_extra)
+                    extra_nodes.append(stop_node)
+                else:
+                    # Empty false branch: wire directly to whatever comes after
+                    # the decision block. _plan_all resolves this via _false_needs_post.
+                    dec_node["_false_needs_post"] = True
+
+                x = t_end_x if t_main else branch_x
+
+            elif stype == "try_catch":
+                monitored = step.get("monitored_steps", [])
+                tc_node = {
+                    "name": name, "x": x, "y": y,
+                    "shape_type": "catcherrors", "data": step,
+                    "next": None,         # default (try) path
+                    "true_next": None,    # alias for rendering
+                    "false_next": None,   # error path
+                }
+
+                if monitored:
+                    m_main, m_extra, m_end_x = self._plan_seq(
+                        monitored, x + X_STEP, y, y_branch + 200
+                    )
+                    self._wire_seq(m_main, m_extra)
+                    tc_node["true_next"] = m_main[0]["name"] if m_main else None
+                    tc_node["_tc_last_name"] = m_main[-1]["name"] if m_main else None
+                    extra_nodes.extend(m_main)
+                    extra_nodes.extend(m_extra)
+
+                # Error stop at y_branch
+                err_stop_name = self._next_name()
+                err_stop = {
+                    "name": err_stop_name, "x": x + X_STEP, "y": y_branch,
+                    "shape_type": "stop", "data": {}, "next": None,
+                }
+                tc_node["false_next"] = err_stop_name
+                extra_nodes.append(err_stop)
+
+                main_nodes.append(tc_node)
+                x += X_STEP
+
+            elif stype == "loop":
+                # Boomi has no foreach shape. The equivalent is:
+                #   Data Process (split) -> steps run once per split document.
+                # Emit a split shape, then inline the loop body on the main path.
+                loop_steps = step.get("loop_steps", [])
+                loop_label = step.get("label", "foreach") or "foreach"
+                loop_over  = step.get("loop_over", step.get("collection", ""))
+                split_node = {
+                    "name": name, "x": x, "y": y,
+                    "shape_type": "parse_csv",   # renders as Data Process split
+                    "data": dict(step, label=f"Split: {loop_label}"),
+                    "next": None,
+                }
+                main_nodes.append(split_node)
+                x += X_STEP
+                self.notes.append(
+                    f"Loop '{loop_label}' (iterates over: {loop_over or 'input documents'}) -> "
+                    f"Data Process split shape; configure split type. "
+                    f"Each split document flows through subsequent steps."
+                )
+                if loop_steps:
+                    l_main, l_extra, l_end_x = self._plan_seq(
+                        loop_steps, x, y, y_branch + 200
+                    )
+                    self._wire_seq(l_main, l_extra)
+                    main_nodes.extend(l_main)
+                    extra_nodes.extend(l_extra)
+                    x = l_end_x
+
+            else:
+                node = {
+                    "name": name, "x": x, "y": y,
+                    "shape_type": stype, "data": step, "next": None,
+                }
+                main_nodes.append(node)
+                x += X_STEP
+
+        return main_nodes, extra_nodes, x
+
+    @staticmethod
+    def _wire_seq(main_nodes, extra_nodes):
+        """Wire sequential connections within a flat node list."""
+        for j in range(len(main_nodes) - 1):
+            n = main_nodes[j]
+            if n["shape_type"] not in ("decision", "catcherrors") and n.get("next") is None:
+                n["next"] = main_nodes[j + 1]["name"]
+
+    def _trigger_shape_type(self, trigger):
+        ttype    = trigger.get("type", "")
+        provider = (trigger.get("workato_provider") or "").lower()
+
         if ttype == "http_listener":
-            self._shapes.append(("start_wss", name, x, trigger))
-        elif ttype == "scheduler":
-            self._shapes.append(("start_schedule", name, x, trigger))
-        else:
-            self._shapes.append(("start_no_data", name, x, trigger))
-            self.notes.append(f"Trigger '{ttype}' mapped to No Data start — reconfigure in Boomi")
+            return "start_wss"
+        # Workato callable recipe functions are exposed as callable APIs
+        if "recipe_function" in provider or "callable" in provider:
+            return "start_wss"
+        if ttype == "scheduler":
+            return "start_schedule"
+        # Connector-based and event triggers → scheduled polling in Boomi
+        if ttype in ("connector_trigger", "db_trigger", "event_trigger"):
+            return "start_schedule"
+        if provider and provider not in ("", "workato", "clock"):
+            return "start_schedule"
+        return "start_no_data"
 
-    def _add_step(self, step):
-        name, x = self._next()
-        stype = step.get("type", "")
-        if stype in DB_OP_TYPES:
-            self._shapes.append(("db", name, x, step))
-        elif stype == "http_request":
-            self._shapes.append(("rest", name, x, step))
-        elif stype == "transform":
-            self._shapes.append(("map", name, x, step))
-            self.notes.append(f"Map step '{step.get('label','')}' — wire source/target profiles in Boomi Map editor")
-        elif stype == "custom_script":
-            self._shapes.append(("groovy", name, x, step))
-        elif stype == "choice_router":
-            self._shapes.append(("decision", name, x, step))
-            self.notes.append(f"Conditional step '{step.get('label','')}' — configure decision logic in Boomi")
-        elif stype in ("return_response", "set_payload"):
-            self._shapes.append(("return", name, x, step))
-        elif stype == "set_variable":
-            self._shapes.append(("setprops", name, x, step))
-        elif stype == "subprocess_call":
-            self._shapes.append(("processcall", name, x, step))
-            self.notes.append(f"Subprocess '{step.get('label','')}' — link to target sub-process in Boomi")
-        elif stype in ("sequence", "logger", "branch", "loop", "connector_action"):
-            self._shapes.append(("message", name, x, step))
-            self.notes.append(f"Step '{stype}' ({step.get('label','')}) — review and reconfigure in Boomi")
-        else:
-            self._shapes.append(("message", name, x, step))
-            self.notes.append(f"Step '{stype}' not auto-mapped — review in Boomi")
+    # ── Render phase ──────────────────────────────────────────────────────────
 
-    def _add_return(self):
-        name, x = self._next()
-        self._shapes.append(("return", name, x, {}))
-
-    def _build_shapes_xml(self):
+    def _render_nodes(self, nodes):
         lines = []
-        for i, entry in enumerate(self._shapes):
-            shape_type = entry[0]
-            shape_name = entry[1]
-            x = entry[2]
-            data = entry[3]
-
-            next_name = self._shapes[i + 1][1] if i + 1 < len(self._shapes) else None
-            dp_xml = self._dragpoint(shape_name, x, next_name)
-            label = xml_escape(data.get("label", "")) if isinstance(data, dict) else ""
-            seq = data.get("sequence") if isinstance(data, dict) else None
-
-            if shape_type == "start_wss":
-                lines.append(self._shape_start_wss(shape_name, x, dp_xml))
-            elif shape_type in ("start_schedule", "start_no_data"):
-                lines.append(self._shape_start_no_data(shape_name, x, dp_xml))
-            elif shape_type == "db":
-                op_id = self.db_op_ids.get(seq, "")
-                lines.append(self._shape_db(shape_name, x, label, op_id, dp_xml))
-            elif shape_type == "rest":
-                op_id = self.rest_op_ids.get(seq, "")
-                lines.append(self._shape_rest(shape_name, x, label, op_id, dp_xml))
-            elif shape_type == "map":
-                lines.append(self._shape_map(shape_name, x, label, dp_xml))
-            elif shape_type == "groovy":
-                lines.append(self._shape_groovy(shape_name, x, label, dp_xml))
-            elif shape_type == "decision":
-                lines.append(self._shape_decision(shape_name, x, label, dp_xml))
-            elif shape_type == "setprops":
-                lines.append(self._shape_setprops(shape_name, x, label, data, dp_xml))
-            elif shape_type == "processcall":
-                lines.append(self._shape_processcall(shape_name, x, label, dp_xml))
-            elif shape_type == "message":
-                lines.append(self._shape_message(shape_name, x, label, dp_xml))
-            elif shape_type == "return":
-                lines.append(self._shape_return(shape_name, x))
-
+        for node in nodes:
+            xml = self._render_one(node)
+            if xml:
+                lines.append(xml)
         return "\n".join(lines)
 
-    def _dragpoint(self, shape_name, x, next_name):
-        if not next_name:
-            return "          <dragpoints/>"
-        dp_x = x + X_STEP
-        dp_y = Y_ROW + 10
-        return (f'          <dragpoints>\n'
-                f'            <dragpoint name="{shape_name}.dragpoint1" toShape="{next_name}"'
-                f' x="{dp_x}" y="{dp_y}"/>\n'
-                f'          </dragpoints>')
+    def _render_one(self, node):
+        st   = node["shape_type"]
+        name = node["name"]
+        x    = node["x"]
+        y    = node["y"]
+        data = node["data"]
+        label = xml_escape(data.get("label", "") if isinstance(data, dict) else "")
+        seq   = data.get("sequence") if isinstance(data, dict) else None
 
-    def _shape_start_wss(self, name, x, dp):
-        return (f'        <shape image="start" name="{name}" shapetype="start" userlabel="" x="{x}" y="{Y_ROW}">\n'
+        # ── Dragpoint helpers ─────────────────────────────────────────────
+        def dp_simple(to_name):
+            if not to_name:
+                return "          <dragpoints/>"
+            dp_x = x + X_STEP
+            dp_y = y + 10
+            return (f'          <dragpoints>\n'
+                    f'            <dragpoint name="{name}.dragpoint1" toShape="{to_name}"'
+                    f' x="{dp_x}" y="{dp_y}"/>\n'
+                    f'          </dragpoints>')
+
+        def dp_branched(true_name, false_name, false_y):
+            dp_x = x + X_STEP
+            parts = ['          <dragpoints>']
+            if true_name:
+                parts.append(
+                    f'            <dragpoint name="{name}.dragpoint1" toShape="{true_name}"'
+                    f' identifier="true" x="{dp_x}" y="{y + 10}"/>'
+                )
+            if false_name:
+                parts.append(
+                    f'            <dragpoint name="{name}.dragpoint2" toShape="{false_name}"'
+                    f' identifier="false" x="{dp_x}" y="{false_y + 10}"/>'
+                )
+            parts.append('          </dragpoints>')
+            return "\n".join(parts)
+
+        # ── Shape rendering switch ────────────────────────────────────────
+
+        if st == "start_wss":
+            dp = dp_simple(node.get("next"))
+            return self._shape_start_wss(name, x, y, dp)
+
+        if st == "start_schedule":
+            dp = dp_simple(node.get("next"))
+            return self._shape_start_schedule(name, x, y, dp)
+
+        if st == "start_no_data":
+            dp = dp_simple(node.get("next"))
+            return self._shape_start_no_data(name, x, y, dp)
+
+        if st == "decision":
+            true_n  = node.get("true_next")
+            false_n = node.get("false_next")
+            # False branch is below the main row
+            false_row_y = Y_BRANCH if y == Y_MAIN else y + 200
+            dp = dp_branched(true_n, false_n, false_row_y)
+            condition = xml_escape(data.get("condition", label) if isinstance(data, dict) else "")
+            return self._shape_decision(name, x, y, label, condition, dp)
+
+        if st == "catcherrors":
+            true_n  = node.get("true_next") or node.get("next")
+            false_n = node.get("false_next")
+            false_row_y = Y_BRANCH if y == Y_MAIN else y + 200
+            dp = dp_branched(true_n, false_n, false_row_y)
+            return self._shape_catcherrors(name, x, y, label, dp)
+
+        if st == "stop":
+            return self._shape_stop(name, x, y)
+
+        if st == "return":
+            return self._shape_return(name, x, y)
+
+        if st in DB_OP_TYPES:
+            op_id = self.db_op_ids.get(seq, "")
+            dp = dp_simple(node.get("next"))
+            return self._shape_db(name, x, y, label, op_id, dp)
+
+        if st == "trigger_read":
+            # Placeholder for the data the Workato trigger delivers.
+            # Rendered as a Message shape with a clear TODO; user must replace
+            # with an HTTP GET connector to poll the actual source system.
+            dp = dp_simple(node.get("next"))
+            provider = data.get("workato_provider", "source") if isinstance(data, dict) else "source"
+            todo_msg = f"TODO: Read from {provider} - replace with HTTP GET connector"
+            todo_data = {"message": todo_msg}
+            return self._shape_message(name, x, y, label, dp)
+
+        if st == "http_request":
+            op_id = self.rest_op_ids.get(seq, "")
+            dp = dp_simple(node.get("next"))
+            # Choose REST action type based on HTTP method, label, AND workato_name.
+            # Workato write actions (add, create, insert, update, upsert) map to
+            # Boomi's Send action type; read actions stay GET.
+            label_lower = label.lower()
+            wt_name = (data.get("workato_name") or "").lower() if isinstance(data, dict) else ""
+            http_method = data.get("http_method", "GET").upper() if isinstance(data, dict) else "GET"
+            write_kw = ("add", "create", "insert", "update", "upsert", "delete", "append", "post", "put")
+            if (http_method in ("POST", "PUT", "PATCH", "DELETE")
+                    or any(k in label_lower for k in write_kw)
+                    or any(k in wt_name for k in write_kw)):
+                action_type = "Send"
+            else:
+                action_type = "GET"
+            return self._shape_rest(name, x, y, label, op_id, dp, action_type)
+
+        if st == "salesforce_action":
+            dp = dp_simple(node.get("next"))
+            return self._shape_salesforce(name, x, y, label, data, dp)
+
+        if st == "log_message":
+            dp = dp_simple(node.get("next"))
+            return self._shape_notify(name, x, y, label, data, dp)
+
+        if st == "send_email":
+            # Map to Notify so the message is visible in execution logs
+            dp = dp_simple(node.get("next"))
+            subj = xml_escape(data.get("email_subject", label) if isinstance(data, dict) else label)
+            to   = xml_escape(data.get("email_to", "") if isinstance(data, dict) else "")
+            email_data = dict(data) if isinstance(data, dict) else {}
+            email_data["message"] = f"Send email to {to} — Subject: {subj}"
+            self.notes.append(f"Email step '{label}' -> Notify shape; add SMTP connector and replace")
+            return self._shape_notify(name, x, y, label, email_data, dp)
+
+        if st == "set_variable":
+            dp = dp_simple(node.get("next"))
+            return self._shape_documentproperties(name, x, y, label, data, dp)
+
+        if st == "file_read":
+            dp = dp_simple(node.get("next"))
+            self.notes.append(f"File read '{label}' -> Disk V2 GET; configure connection directory and filename")
+            return self._shape_diskv2(name, x, y, label, dp)
+
+        if st == "file_write":
+            dp = dp_simple(node.get("next"))
+            self.notes.append(f"File write '{label}' -> Disk V2 CREATE; configure connection directory and filename")
+            return self._shape_diskv2(name, x, y, label, dp)
+
+        if st in ("parse_csv", "parse_xml", "parse_json"):
+            dp = dp_simple(node.get("next"))
+            fmt = {"parse_csv": "CSV", "parse_xml": "XML", "parse_json": "JSON"}.get(st, "data")
+            self.notes.append(
+                f"{fmt} parse step '{label}' -> Data Process split; configure split type and profile"
+            )
+            return self._shape_data_process_split(name, x, y, label, dp)
+
+        if st == "google_sheets_action":
+            dp = dp_simple(node.get("next"))
+            self.notes.append(f"Google Sheets step '{label}' -> HTTP connector; configure Sheets API auth and sheet ID")
+            op_id = self.rest_op_ids.get(seq, "")
+            label_lower = label.lower()
+            wt_name = (data.get("workato_name") or "").lower() if isinstance(data, dict) else ""
+            write_kw = ("add", "create", "insert", "update", "upsert", "delete", "append")
+            action_type = "Send" if (any(k in label_lower for k in write_kw) or any(k in wt_name for k in write_kw)) else "GET"
+            return self._shape_rest(name, x, y, label, op_id, dp, action_type)
+
+        if st == "transform":
+            dp = dp_simple(node.get("next"))
+            self.notes.append(
+                f"Map step '{label}' -- wire source/target profiles in Boomi Map editor"
+            )
+            return (f'        <shape image="map_icon" name="{name}" shapetype="map"\n'
+                    f'          userlabel="{label}" x="{x}" y="{y}">\n'
+                    f'          <configuration><map mapId=""/></configuration>\n'
+                    f'{dp}\n'
+                    f'        </shape>')
+
+        if st == "custom_script":
+            dp = dp_simple(node.get("next"))
+            return self._shape_groovy(name, x, y, label, dp)
+
+        if st == "subprocess_call":
+            dp = dp_simple(node.get("next"))
+            self.notes.append(f"Subprocess '{label}' — link to target sub-process in Boomi")
+            return (f'        <shape image="processcall_icon" name="{name}" shapetype="processcall"\n'
+                    f'          userlabel="{label}" x="{x}" y="{y}">\n'
+                    f'          <configuration><processcall processId="" waitForComplete="true"/></configuration>\n'
+                    f'{dp}\n'
+                    f'        </shape>')
+
+        if st == "return_response":
+            dp = dp_simple(node.get("next"))
+            return self._shape_return_response(name, x, y, label, data, dp)
+
+        if st == "loop":
+            dp = dp_simple(node.get("next"))
+            return self._shape_message(name, x, y, f"Loop: {label}", dp)
+
+        # Fallback: message shape for anything unmapped.
+        # Use source_tag / workato metadata as label so the shape is identifiable.
+        if not label and isinstance(data, dict):
+            src = data.get("source_tag") or f'{data.get("workato_provider","")}:{data.get("workato_name","")}'
+            label = xml_escape(src.strip(":") or st)
+        effective_label = label or xml_escape(st)
+        self.notes.append(f"Step type '{st}' ({effective_label}) — review and reconfigure in Boomi")
+        dp = dp_simple(node.get("next"))
+        return self._shape_message(name, x, y, effective_label, dp)
+
+    # ── Shape XML generators ──────────────────────────────────────────────────
+
+    def _shape_start_wss(self, name, x, y, dp):
+        return (f'        <shape image="start" name="{name}" shapetype="start" userlabel="" x="{x}" y="{y}">\n'
                 f'          <configuration>\n'
                 f'            <connectoraction actionType="Listen" allowDynamicCredentials="NONE"\n'
                 f'              connectorType="{WSS_CONNECTOR}" hideSettings="true"\n'
@@ -439,17 +788,119 @@ class ProcessShapeBuilder:
                 f'{dp}\n'
                 f'        </shape>')
 
-    def _shape_start_no_data(self, name, x, dp):
-        return (f'        <shape image="start" name="{name}" shapetype="start" userlabel="" x="{x}" y="{Y_ROW}">\n'
+    def _shape_start_no_data(self, name, x, y, dp):
+        return (f'        <shape image="start" name="{name}" shapetype="start" userlabel="" x="{x}" y="{y}">\n'
                 f'          <configuration>\n'
-                f'            <nodata/>\n'
+                f'            <noaction/>\n'
                 f'          </configuration>\n'
                 f'{dp}\n'
                 f'        </shape>')
 
-    def _shape_db(self, name, x, label, op_id, dp):
+    def _shape_start_schedule(self, name, x, y, dp):
+        # Boomi schedule config lives in Process Options (UI), not in process XML.
+        # The start shape itself is identical to noaction — use noaction here and
+        # note that the user must set the schedule in Process Options after import.
+        return (f'        <shape image="start" name="{name}" shapetype="start" userlabel="" x="{x}" y="{y}">\n'
+                f'          <configuration>\n'
+                f'            <noaction/>\n'
+                f'          </configuration>\n'
+                f'{dp}\n'
+                f'        </shape>')
+
+    def _shape_decision(self, name, x, y, label, condition, dp):
+        # Use condition text as userlabel so it's visible on the canvas.
+        # The DDP property must be wired manually; the condition text is preserved
+        # in the label so the developer knows exactly what to configure.
+        display = condition[:80] if condition else (label or "Decision")
+        safe_label = xml_escape(display)
+        # Strip the DDP property name from condition if it was already used as label
+        ddp_name = xml_escape(condition[:40] if condition else "CONDITION")
+        return (f'        <shape image="decision_icon" name="{name}" shapetype="decision"\n'
+                f'          userlabel="{safe_label}" x="{x}" y="{y}">\n'
+                f'          <configuration>\n'
+                f'            <decision comparison="equals" name="{safe_label}">\n'
+                f'              <decisionvalue valueType="track">\n'
+                f'                <trackparameter defaultValue="" propertyId="dynamicdocument.CONDITION"\n'
+                f'                               propertyName="{ddp_name}"/>\n'
+                f'              </decisionvalue>\n'
+                f'              <decisionvalue valueType="static">\n'
+                f'                <staticparameter staticproperty="true"/>\n'
+                f'              </decisionvalue>\n'
+                f'            </decision>\n'
+                f'          </configuration>\n'
+                f'{dp}\n'
+                f'        </shape>')
+
+    def _shape_catcherrors(self, name, x, y, label, dp):
+        return (f'        <shape image="catcherrors_icon" name="{name}" shapetype="catcherrors"\n'
+                f'          userlabel="{label}" x="{x}" y="{y}">\n'
+                f'          <configuration>\n'
+                f'            <catcherrors allowEmpty="false" passthru="false"/>\n'
+                f'          </configuration>\n'
+                f'{dp}\n'
+                f'        </shape>')
+
+    def _shape_stop(self, name, x, y):
+        # continue="true" is REQUIRED — omitting it causes GUI stack overflow (process_component.md)
+        return (f'        <shape image="stop_icon" name="{name}" shapetype="stop"\n'
+                f'          userlabel="" x="{x}" y="{y}">\n'
+                f'          <configuration>\n'
+                f'            <stop continue="true"/>\n'
+                f'          </configuration>\n'
+                f'          <dragpoints/>\n'
+                f'        </shape>')
+
+    def _shape_notify(self, name, x, y, label, data, dp):
+        # Message must use <notifyMessage> (not <message>) — Boomi schema is strict
+        msg = xml_escape(data.get("message", label) if isinstance(data, dict) else label)
+        return (f'        <shape image="notify_icon" name="{name}" shapetype="notify"\n'
+                f'          userlabel="{xml_escape(label)}" x="{x}" y="{y}">\n'
+                f'          <configuration>\n'
+                f'            <notify disableEvent="true" enableUserLog="false" perExecution="false" title="">\n'
+                f'              <notifyMessage>{msg}</notifyMessage>\n'
+                f'              <notifyMessageLevel>INFO</notifyMessageLevel>\n'
+                f'              <notifyParameters/>\n'
+                f'            </notify>\n'
+                f'          </configuration>\n'
+                f'{dp}\n'
+                f'        </shape>')
+
+    def _shape_documentproperties(self, name, x, y, label, data, dp):
+        var_name = xml_escape(str(
+            data.get("variable_name", label) if isinstance(data, dict) else label
+        ))
+        return (f'        <shape image="setproperties_icon" name="{name}" shapetype="documentproperties"\n'
+                f'          userlabel="{label}" x="{x}" y="{y}">\n'
+                f'          <configuration>\n'
+                f'            <setproperties>\n'
+                f'              <setproperty propertyName="{var_name}" propertyType="DDP" valueType="STATIC_VALUE">\n'
+                f'                <value><![CDATA[]]></value>\n'
+                f'              </setproperty>\n'
+                f'            </setproperties>\n'
+                f'          </configuration>\n'
+                f'{dp}\n'
+                f'        </shape>')
+
+    def _shape_salesforce(self, name, x, y, label, data, dp):
+        sf_op     = data.get("salesforce_operation", "UPSERT") if isinstance(data, dict) else "UPSERT"
+        action_type = "Send" if sf_op in ("CREATE", "UPDATE", "UPSERT", "DELETE") else "Get"
         return (f'        <shape image="connectoraction_icon" name="{name}" shapetype="connectoraction"\n'
-                f'          userlabel="{label}" x="{x}" y="{Y_ROW}">\n'
+                f'          userlabel="{label}" x="{x}" y="{y}">\n'
+                f'          <configuration>\n'
+                f'            <connectoraction actionType="{action_type}" allowDynamicCredentials="NONE"\n'
+                f'              connectorType="{SALESFORCE_CONNECTOR}"\n'
+                f'              hideSettings="false"\n'
+                f'              operationId="">\n'
+                f'              <parameters/>\n'
+                f'              <dynamicProperties/>\n'
+                f'            </connectoraction>\n'
+                f'          </configuration>\n'
+                f'{dp}\n'
+                f'        </shape>')
+
+    def _shape_db(self, name, x, y, label, op_id, dp):
+        return (f'        <shape image="connectoraction_icon" name="{name}" shapetype="connectoraction"\n'
+                f'          userlabel="{label}" x="{x}" y="{y}">\n'
                 f'          <configuration>\n'
                 f'            <connectoraction actionType="GET" allowDynamicCredentials="NONE"\n'
                 f'              connectionId="{self.db_conn_id}"\n'
@@ -463,12 +914,13 @@ class ProcessShapeBuilder:
                 f'{dp}\n'
                 f'        </shape>')
 
-    def _shape_rest(self, name, x, label, op_id, dp):
+    def _shape_rest(self, name, x, y, label, op_id, dp, action_type="GET"):
+        conn_id = self.rest_conn_id or ""
         return (f'        <shape image="connectoraction_icon" name="{name}" shapetype="connectoraction"\n'
-                f'          userlabel="{label}" x="{x}" y="{Y_ROW}">\n'
+                f'          userlabel="{label}" x="{x}" y="{y}">\n'
                 f'          <configuration>\n'
-                f'            <connectoraction actionType="GET" allowDynamicCredentials="NONE"\n'
-                f'              connectionId="{self.rest_conn_id}"\n'
+                f'            <connectoraction actionType="{action_type}" allowDynamicCredentials="NONE"\n'
+                f'              connectionId="{conn_id}"\n'
                 f'              connectorType="{REST_CONNECTOR}"\n'
                 f'              hideSettings="false"\n'
                 f'              operationId="{op_id}">\n'
@@ -479,24 +931,14 @@ class ProcessShapeBuilder:
                 f'{dp}\n'
                 f'        </shape>')
 
-    def _shape_map(self, name, x, label, dp):
-        map_id = new_id()
-        return (f'        <shape image="map_icon" name="{name}" shapetype="map"\n'
-                f'          userlabel="{label}" x="{x}" y="{Y_ROW}">\n'
-                f'          <configuration>\n'
-                f'            <map mapId="{map_id}"/>\n'
-                f'          </configuration>\n'
-                f'{dp}\n'
-                f'        </shape>')
-
-    def _shape_groovy(self, name, x, label, dp):
+    def _shape_groovy(self, name, x, y, label, dp):
         return (f'        <shape image="dataprocess_icon" name="{name}" shapetype="dataprocess"\n'
-                f'          userlabel="{label}" x="{x}" y="{Y_ROW}">\n'
+                f'          userlabel="{label}" x="{x}" y="{y}">\n'
                 f'          <configuration>\n'
                 f'            <dataprocess>\n'
                 f'              <step index="1" key="1" name="Custom Scripting" processtype="12">\n'
                 f'                <dataprocessscript language="groovy2" useCache="true">\n'
-                f'                  <script>// TODO: implement custom logic for {xml_escape(label)}</script>\n'
+                f'                  <script>// TODO: implement {xml_escape(label)}</script>\n'
                 f'                </dataprocessscript>\n'
                 f'              </step>\n'
                 f'            </dataprocess>\n'
@@ -504,67 +946,88 @@ class ProcessShapeBuilder:
                 f'{dp}\n'
                 f'        </shape>')
 
-    def _shape_decision(self, name, x, label, dp):
-        return (f'        <shape image="decision_icon" name="{name}" shapetype="decision"\n'
-                f'          userlabel="{label}" x="{x}" y="{Y_ROW}">\n'
-                f'          <configuration>\n'
-                f'            <decision comparator="EQUAL" valueType="STATIC_VALUE">\n'
-                f'              <firstOperand type="DYNAMIC_DOCUMENT_PROPERTY" name="condition"/>\n'
-                f'              <secondOperand type="STATIC" value="true"/>\n'
-                f'            </decision>\n'
-                f'          </configuration>\n'
-                f'{dp}\n'
-                f'        </shape>')
-
-    def _shape_setprops(self, name, x, label, step, dp):
-        content = xml_escape(str(step.get("static_content", "")))[:200]
-        return (f'        <shape image="setproperties_icon" name="{name}" shapetype="setproperties"\n'
-                f'          userlabel="{label}" x="{x}" y="{Y_ROW}">\n'
-                f'          <configuration>\n'
-                f'            <setproperties>\n'
-                f'              <setproperty propertyName="content" propertyType="DYNAMIC" valueType="STATIC_VALUE">\n'
-                f'                <value><![CDATA[{content}]]></value>\n'
-                f'              </setproperty>\n'
-                f'            </setproperties>\n'
-                f'          </configuration>\n'
-                f'{dp}\n'
-                f'        </shape>')
-
-    def _shape_processcall(self, name, x, label, dp):
-        return (f'        <shape image="processcall_icon" name="{name}" shapetype="processcall"\n'
-                f'          userlabel="{label}" x="{x}" y="{Y_ROW}">\n'
-                f'          <configuration>\n'
-                f'            <processcall processId="" waitForComplete="true"/>\n'
-                f'          </configuration>\n'
-                f'{dp}\n'
-                f'        </shape>')
-
-    def _shape_message(self, name, x, label, dp):
+    def _shape_message(self, name, x, y, label, dp):
         return (f'        <shape image="message_icon" name="{name}" shapetype="message"\n'
-                f'          userlabel="{label}" x="{x}" y="{Y_ROW}">\n'
+                f'          userlabel="{label}" x="{x}" y="{y}">\n'
                 f'          <configuration>\n'
                 f'            <message combined="false">\n'
-                f'              <msgTxt><!-- TODO: configure message for {xml_escape(label)} --></msgTxt>\n'
+                f'              <msgTxt><!-- {xml_escape(label)} --></msgTxt>\n'
                 f'              <msgParameters/>\n'
                 f'            </message>\n'
                 f'          </configuration>\n'
                 f'{dp}\n'
                 f'        </shape>')
 
-    def _shape_return(self, name, x):
+    def _shape_return(self, name, x, y):
         return (f'        <shape image="return_icon" name="{name}" shapetype="returndocuments"\n'
-                f'          userlabel="" x="{x}" y="{Y_ROW}">\n'
+                f'          userlabel="" x="{x}" y="{y}">\n'
                 f'          <configuration>\n'
                 f'            <returndocuments/>\n'
                 f'          </configuration>\n'
                 f'          <dragpoints/>\n'
                 f'        </shape>')
 
+    def _shape_return_response(self, name, x, y, label, data, dp):
+        status = data.get("status_code", "200") if isinstance(data, dict) else "200"
+        content = xml_escape(str(data.get("static_content", "") if isinstance(data, dict) else ""))[:500]
+        return (f'        <shape image="message_icon" name="{name}" shapetype="message"\n'
+                f'          userlabel="{label}" x="{x}" y="{y}">\n'
+                f'          <configuration>\n'
+                f'            <message combined="false">\n'
+                f'              <msgTxt><![CDATA[{content}]]></msgTxt>\n'
+                f'              <msgParameters/>\n'
+                f'            </message>\n'
+                f'          </configuration>\n'
+                f'{dp}\n'
+                f'        </shape>')
 
-def gen_process(component_id, name, folder_id, shapes_xml):
+    def _shape_diskv2(self, name, x, y, label, dp):
+        return (f'        <shape image="connectoraction_icon" name="{name}" shapetype="connectoraction"\n'
+                f'          userlabel="{xml_escape(label)}" x="{x}" y="{y}">\n'
+                f'          <configuration>\n'
+                f'            <connectoraction actionType="GET" allowDynamicCredentials="NONE"\n'
+                f'              connectorType="disk-sdk"\n'
+                f'              hideSettings="false"\n'
+                f'              operationId="">\n'
+                f'              <parameters/>\n'
+                f'              <dynamicProperties/>\n'
+                f'            </connectoraction>\n'
+                f'          </configuration>\n'
+                f'{dp}\n'
+                f'        </shape>')
+
+    def _shape_data_process_split(self, name, x, y, label, dp):
+        # Render as a Message placeholder. The Data Process split shape requires
+        # knowing the profile type (flat-file, JSON, XML) which is flow-specific.
+        # The user configures the actual split in the Boomi Data Process editor.
+        msg = xml_escape(f"TODO: Replace with Data Process (Split) shape — {label}")
+        return (f'        <shape image="message_icon" name="{name}" shapetype="message"\n'
+                f'          userlabel="{xml_escape(label)}" x="{x}" y="{y}">\n'
+                f'          <configuration>\n'
+                f'            <message combined="false">\n'
+                f'              <msgTxt>{msg}</msgTxt>\n'
+                f'              <msgParameters/>\n'
+                f'            </message>\n'
+                f'          </configuration>\n'
+                f'{dp}\n'
+                f'        </shape>')
+
+
+# ─── Process XML wrapper ──────────────────────────────────────────────────────
+
+def gen_process(component_id, name, folder_id, shapes_xml, trigger_shape="stop"):
+    # Process options follow the decision table in process_component.md:
+    #   WSS/FSS/Event listener  → allowSimultaneous=true,  updateRunDates=false
+    #   Scheduled / no-data     → allowSimultaneous=false, updateRunDates=true
+    if trigger_shape == "start_wss":
+        allow_simul   = "true"
+        update_dates  = "false"
+    else:
+        allow_simul   = "false"
+        update_dates  = "true"
     inner = dedent(f"""\
-    <process allowSimultaneous="true" enableUserLog="false" processLogOnErrorOnly="false"
-             purgeDataImmediately="false" updateRunDates="false" workload="general">
+    <process allowSimultaneous="{allow_simul}" enableUserLog="false" processLogOnErrorOnly="false"
+             purgeDataImmediately="false" updateRunDates="{update_dates}" workload="general">
       <shapes>
 {shapes_xml}
       </shapes>
@@ -577,7 +1040,7 @@ def gen_process(component_id, name, folder_id, shapes_xml):
 class BoomiFlowGenerator:
     """
     For one canonical flow spec, generates all required Boomi component XMLs.
-    Returns a list of (comp_type, subdir, filename, xml_content, notes).
+    Returns list of (comp_type, name, xml_content) tuples.
     """
 
     def __init__(self, flow, spec, folder_id, project_prefix):
@@ -588,25 +1051,37 @@ class BoomiFlowGenerator:
         self.all_notes = []
 
     def generate(self):
-        """Returns list of (subdir, filename_stem, xml_str) and notes."""
         components = []
         trigger = self.flow.get("trigger", {})
-        steps = self.flow.get("steps", [])
+        steps   = self.flow.get("steps", [])
 
         flow_name = self.flow.get("name", "Flow")
         if not flow_name.upper().startswith("MIG_"):
             flow_name = f"MIG_{flow_name}"
 
-        # ── Assign all IDs upfront ────────────────────────────────────────
-        process_id  = new_id()
-        wss_op_id   = new_id() if trigger.get("type") == "http_listener" else None
-        db_conn_id  = None
-        rest_conn_id = None
-        db_op_ids   = {}   # seq -> id
-        rest_op_ids = {}   # seq -> id
+        # Flatten all nested steps for connection detection
+        all_steps = list(self._iter_steps(steps))
 
-        db_steps   = [s for s in steps if s.get("type") in DB_OP_TYPES]
-        rest_steps = [s for s in steps if s.get("type") == "http_request"]
+        # Assign IDs upfront
+        process_id   = new_id()
+        # wss_op_id needed whenever the start shape is a WSS listener (http_listener
+        # type OR recipe_function/callable provider — mirrors _trigger_shape_type logic)
+        _ttype    = trigger.get("type", "")
+        _provider = (trigger.get("workato_provider") or "").lower()
+        _needs_wss = (
+            _ttype == "http_listener"
+            or "recipe_function" in _provider
+            or "callable" in _provider
+        )
+        wss_op_id    = new_id() if _needs_wss else None
+        db_conn_id   = None
+        rest_conn_id = None
+        db_op_ids    = {}
+        rest_op_ids  = {}
+
+        REST_STEP_TYPES = {"http_request", "google_sheets_action"}
+        db_steps   = [s for s in all_steps if s.get("type") in DB_OP_TYPES]
+        rest_steps = [s for s in all_steps if s.get("type") in REST_STEP_TYPES]
 
         if db_steps:
             db_conn_id = new_id()
@@ -618,7 +1093,7 @@ class BoomiFlowGenerator:
         for s in rest_steps:
             rest_op_ids[s["sequence"]] = new_id()
 
-        # ── WSS operation ─────────────────────────────────────────────────
+        # WSS operation
         if wss_op_id:
             http_method = trigger.get("http_method", "GET").upper()
             path = trigger.get("path", "/endpoint")
@@ -630,9 +1105,9 @@ class BoomiFlowGenerator:
                                   http_method, object_name)
             ))
 
-        # ── DB connection ─────────────────────────────────────────────────
+        # DB connection + operations
         if db_conn_id:
-            jdbc_url = self._infer_jdbc()
+            jdbc_url  = self._infer_jdbc()
             conn_name = f"MIG_{self.prefix}_DB_Connection"
             components.append((
                 "connector-settings", conn_name,
@@ -646,9 +1121,9 @@ class BoomiFlowGenerator:
                                      self.folder_id, s)
                 ))
 
-        # ── REST connection ───────────────────────────────────────────────
+        # REST connection + operations
         if rest_conn_id:
-            base_url = rest_steps[0].get("url", "https://api.example.com")
+            base_url  = rest_steps[0].get("url", "https://api.example.com")
             conn_name = f"MIG_{self.prefix}_REST_Connection"
             components.append((
                 "connector-settings", conn_name,
@@ -662,23 +1137,32 @@ class BoomiFlowGenerator:
                                        self.folder_id, s)
                 ))
 
-        # ── Process ───────────────────────────────────────────────────────
+        # Process XML
         builder = ProcessShapeBuilder(self.flow, wss_op_id, db_conn_id,
                                       db_op_ids, rest_conn_id, rest_op_ids)
         shapes_xml, notes = builder.build()
         self.all_notes.extend(notes)
 
+        # Determine trigger shape for correct process options
+        _trigger_shape = builder._trigger_shape_type(trigger)
         components.append((
             "process", flow_name,
-            gen_process(process_id, flow_name, self.folder_id, shapes_xml)
+            gen_process(process_id, flow_name, self.folder_id, shapes_xml,
+                        trigger_shape=_trigger_shape)
         ))
 
         return components, self.all_notes
 
+    def _iter_steps(self, steps):
+        """Flatten all nested steps for connection/operation scanning."""
+        for s in steps:
+            yield s
+            for key in ("true_steps", "false_steps", "monitored_steps", "loop_steps"):
+                yield from self._iter_steps(s.get(key, []))
+
     def _infer_jdbc(self):
-        """Try to extract JDBC URL from spec connections or return a placeholder."""
         conns = self.spec.get("connections", {})
-        for k, v in conns.items():
+        for v in conns.values():
             url = v.get("jdbc_url") or v.get("url")
             if url:
                 return url
@@ -688,8 +1172,8 @@ class BoomiFlowGenerator:
 # ─── File writer & pusher ─────────────────────────────────────────────────────
 
 SUBDIR_MAP = {
-    "process":           "process",
-    "connector-action":  "connector-action",
+    "process":            "process",
+    "connector-action":   "connector-action",
     "connector-settings": "connector-settings",
 }
 
@@ -703,34 +1187,58 @@ def write_component(subdir, name, xml_str, output_dir):
     return fpath
 
 
+_UUID_RE = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", re.I)
+
+
 def push_component(fpath, scripts_dir):
     """
-    Create a new component in Boomi via boomi-component-create.sh.
-    Success is determined by whether the componentId was written back to the
-    XML file, not just the script exit code (jq parse errors in the script's
-    response parsing can cause non-zero exit even when creation succeeded).
+    Push a component XML to Boomi via boomi-component-create.sh.
+    Returns (success: bool, boomi_id: str|None).
+    boomi_id is the Boomi-assigned componentId extracted from script output,
+    or None if it could not be determined.
     """
     create_script = os.path.join(scripts_dir, "boomi-component-create.sh")
     if not os.path.isfile(create_script):
         print(f"  ERROR: create script not found at {create_script}", file=sys.stderr)
-        return False
+        return False, None
 
-    # Record componentId before the call so we can detect if it changed
-    id_before = _read_component_id_from_xml(fpath)
+    local_bin = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "bin")
+    env = os.environ.copy()
+    env["PATH"] = (local_bin.replace("\\", "/") + os.pathsep
+                   + local_bin + os.pathsep + env.get("PATH", ""))
+    result = subprocess.run(["bash", create_script, fpath],
+                            capture_output=True, text=True, env=env)
+    combined = result.stdout + result.stderr
+    for line in combined.splitlines():
+        if "jq: parse error" not in line:
+            print(line)
 
-    subprocess.run(["bash", create_script, fpath], capture_output=False, text=True)
+    # Extract the Boomi-assigned ID from script output — more reliable than
+    # reading the file, which may not be updated in all code paths.
+    boomi_id = None
+    for pattern in (
+        r"Updated local file with componentId:\s*([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})",
+        r"already exists with ID:\s*([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})",
+    ):
+        m = re.search(pattern, combined, re.I)
+        if m:
+            boomi_id = m.group(1)
+            break
 
-    # Success = script updated the file with a platform-assigned componentId,
-    # OR the component already existed (id_before was already set)
-    id_after = _read_component_id_from_xml(fpath)
-    return bool(id_after)
+    already_exists = "already exists" in combined
+    script_reported_success = "Updated local file with componentId" in combined
+
+    # Fall back to reading the file if the regex didn't find an ID in output
+    if boomi_id is None:
+        boomi_id = _read_component_id_from_xml(fpath) or None
+
+    success = already_exists or script_reported_success or bool(boomi_id)
+    return success, boomi_id
 
 
 def _read_component_id_from_xml(fpath):
-    """Extract componentId attribute from a Boomi component XML file."""
     try:
-        tree = ET.parse(fpath)
-        return tree.getroot().get("componentId", "")
+        return ET.parse(fpath).getroot().get("componentId", "")
     except Exception:
         return ""
 
@@ -738,14 +1246,23 @@ def _read_component_id_from_xml(fpath):
 # ─── Main ─────────────────────────────────────────────────────────────────────
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate Boomi processes from a migration spec.")
+    # Ensure stdout handles Unicode on Windows (cp1252 by default).
+    if hasattr(sys.stdout, "reconfigure"):
+        try:
+            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+
+    parser = argparse.ArgumentParser(
+        description="Generate Boomi processes from a migration spec."
+    )
     parser.add_argument("spec", nargs="?", default="migration-specs/boomi-customer-api.json")
     parser.add_argument("--folder-id", default=None,
-                        help="Boomi folder ID for generated components (auto-detected if omitted)")
+                        help="Boomi folder ID (auto-detected if omitted)")
     parser.add_argument("--project", default=None,
-                        help="Project prefix for shared component names (default: spec project_name)")
+                        help="Project prefix for shared component names")
     parser.add_argument("--output-dir", default="active-development",
-                        help="Directory to write component XML files (default: active-development)")
+                        help="Directory for component XML files")
     parser.add_argument("--dry-run", action="store_true",
                         help="Write XML files locally without pushing to Boomi")
     args = parser.parse_args()
@@ -758,10 +1275,9 @@ def main():
         spec = json.load(f)
 
     project_name = args.project or spec.get("project_name", "Migration")
-    flows = spec.get("integrations", [])
+    flows        = spec.get("integrations", [])
+    folder_id    = args.folder_id or detect_folder_id()
 
-    # Detect folder ID
-    folder_id = args.folder_id or detect_folder_id()
     if not folder_id:
         print("ERROR: Could not detect folderId. Pass --folder-id <id> or ensure "
               "active-development/ contains existing Boomi XML.", file=sys.stderr)
@@ -775,7 +1291,6 @@ def main():
     print(f"  Output  : {args.output_dir}")
     print(f"  Dry run : {args.dry_run}")
 
-    # Locate skill scripts (needed for push)
     scripts_dir = None
     if not args.dry_run:
         scripts_dir = find_skill_path()
@@ -786,7 +1301,7 @@ def main():
         print(f"  Skill   : {scripts_dir}")
 
     all_results = []
-    all_notes = []
+    all_notes   = []
 
     for flow in flows:
         flow_name = flow.get("name", "Flow")
@@ -796,32 +1311,62 @@ def main():
         components, notes = generator.generate()
         all_notes.extend([(flow_name, n) for n in notes])
 
-        for (subdir, comp_name, xml_str) in components:
-            fpath = write_component(subdir, comp_name, xml_str, args.output_dir)
+        # Separate process from non-process components so we can push operations
+        # first and patch the process XML with Boomi-assigned IDs before pushing it.
+        non_process = [(s, n, x) for s, n, x in components if s != "process"]
+        process_cmps = [(s, n, x) for s, n, x in components if s == "process"]
+
+        # Track placeholder-UUID -> Boomi-assigned-UUID for later patching
+        id_remap = {}
+
+        for (subdir, comp_name, xml_str) in non_process:
+            fpath  = write_component(subdir, comp_name, xml_str, args.output_dir)
             status = "written"
             print(f"  [{subdir}] {comp_name}")
-
             if not args.dry_run:
-                ok = push_component(fpath, scripts_dir)
+                id_placeholder = _read_component_id_from_xml(fpath)
+                ok, boomi_id   = push_component(fpath, scripts_dir)
+                status         = "pushed" if ok else "push_failed"
+                # Map placeholder -> actual Boomi ID for process XML patching.
+                # Use the ID extracted from script output (most reliable); fall
+                # back to the post-push file read if the script didn't print it.
+                if id_placeholder and boomi_id and boomi_id != id_placeholder:
+                    id_remap[id_placeholder] = boomi_id
+                print(f"    -> {status}")
+            all_results.append({
+                "flow": flow_name, "component": comp_name,
+                "file": fpath, "status": status,
+            })
+
+        for (subdir, comp_name, xml_str) in process_cmps:
+            # Patch any pre-assigned operation/connection IDs with the actual
+            # Boomi-assigned IDs so the process references valid components.
+            for placeholder, actual in id_remap.items():
+                xml_str = xml_str.replace(placeholder, actual)
+            fpath  = write_component(subdir, comp_name, xml_str, args.output_dir)
+            status = "written"
+            print(f"  [{subdir}] {comp_name}")
+            if not args.dry_run:
+                ok, _  = push_component(fpath, scripts_dir)
                 status = "pushed" if ok else "push_failed"
                 print(f"    -> {status}")
+            all_results.append({
+                "flow": flow_name, "component": comp_name,
+                "file": fpath, "status": status,
+            })
 
-            all_results.append({"flow": flow_name, "component": comp_name,
-                                 "file": fpath, "status": status})
-
-    # Output summary
     output_path = args.spec.replace(".json", "_boomi_output.json")
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump({
-            "project": project_name,
-            "folder_id": folder_id,
-            "components": all_results,
-            "manual_review": [{"flow": f, "note": n} for f, n in all_notes],
+            "project":       project_name,
+            "folder_id":     folder_id,
+            "components":    all_results,
+            "manual_review": [{"flow": fl, "note": n} for fl, n in all_notes],
         }, f, indent=2)
 
-    total = len(all_results)
+    total  = len(all_results)
     pushed = sum(1 for r in all_results if r["status"] == "pushed")
-    written = sum(1 for r in all_results if r["status"] == "written")
+    written= sum(1 for r in all_results if r["status"] == "written")
 
     print(f"\n{'=' * 50}")
     if args.dry_run:
@@ -832,8 +1377,8 @@ def main():
 
     if all_notes:
         print(f"\nManual review ({len(all_notes)} items):")
-        for flow_name, note in all_notes:
-            print(f"  [{flow_name}] {note[:100]}")
+        for flow_n, note in all_notes:
+            print(f"  [{flow_n}] {note[:100]}")
 
 
 if __name__ == "__main__":

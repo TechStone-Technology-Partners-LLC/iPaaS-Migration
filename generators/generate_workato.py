@@ -45,6 +45,8 @@ class WorkatoClient:
             print("ERROR: 'requests' library not found. Run: pip install requests", file=sys.stderr)
             sys.exit(1)
 
+        # Strip all whitespace — tokens copy-pasted from the UI may have embedded newlines
+        api_token = "".join(api_token.split())
         self.api_token = api_token
         self.session = self._requests.Session()
         self.session.headers.update({
@@ -255,6 +257,46 @@ def action_note(number, message, label="Note"):
     }, label=f"[REVIEW REQUIRED] {label}")
 
 
+def action_repeat(number, source_list, block, label="Repeat for each"):
+    """Workato foreach/repeat action."""
+    return _step(number, "workato", "repeat", "action", {
+        "source": source_list or "[]",
+    }, block=block, label=label)
+
+
+def action_monitor(number, block, label="Monitor"):
+    """Workato error-monitoring (try/catch) action."""
+    return _step(number, "workato", "monitor", "action", {}, block=block, label=label)
+
+
+def _parse_condition_text(condition_text):
+    """
+    Try to split 'field OPERATOR value' condition text into (operand, operator, value).
+    Falls back gracefully if the text doesn't match a known pattern.
+    """
+    if not condition_text:
+        return "condition", "equals", "true"
+    # Handle 'field EQUALS value', 'field == value', 'field != value', etc.
+    patterns = [
+        (r"(.+?)\s+(EQUALS|==|IS EQUAL TO)\s+(.+)", "equals"),
+        (r"(.+?)\s+(NOT EQUALS|!=|IS NOT EQUAL TO)\s+(.+)", "not_equals"),
+        (r"(.+?)\s+(GREATER THAN|>)\s+(.+)", "greater_than"),
+        (r"(.+?)\s+(LESS THAN|<)\s+(.+)", "less_than"),
+        (r"(.+?)\s+(CONTAINS)\s+(.+)", "contains"),
+        (r"(.+?)\s+(STARTS WITH)\s+(.+)", "starts_with"),
+        (r"(.+?)\s+(IS EMPTY|IS NULL)", None),
+    ]
+    import re as _re
+    for pattern, wt_op in patterns:
+        m = _re.match(pattern, condition_text.strip(), _re.IGNORECASE)
+        if m:
+            operand = m.group(1).strip()
+            value   = m.group(3).strip() if len(m.groups()) >= 3 else ""
+            return operand, wt_op or "equals", value
+    # If no pattern matched, use the full condition as operand with a note
+    return condition_text.strip(), "equals", "true"
+
+
 # ─── Spec → Workato Recipe Translator ────────────────────────────────────────
 
 class RecipeBuilder:
@@ -302,82 +344,150 @@ class RecipeBuilder:
         return trigger_http("GET", "/migrated-endpoint", f"Placeholder trigger for '{self.flow['name']}'")
 
     def _build_steps(self):
+        """Build all top-level recipe steps."""
         blocks = []
-        steps = self.flow.get("steps", [])
+        for step in self.flow.get("steps", []):
+            result = self._build_one_step(step)
+            blocks.extend(result)
 
-        for step in steps:
-            stype = step.get("type", "")
-            num = self.next_num()
-
-            if stype == "db_select":
-                blocks.append(self._db_select(num, step))
-
-            elif stype == "db_insert":
-                blocks.append(self._db_insert(num, step))
-
-            elif stype == "db_update":
-                blocks.append(self._db_update(num, step))
-
-            elif stype == "db_delete":
-                note = f"DB DELETE on table {step.get('table')} — implement as Workato delete_rows action"
-                self.notes.append(note)
-                blocks.append(action_note(num, note, label=step.get("label", "DB Delete")))
-
-            elif stype == "set_payload":
-                # Static response — emit as final callable_recipe_response
-                content = step.get("static_content", "")
-                blocks.append(action_http_response(num, content, "200", step.get("label", "Return response")))
-
-            elif stype == "transform":
-                note = (
-                    f"Boomi Map step '{step.get('label', '')}' — implement field mapping "
-                    f"in Workato using formula pills or a separate recipe step"
-                )
-                self.notes.append(note)
-                blocks.append(action_note(num, note, label=step.get("label", "Transform")))
-
-            elif stype == "set_variable":
-                # Set Properties — usually capturing a URL param into a variable
-                # In Workato callable recipes, URL params are available in trigger output
-                note = (
-                    f"Boomi Set Properties step '{step.get('label', '')}' — "
-                    f"in Workato, use trigger_input or trigger URL params directly"
-                )
-                self.notes.append(note)
-                blocks.append(action_note(num, note, label=step.get("label", "Set Variable")))
-
-            elif stype == "custom_script":
-                # Groovy script — preserve the logic as a note
-                purpose = step.get("purpose", "custom_transform")
-                script = step.get("script", "")
-                note = (
-                    f"Boomi Groovy script (purpose: {purpose}) — "
-                    f"implement equivalent logic in Workato using formula pills or custom Ruby. "
-                    f"Original script:\n{script[:400]}{'...' if len(script) > 400 else ''}"
-                )
-                self.notes.append(note)
-                blocks.append(action_note(num, note, label=step.get("label", "Custom Script")))
-
-            elif stype == "logger":
-                # Skip loggers — Workato has built-in logging
-                pass
-
-            elif stype == "return_response":
-                # Already handled via set_payload above
-                pass
-
-            else:
-                note = f"Step type '{stype}' not mapped — '{step.get('label', '')}'"
-                self.notes.append(note)
-                blocks.append(action_note(num, note, label=step.get("label", stype)))
-
-        # If no response step was added, add a default 200 OK
-        if blocks and not any(
-            s.get("name") in ("callable_recipe_response",) for s in blocks
-        ):
-            blocks.append(action_http_response(self.next_num(), '{"status": "ok"}', "200", "Return response"))
-
+        # If no response step was added for callable recipes, add a default 200 OK
+        if blocks and not any(s.get("name") == "callable_recipe_response" for s in blocks):
+            trigger_type = self.flow.get("trigger", {}).get("type", "")
+            if trigger_type == "http_listener":
+                blocks.append(action_http_response(
+                    self.next_num(), '{"status": "ok"}', "200", "Return response"
+                ))
         return blocks
+
+    def _build_steps_list(self, steps):
+        """Build steps from a nested list (true_steps, false_steps, loop_steps, etc.)."""
+        blocks = []
+        for step in (steps or []):
+            blocks.extend(self._build_one_step(step))
+        return blocks
+
+    def _build_one_step(self, step):
+        """
+        Convert a single spec step to a list of Workato action dicts.
+        Returns a list so branching steps (IF+ELSE) can emit multiple actions.
+        """
+        stype = step.get("type", "")
+        num   = self.next_num()
+        label = step.get("label") or stype
+
+        # ── Control flow: IF / ELSE ───────────────────────────────────────
+        if stype in ("choice_router", "choice_router_multi"):
+            condition   = step.get("condition", "")
+            true_steps  = self._build_steps_list(step.get("true_steps", []))
+            false_steps = self._build_steps_list(step.get("false_steps", []))
+            operand, operator, value = _parse_condition_text(condition)
+
+            result = [action_if(num, operand, operator, value, true_steps, label=label)]
+            if false_steps:
+                result.append(action_else(self.next_num(), false_steps))
+            return result
+
+        # ── Loop: foreach / while ─────────────────────────────────────────
+        if stype in ("loop", "foreach", "try_scope"):
+            # try_scope is a monitoring wrapper, not a real loop — handled below
+            if stype == "try_scope":
+                pass
+            else:
+                loop_steps = self._build_steps_list(
+                    step.get("loop_steps", step.get("monitored_steps", []))
+                )
+                loop_over = step.get("loop_over", step.get("collection", ""))
+                return [action_repeat(num, loop_over, loop_steps, label=label)]
+
+        # ── Try/Catch: monitor ────────────────────────────────────────────
+        if stype in ("try_catch", "try_scope"):
+            monitored_steps = self._build_steps_list(step.get("monitored_steps", []))
+            return [action_monitor(num, monitored_steps, label=label)]
+
+        # ── Database ──────────────────────────────────────────────────────
+        if stype == "db_select":
+            return [self._db_select(num, step)]
+        if stype == "db_insert":
+            return [self._db_insert(num, step)]
+        if stype == "db_update":
+            return [self._db_update(num, step)]
+        if stype == "db_delete":
+            note = f"DB DELETE on table '{step.get('table')}' — implement as Workato delete_rows action"
+            self.notes.append(note)
+            return [action_note(num, note, label=label)]
+
+        # ── Response / Payload ────────────────────────────────────────────
+        if stype in ("set_payload", "return_response"):
+            content = step.get("static_content", step.get("response_body", ""))
+            status  = step.get("status_code", "200")
+            return [action_http_response(num, content, status, label)]
+
+        # ── Transform (Map) ───────────────────────────────────────────────
+        if stype == "transform":
+            note = (
+                f"Map step '{label}' — implement field mapping in Workato using "
+                f"formula pills or a dedicated recipe step"
+            )
+            self.notes.append(note)
+            return [action_note(num, note, label=label)]
+
+        # ── Set Variable / Properties ─────────────────────────────────────
+        if stype == "set_variable":
+            var_name  = step.get("variable_name", label)
+            var_value = step.get("variable_value", step.get("value", ""))
+            return [_step(num, "workato", "set_variable", "action",
+                          {"variable_name": var_name, "value": var_value},
+                          label=f"Set {var_name}")]
+
+        # ── Custom Script (Groovy / DataWeave) ────────────────────────────
+        if stype == "custom_script":
+            purpose = step.get("purpose", "custom_transform")
+            script  = step.get("script", "")
+            note = (
+                f"{purpose} script — implement in Workato using formula pills or custom Ruby. "
+                f"Original:\n{script[:300]}{'...' if len(script) > 300 else ''}"
+            )
+            self.notes.append(note)
+            return [action_note(num, note, label=label)]
+
+        # ── Logger ────────────────────────────────────────────────────────
+        if stype in ("logger", "log_message"):
+            return []   # Workato has built-in execution logs
+
+        # ── Subprocess / flow_ref ─────────────────────────────────────────
+        if stype in ("subprocess_call", "flow_ref"):
+            note = f"Subprocess '{label}' — create a separate callable Workato recipe and invoke it here"
+            self.notes.append(note)
+            return [action_note(num, note, label=label)]
+
+        # ── HTTP Request ──────────────────────────────────────────────────
+        if stype == "http_request":
+            method = step.get("http_method", step.get("method", "GET")).lower()
+            path   = step.get("path", step.get("url", "/"))
+            return [_step(num, "http", method, "action",
+                          {"url": path, "request_type": "json"},
+                          label=label)]
+
+        # ── Salesforce ────────────────────────────────────────────────────
+        if stype in ("salesforce_action", "salesforce_query", "salesforce_create",
+                     "salesforce_update", "salesforce_upsert", "salesforce_delete"):
+            sf_op  = step.get("salesforce_operation", stype.split("_")[-1].upper())
+            sf_obj = step.get("salesforce_object", step.get("object_type", ""))
+            return [_step(num, "salesforce", sf_op.lower(), "action",
+                          {"sobject_name": sf_obj},
+                          label=label)]
+
+        # ── Connector action (generic catch-all) ──────────────────────────
+        if stype == "connector_action":
+            provider = step.get("workato_provider") or step.get("config_ref") or "workato"
+            wt_name  = step.get("workato_name") or "custom_action"
+            if provider and wt_name:
+                return [_step(num, provider, wt_name, "action", {}, label=label)]
+
+        # ── Fallback ──────────────────────────────────────────────────────
+        note = f"Step type '{stype}' ('{label}') — manual Workato implementation required"
+        self.notes.append(note)
+        return [action_note(num, note, label=label)]
 
     def _db_select(self, number, step):
         sql = step.get("sql", "")
@@ -551,6 +661,10 @@ def main():
         print("ERROR: WORKATO_API_TOKEN not set.", file=sys.stderr)
         print("  Add it to your .env file: WORKATO_API_TOKEN=your_token_here", file=sys.stderr)
         sys.exit(1)
+
+    # Show token prefix so the user can verify which token is being used
+    token_preview = api_token[:12] + "..." if len(api_token) > 12 else api_token
+    print(f"  Token loaded : {token_preview}  (email: {email or 'not set'})")
 
     client = WorkatoClient(api_token, email)
 

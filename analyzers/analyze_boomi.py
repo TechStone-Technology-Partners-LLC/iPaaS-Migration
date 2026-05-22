@@ -401,6 +401,297 @@ def extract_connection_info(connection_id, component_index):
     }
 
 
+def _build_shape_map(all_shapes):
+    return {s.get("name"): s for s in all_shapes}
+
+
+def _build_conn_map(all_shapes):
+    """Map shapeName -> list of {to, identifier} dicts from dragpoints."""
+    conn_map = {}
+    for shape in all_shapes:
+        name = shape.get("name")
+        dps = []
+        for dp in shape.findall(".//dragpoint"):
+            dps.append({"to": dp.get("toShape"), "identifier": dp.get("identifier", "")})
+        conn_map[name] = dps
+    return conn_map
+
+
+def _extract_decision_condition(shape):
+    """Pull condition text from a Boomi decision shape XML."""
+    cfg = shape.find("configuration/decision")
+    if cfg is None:
+        return ""
+    field, operator, value = "", "EQUALS", ""
+    cv = cfg.find("comparevalue")
+    if cv is not None:
+        pp = cv.find(".//processparameter")
+        sp = cv.find(".//staticparameter")
+        if pp is not None:
+            field = pp.get("processproperty", pp.get("name", ""))
+        elif sp is not None:
+            field = sp.get("staticproperty", "")
+    op_el = cfg.find("comparevalueoperator")
+    if op_el is not None and op_el.text:
+        operator = op_el.text.strip()
+    ct = cfg.find("compareto")
+    if ct is not None:
+        pp = ct.find(".//processparameter")
+        sp = ct.find(".//staticparameter")
+        if pp is not None:
+            value = pp.get("processproperty", pp.get("name", ""))
+        elif sp is not None:
+            value = sp.get("staticproperty", "")
+    return f"{field} {operator} {value}".strip()
+
+
+def _classify_and_extract_shape(shape, component_index, connections_used, seq):
+    """Convert a single shape element to a step dict. Returns (step_dict, seq)."""
+    shape_type = shape.get("shapetype", "")
+    userlabel = shape.get("userlabel", "")
+    connector_cfg = shape.find("configuration/connectoraction")
+
+    if shape_type == "connectoraction" and connector_cfg is not None:
+        conn_type = connector_cfg.get("connectorType", "")
+        op_id = connector_cfg.get("operationId", "")
+        conn_id = connector_cfg.get("connectionId", "")
+        if "dbv2" in conn_type or "db" in conn_type.lower():
+            seq += 1
+            step = extract_db_step(shape, op_id, conn_id, component_index, seq)
+            step["label"] = userlabel or step["label"]
+            connections_used.add(conn_id)
+            return step, seq
+        elif "rest" in conn_type.lower() or conn_type == "http":
+            seq += 1
+            connections_used.add(conn_id)
+            return {
+                "source_tag": f"{conn_type}:request",
+                "type": "http_request",
+                "label": userlabel,
+                "config_ref": conn_id,
+                "requires_review": True,
+                "boomi_step": "REST_Connector",
+                "complexity": "medium",
+                "operation_id": op_id,
+                "connection_id": conn_id,
+                "sequence": seq,
+            }, seq
+        else:
+            seq += 1
+            return {
+                "source_tag": f"{conn_type}:action",
+                "type": "connector_action",
+                "label": userlabel,
+                "connector_type": conn_type,
+                "operation_id": op_id,
+                "connection_id": conn_id,
+                "requires_review": True,
+                "sequence": seq,
+            }, seq
+
+    if shape_type == "map":
+        seq += 1
+        step = extract_map_step(shape, seq)
+        step["label"] = userlabel or step["label"]
+        return step, seq
+
+    if shape_type == "message":
+        seq += 1
+        step = extract_message_step(shape, seq)
+        step["label"] = userlabel or step["label"]
+        return step, seq
+
+    if shape_type == "documentproperties":
+        seq += 1
+        step = extract_set_properties_step(shape, seq)
+        step["label"] = userlabel or step["label"]
+        return step, seq
+
+    if shape_type == "dataprocess":
+        seq += 1
+        step = extract_groovy_step(shape, seq)
+        step["label"] = userlabel or step["label"]
+        return step, seq
+
+    if shape_type == "processcall":
+        seq += 1
+        called_cfg = shape.find("configuration/processcall")
+        called_id = called_cfg.get("processId") if called_cfg is not None else ""
+        return {
+            "source_tag": "boomi:processcall",
+            "type": "subprocess_call",
+            "label": userlabel,
+            "requires_review": True,
+            "called_process_id": called_id,
+            "note": "Subprocess call — ensure called process is also migrated",
+            "sequence": seq + 1,
+        }, seq + 1
+
+    return None, seq
+
+
+def _traverse(start_name, shape_map, conn_map, component_index, connections_used,
+              seq_start=0, visited=None):
+    """
+    Follow dragpoints from start_name, returning (steps, seq).
+    Recurses into decision true/false branches and catcherrors branches.
+    """
+    if visited is None:
+        visited = set()
+
+    steps = []
+    seq = seq_start
+    current_name = start_name
+
+    while current_name and current_name not in visited:
+        shape = shape_map.get(current_name)
+        if shape is None:
+            break
+
+        visited.add(current_name)
+        shape_type = shape.get("shapetype", "")
+        userlabel = shape.get("userlabel", "")
+        dps = conn_map.get(current_name, [])
+
+        # ── Terminal shapes — stop traversal ──────────────────────────────
+        if shape_type in ("returndocuments", "stop"):
+            break
+
+        # ── Start shape — only extract trigger, then follow ───────────────
+        if shape_type == "start":
+            next_dp = dps[0] if dps else None
+            current_name = next_dp["to"] if next_dp else None
+            continue
+
+        # ── Decision shape — recurse into true/false branches ─────────────
+        if shape_type == "decision":
+            seq += 1
+            condition = _extract_decision_condition(shape)
+
+            true_dp  = next((d for d in dps if d["identifier"] == "true"),  dps[0] if dps else None)
+            false_dp = next((d for d in dps if d["identifier"] == "false"), None)
+
+            true_steps = []
+            false_steps = []
+            true_end_name = None
+
+            if true_dp and true_dp["to"]:
+                true_steps, _ = _traverse(
+                    true_dp["to"], shape_map, conn_map, component_index,
+                    connections_used, seq, set(visited)
+                )
+                # Find first shape after the true branch (for main path continuation)
+                true_end_name = true_dp["to"]
+
+            if false_dp and false_dp["to"]:
+                false_steps, _ = _traverse(
+                    false_dp["to"], shape_map, conn_map, component_index,
+                    connections_used, seq, set(visited)
+                )
+
+            steps.append({
+                "source_tag": "boomi:decision",
+                "type": "choice_router",
+                "label": userlabel or "Decision",
+                "config_ref": None,
+                "requires_review": True,
+                "boomi_step": "Decision",
+                "complexity": "medium",
+                "condition": condition,
+                "true_steps": true_steps,
+                "false_steps": false_steps,
+                "sequence": seq,
+            })
+            # Continue on the main path (true branch direction)
+            current_name = true_dp["to"] if true_dp else None
+            # Skip shapes already visited via recursion
+            while current_name and current_name in visited:
+                sub_dps = conn_map.get(current_name, [])
+                current_name = sub_dps[0]["to"] if sub_dps else None
+            continue
+
+        # ── CatchErrors shape — recurse into success / error branches ──────
+        if shape_type == "catcherrors":
+            seq += 1
+            # First dragpoint = success (try) path; second = error path
+            success_dp = next((d for d in dps if d["identifier"] != "false"), dps[0] if dps else None)
+            error_dp   = next((d for d in dps if d["identifier"] == "false"), dps[1] if len(dps) > 1 else None)
+
+            monitored_steps = []
+            error_steps = []
+
+            if success_dp and success_dp["to"]:
+                monitored_steps, _ = _traverse(
+                    success_dp["to"], shape_map, conn_map, component_index,
+                    connections_used, seq, set(visited)
+                )
+            if error_dp and error_dp["to"]:
+                error_steps, _ = _traverse(
+                    error_dp["to"], shape_map, conn_map, component_index,
+                    connections_used, seq, set(visited)
+                )
+
+            steps.append({
+                "source_tag": "boomi:catcherrors",
+                "type": "try_catch",
+                "label": userlabel or "Try/Catch",
+                "config_ref": None,
+                "requires_review": False,
+                "boomi_step": "CatchErrors",
+                "complexity": "low",
+                "monitored_steps": monitored_steps,
+                "error_steps": error_steps,
+                "sequence": seq,
+            })
+            # Continue on the success path after the monitored block
+            current_name = success_dp["to"] if success_dp else None
+            while current_name and current_name in visited:
+                sub_dps = conn_map.get(current_name, [])
+                current_name = sub_dps[0]["to"] if sub_dps else None
+            continue
+
+        # ── Route / Branch — treat as multi-way choice_router ─────────────
+        if shape_type in ("route", "branch"):
+            seq += 1
+            branch_steps_list = []
+            for dp in dps:
+                if dp["to"]:
+                    b_steps, _ = _traverse(
+                        dp["to"], shape_map, conn_map, component_index,
+                        connections_used, seq, set(visited)
+                    )
+                    branch_steps_list.append({
+                        "identifier": dp["identifier"] or dp["to"],
+                        "steps": b_steps,
+                    })
+            steps.append({
+                "source_tag": f"boomi:{shape_type}",
+                "type": "choice_router",
+                "label": userlabel or shape_type.capitalize(),
+                "requires_review": True,
+                "boomi_step": shape_type.capitalize(),
+                "complexity": "medium",
+                "branches": branch_steps_list,
+                "true_steps": branch_steps_list[0]["steps"] if branch_steps_list else [],
+                "false_steps": branch_steps_list[1]["steps"] if len(branch_steps_list) > 1 else [],
+                "sequence": seq,
+            })
+            break
+
+        # ── All other linear shapes ────────────────────────────────────────
+        step, seq = _classify_and_extract_shape(
+            shape, component_index, connections_used, seq
+        )
+        if step:
+            steps.append(step)
+
+        # Advance: follow first dragpoint
+        next_dp = dps[0] if dps else None
+        current_name = next_dp["to"] if next_dp else None
+
+    return steps, seq
+
+
 def analyze_process(process_file, component_index):
     """Analyze a single Boomi process XML → return a normalized flow spec dict."""
     tree = ET.parse(process_file)
@@ -413,23 +704,19 @@ def analyze_process(process_file, component_index):
     if desc_elem is not None and desc_elem.text:
         description = desc_elem.text.strip()
 
-    # Sort shapes by x-position to get execution order
     all_shapes = root.findall(".//shape")
-    ordered_shapes = sorted(all_shapes, key=lambda s: float(s.get("x", "0")))
+    shape_map = _build_shape_map(all_shapes)
+    conn_map  = _build_conn_map(all_shapes)
 
+    # Find start shape and extract trigger
     trigger = None
-    steps = []
     connections_used = set()
-    seq = 0
+    start_name = None
 
-    for shape in ordered_shapes:
-        shape_type = shape.get("shapetype", "")
-        userlabel = shape.get("userlabel", "")
-
-        connector_cfg = shape.find("configuration/connectoraction")
-
-        # ── Trigger (Start shape) ──────────────────────────────────────────
-        if shape_type == "start":
+    for shape in all_shapes:
+        if shape.get("shapetype") == "start":
+            start_name = shape.get("name")
+            connector_cfg = shape.find("configuration/connectoraction")
             if connector_cfg is not None:
                 conn_type = connector_cfg.get("connectorType", "")
                 op_id = connector_cfg.get("operationId", "")
@@ -439,136 +726,21 @@ def analyze_process(process_file, component_index):
                     trigger = {
                         "source_tag": f"{conn_type}:listen",
                         "type": "connector_trigger",
-                        "label": userlabel,
+                        "label": shape.get("userlabel", ""),
                         "connector_type": conn_type,
                         "operation_id": op_id,
                         "requires_review": True,
                         "note": f"Non-WSS trigger ({conn_type}) — manual mapping required",
                     }
+            break
 
-        # ── Return Documents ───────────────────────────────────────────────
-        elif shape_type == "returndocuments":
-            # Not a step — it's the process response endpoint; implicitly handled
-            pass
+    # Graph traversal from start shape — preserves decision/try branch structure
+    steps, _ = _traverse(
+        start_name, shape_map, conn_map, component_index, connections_used
+    )
 
-        # ── DB / REST Connector Action ─────────────────────────────────────
-        elif shape_type == "connectoraction" and connector_cfg is not None:
-            conn_type = connector_cfg.get("connectorType", "")
-            op_id = connector_cfg.get("operationId", "")
-            conn_id = connector_cfg.get("connectionId", "")
-
-            if "dbv2" in conn_type or "db" in conn_type.lower():
-                seq += 1
-                step = extract_db_step(shape, op_id, conn_id, component_index, seq)
-                step["label"] = userlabel or step["label"]
-                connections_used.add(conn_id)
-                steps.append(step)
-            elif "rest" in conn_type.lower() or conn_type == "http":
-                seq += 1
-                steps.append({
-                    "source_tag": f"{conn_type}:request",
-                    "type": "http_request",
-                    "label": userlabel,
-                    "config_ref": conn_id,
-                    "requires_review": True,
-                    "boomi_step": "REST_Connector",
-                    "complexity": "medium",
-                    "operation_id": op_id,
-                    "connection_id": conn_id,
-                    "note": "REST connector step — check operation XML for HTTP method and URL",
-                    "sequence": seq,
-                })
-                connections_used.add(conn_id)
-            else:
-                # Unknown connector type — flag for review
-                seq += 1
-                steps.append({
-                    "source_tag": f"{conn_type}:action",
-                    "type": "connector_action",
-                    "label": userlabel,
-                    "connector_type": conn_type,
-                    "operation_id": op_id,
-                    "connection_id": conn_id,
-                    "requires_review": True,
-                    "note": f"Unknown connector type: {conn_type}",
-                    "sequence": seq,
-                })
-
-        # ── Map ───────────────────────────────────────────────────────────
-        elif shape_type == "map":
-            seq += 1
-            step = extract_map_step(shape, seq)
-            step["label"] = userlabel or step["label"]
-            steps.append(step)
-
-        # ── Message ───────────────────────────────────────────────────────
-        elif shape_type == "message":
-            seq += 1
-            step = extract_message_step(shape, seq)
-            step["label"] = userlabel or step["label"]
-            steps.append(step)
-
-        # ── Set Properties ────────────────────────────────────────────────
-        elif shape_type == "documentproperties":
-            seq += 1
-            step = extract_set_properties_step(shape, seq)
-            step["label"] = userlabel or step["label"]
-            steps.append(step)
-
-        # ── Data Process (Groovy) ─────────────────────────────────────────
-        elif shape_type == "dataprocess":
-            seq += 1
-            step = extract_groovy_step(shape, seq)
-            step["label"] = userlabel or step["label"]
-            steps.append(step)
-
-        # ── Decision / Route / Branch ─────────────────────────────────────
-        elif shape_type in ("decision", "route", "branch"):
-            seq += 1
-            steps.append({
-                "source_tag": f"boomi:{shape_type}",
-                "type": SHAPE_TYPE_LABELS.get(shape_type, shape_type),
-                "label": userlabel,
-                "config_ref": None,
-                "requires_review": True,
-                "boomi_step": shape_type.capitalize(),
-                "complexity": "medium",
-                "note": f"Boomi {shape_type} shape — review branching logic for target platform",
-                "sequence": seq,
-            })
-
-        # ── Process Call ──────────────────────────────────────────────────
-        elif shape_type == "processcall":
-            seq += 1
-            called_id = shape.find("configuration/processcall")
-            called_id = called_id.get("processId") if called_id is not None else ""
-            steps.append({
-                "source_tag": "boomi:processcall",
-                "type": "subprocess_call",
-                "label": userlabel,
-                "config_ref": None,
-                "requires_review": True,
-                "boomi_step": "Process_Call",
-                "complexity": "medium",
-                "called_process_id": called_id,
-                "note": "Subprocess call — ensure called process is also migrated",
-                "sequence": seq,
-            })
-
-        # ── Other / Unknown ───────────────────────────────────────────────
-        elif shape_type not in ("start",):
-            seq += 1
-            steps.append({
-                "source_tag": f"boomi:{shape_type}",
-                "type": SHAPE_TYPE_LABELS.get(shape_type, "unknown"),
-                "label": userlabel,
-                "config_ref": None,
-                "requires_review": True,
-                "boomi_step": shape_type,
-                "complexity": "low",
-                "note": f"Unknown shape type: {shape_type}",
-                "sequence": seq,
-            })
+    # Detect whether any catcherrors shape exists for the error_handling summary
+    has_error_handler = any(s.get("shapetype") == "catcherrors" for s in all_shapes)
 
     return {
         "name": name,
@@ -580,9 +752,8 @@ def analyze_process(process_file, component_index):
         "steps": steps,
         "connections_used": list(connections_used),
         "error_handling": {
-            "has_error_handler": False,
+            "has_error_handler": has_error_handler,
             "strategies": [],
-            "note": "Boomi error handling (Try/Catch shapes) not yet captured — review process for exception paths",
         },
         "boomi_suggestions": {
             "process_name": name,

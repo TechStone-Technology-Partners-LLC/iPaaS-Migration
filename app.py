@@ -144,7 +144,8 @@ def target_credential_form(platform: str) -> dict:
 # ─── Migration runner ──────────────────────────────────────────────────────────
 
 def build_migrate_cmd(source: str, target: str, source_opts: dict, dest_name: str,
-                      project: str, dry_run: bool, source_env: dict) -> list[str]:
+                      project: str, dry_run: bool, source_env: dict,
+                      skip_analyze: bool = False) -> list[str]:
     """Build the migrate.py CLI args list."""
     cmd = [sys.executable, str(AGENT_DIR / "migrate.py"),
            "--from", source, "--to", target]
@@ -168,6 +169,8 @@ def build_migrate_cmd(source: str, target: str, source_opts: dict, dest_name: st
         cmd += ["--dest-name", dest_name]
     if dry_run:
         cmd.append("--dry-run")
+    if skip_analyze:
+        cmd.append("--skip-analyze")
 
     return cmd
 
@@ -236,6 +239,10 @@ def main():
         dest_name = st.text_input("Destination folder/project name (optional)", placeholder="MIG_<project>")
     with opt_col3:
         dry_run = st.checkbox("Dry run", help="Generate artifacts without pushing to the target platform")
+        skip_analyze = st.checkbox(
+            "Skip analyze",
+            help="Re-use existing spec — use when source API token expired or only generator settings changed",
+        )
 
     # ── Run button ───────────────────────────────────────────────────────────
     st.divider()
@@ -259,7 +266,7 @@ def main():
                 st.error(e)
             return
 
-        cmd = build_migrate_cmd(source, target, src_opts, dest_name, project_name, dry_run, src_env)
+        cmd = build_migrate_cmd(source, target, src_opts, dest_name, project_name, dry_run, src_env, skip_analyze)
         combined_env = {**src_env, **tgt_env}
 
         st.subheader("Migration output")
@@ -280,7 +287,7 @@ def main():
                 try:
                     item = q.get(timeout=0.1)
                 except queue.Empty:
-                    output_placeholder.text_area("Log", value="".join(lines), height=400, label_visibility="collapsed")
+                    output_placeholder.code("".join(lines), language=None)
                     continue
 
                 if item is None:
@@ -290,7 +297,7 @@ def main():
                     continue
 
                 lines.append(item)
-                output_placeholder.text_area("Log", value="".join(lines), height=400, label_visibility="collapsed")
+                output_placeholder.code("".join(lines), language=None)
 
         # Drain any remaining returncode message
         while not q.empty():
@@ -298,7 +305,7 @@ def main():
             if isinstance(item, tuple) and item[0] == "__returncode__":
                 returncode = item[1]
 
-        output_placeholder.text_area("Log", value="".join(lines), height=400, label_visibility="collapsed")
+        output_placeholder.code("".join(lines), language=None)
 
         if returncode == 0:
             status_placeholder.success("✅ Migration completed successfully.")

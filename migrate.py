@@ -26,6 +26,24 @@ from datetime import datetime
 from pathlib import Path
 
 
+def _load_dotenv():
+    """Load .env from the project root into os.environ (setdefault — never overrides)."""
+    env_file = Path(__file__).parent / ".env"
+    if not env_file.exists():
+        return
+    with open(env_file, encoding="utf-8") as fh:
+        for line in fh:
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, _, val = line.partition("=")
+            key = key.strip()
+            val = val.strip().strip('"').strip("'")
+            os.environ.setdefault(key, val)
+
+_load_dotenv()
+
+
 # ─── Skill path detection ─────────────────────────────────────────────────────
 
 def find_skill_path():
@@ -64,6 +82,20 @@ def find_skill_path():
 
 # ─── Shell script runner ──────────────────────────────────────────────────────
 
+def _patched_env():
+    """Return os.environ with the project-local bin/ prepended to PATH.
+    This ensures jq.exe (and other bundled tools) are found when bash scripts
+    are launched from a non-interactive subprocess (e.g. via Streamlit).
+    """
+    local_bin = os.path.join(os.path.dirname(os.path.abspath(__file__)), "bin")
+    env = os.environ.copy()
+    # Convert Windows path to POSIX for bash on Windows (Git Bash / MSYS2)
+    posix_bin = local_bin.replace("\\", "/")
+    # Also keep the Windows form for native tools
+    env["PATH"] = posix_bin + os.pathsep + local_bin + os.pathsep + env.get("PATH", "")
+    return env
+
+
 def run_script(script_path, args, cwd=None):
     """
     Run a bash script and return (stdout, returncode).
@@ -71,7 +103,8 @@ def run_script(script_path, args, cwd=None):
     """
     cmd = ["bash", script_path] + args
     print(f"  $ bash {os.path.basename(script_path)} {' '.join(args)}")
-    result = subprocess.run(cmd, cwd=cwd or os.getcwd(), capture_output=False, text=True)
+    result = subprocess.run(cmd, cwd=cwd or os.getcwd(), env=_patched_env(),
+                            capture_output=False, text=True)
     return result.returncode
 
 
@@ -182,15 +215,32 @@ def run_analyze(source_system, source_dir, project_name, cwd):
     if entry["arg_style"] == "positional":
         # analyze_boomi.py <source_dir> --project <name> --output <path>
         analyzer_args = [source_dir, "--project", project_name, "--output", spec_path]
+    elif source_system == "workato":
+        if os.path.isdir(source_dir):
+            # Local exported recipe JSON files
+            analyzer_args = ["--source-dir", source_dir, "--project", project_name, "--output", spec_path]
+        elif source_dir:
+            # Non-empty, non-directory string = Workato folder name -> live API pull
+            analyzer_args = ["--folder", source_dir, "--project", project_name, "--output", spec_path]
+        else:
+            # Blank -> pull all recipes via live API
+            analyzer_args = ["--project", project_name, "--output", spec_path]
     else:
-        # analyze_workato.py --source-dir <dir> --project <name> --output <path>
+        # analyze_celigo.py / analyze_webmethods.py --source-dir <dir> ...
         analyzer_args = ["--source-dir", source_dir, "--project", project_name, "--output", spec_path]
 
     print(f"\n[ANALYZE] Running {os.path.basename(analyzer_path)}...")
     rc = run_python(analyzer_path, analyzer_args, cwd=cwd)
     if rc != 0:
-        print(f"ERROR: Analyzer failed (exit {rc})", file=sys.stderr)
-        sys.exit(1)
+        # If analysis failed but a spec already exists on disk, use it as a fallback.
+        # This handles expired API tokens on re-runs without requiring manual intervention.
+        if os.path.isfile(spec_path):
+            print(f"\nWARNING: Analyzer exited with error but an existing spec was found.")
+            print(f"  Using existing spec: {spec_path}")
+            print(f"  To force re-analysis, refresh your API token and delete the spec file.")
+        else:
+            print(f"ERROR: Analyzer failed (exit {rc})", file=sys.stderr)
+            sys.exit(1)
 
     if not os.path.isfile(spec_path):
         print(f"ERROR: Spec file not created at {spec_path}", file=sys.stderr)
@@ -311,8 +361,9 @@ Examples:
         print("ERROR: --from boomi requires either --boomi-folder or --source-dir", file=sys.stderr)
         sys.exit(1)
 
-    file_based_sources = ("mulesoft", "workato", "celigo", "webmethods")
-    if args.source in file_based_sources and not args.source_dir and not args.skip_pull and not args.skip_analyze:
+    # Workato supports live API pull (no source-dir needed). Others still require local files.
+    file_based_only_sources = ("mulesoft", "celigo", "webmethods")
+    if args.source in file_based_only_sources and not args.source_dir and not args.skip_pull and not args.skip_analyze:
         print(f"ERROR: --from {args.source} requires --source-dir <path-to-exported-files>", file=sys.stderr)
         sys.exit(1)
 
@@ -337,7 +388,12 @@ Examples:
     print(f"  Dry run : {args.dry_run}")
 
     # ── PHASE 1: PULL ──────────────────────────────────────────────────────
-    source_dir = args.source_dir or os.path.join(cwd, "active-development")
+    # For Workato live pull, source_dir may be None (blank = all recipes) or a folder name.
+    # For all other non-Boomi sources, default to active-development/ if no --source-dir.
+    if args.source == "workato":
+        source_dir = args.source_dir or ""   # empty string = pull all recipes via API
+    else:
+        source_dir = args.source_dir or os.path.join(cwd, "active-development")
 
     if args.source == "boomi" and args.boomi_folder and not args.skip_pull:
         skill_path = find_skill_path()
