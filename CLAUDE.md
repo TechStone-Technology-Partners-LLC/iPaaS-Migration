@@ -117,6 +117,9 @@ Realistic source system examples for testing:
 - `samples/mulesoft/customer-api/` — REST CRUD API with PostgreSQL backend
 - `samples/mulesoft/file-processor/` — SFTP file pickup, CSV parse, HTTP post with retry
 - `samples/mulesoft/crm-sync/` — Scheduled Salesforce-to-MySQL sync with email notification
+- `samples/oracle-soa/CustomerOrderProcessing/` — AQ trigger, EBS credit check, DB inventory, JMS error queue (BPEL 2.0)
+- `samples/oracle-soa/AccountSyncBatch/` — FTP trigger, EBS account lookup, DB upsert, forEach loop (BPEL 2.0)
+- `samples/oracle-soa/NotificationFanout/` — HTTP trigger, parallel `<flow>` with email/DB/B2B EDI branches (BPEL 2.0)
 
 ## Naming Convention for Migrated Components
 
@@ -215,9 +218,23 @@ At the start of any migration or integration task, run `boomi-component-search.s
 bash <skill-path>/scripts/boomi-component-search.sh --name "%SystemName%" --type "connector-settings,connector-action"
 ```
 
+## Account Context
+
+**IMPORTANT for new sessions:** Component IDs and folderIds in the Active Migrations section below are tied to the **personal Boomi account** used during initial development. On the **org/team account**, those components do not exist.
+
+When resuming any migration on a new Boomi account:
+1. Run `/bc-integration:env-setup-guide` to configure new account credentials in `.env`
+2. Run `bash <skill-path>/scripts/boomi-folder-create.sh --test-connection` to verify connectivity
+3. Run connector discovery before generating: `bash <skill-path>/scripts/boomi-component-search.sh --name "%SystemName%" --type "connector-settings,connector-action"`
+4. Migration specs in `migration-specs/*.json` are reusable — **do not re-analyze**, go straight to GENERATE
+5. The `active-development/` folder and `.sync-state/` are gitignored — they will be empty on a fresh clone. Use `boomi-component-create.sh` (not `push.sh`) for all first-time pushes on the new account
+6. New components will get new IDs — update CLAUDE.md with the new IDs after each generation run
+
+---
+
 ## Active Migrations
 
-### Workato → Boomi: SF Account sync to NetSuite (COMPLETE)
+### Workato → Boomi: SF Account sync to NetSuite (COMPLETE — personal account)
 All 5 components pushed. Folder: `ClaudeCode/MIG_<project>` (folderId `Rjo4NTY2MjA1`)
 
 | Component | ID |
@@ -236,7 +253,7 @@ All 5 components pushed. Folder: `ClaudeCode/MIG_<project>` (folderId `Rjo4NTY2M
 3. NetSuite TBA connection `15c076fa`: Configure via Environment Extensions
 4. NetSuite REST connection `1cce1777`: Configure OAuth2 credentials
 
-### Workato → Boomi: Upload Salesforce account files to Box (IN PROGRESS)
+### Workato → Boomi: Upload Salesforce account files to Box (IN PROGRESS — personal account)
 Folder: `ClaudeCode/MIG_<project>` (folderId `Rjo4NTY2MjA1`)
 
 | Component | ID | Status |
@@ -255,8 +272,30 @@ Folder: `ClaudeCode/MIG_<project>` (folderId `Rjo4NTY2MjA1`)
 6. shape11: Configure Box Upload operation — folder = `DPP_BOX_FOLDER_ID`, filename = `DPP_ATTACHMENT_NAME`
 7. Box connector shapes (4, 7, 11): Wire to the Box connection created in step 1
 
+### Oracle SOA Suite → Boomi: Sample Pipeline Test (COMPLETE — 2026-05-25, personal account)
+End-to-end test with 3 sample composites. Score: 80% (C). All 6 components pushed to Boomi folder **`MIG_oracle_soa_test`** (folderId `Rjo4NTY4NTU1` on personal account — does not exist on org account).
+
+| Component | ID | Notes |
+|---|---|---|
+| MIG_AccountSyncBPEL (process) | c615d5ae | FTP trigger → EBS → DB forEach loop |
+| MIG_oracle_soa_test_DB_Connection | 8b5ab902 | Shared DB connection (was double-prefix in old code — fixed) |
+| MIG_OrderProcessingBPEL_CheckInventory_Operation | 124698bd | REST operation for inventory check |
+| MIG_OrderProcessingBPEL (process) | 5eb02954 | AQ trigger → DB → EBS credit check |
+| MIG_NotificationFanoutBPEL_WSSOperation | 4359a68f | WSS operation for HTTP listener |
+| MIG_NotificationFanoutBPEL (process) | 4435d9a4 | HTTP trigger → parallel Branch (email/DB/EDI) |
+
+**Gaps flagged by validator:**
+- `[OrderProcessingBPEL]` ValidateCredit — EBS Adapter needs Oracle EBS connector in account
+- `[NotificationFanoutBPEL]` ParallelNotificationFanout — BPEL `<flow>` mapped to sequential Branch
+
+**Bugs fixed during test run (committed in 6b55fdd):**
+- `generate_boomi.py`: double `MIG_MIG_` prefix on DB connection name
+- `validators/validate_logic.py`: transform steps over-penalized (score was 30%→80% after fix)
+
+---
+
 ### Oracle SOA Suite → Boomi: EBS Integrations (IN PROGRESS — SETUP PHASE)
-25+ BPEL composites. Pipeline built; awaiting Oracle SOA credentials and composite export.
+25+ BPEL composites. Pipeline built and validated with samples; awaiting Oracle SOA credentials.
 
 **Pipeline command (once credentials are in .env):**
 ```bash
