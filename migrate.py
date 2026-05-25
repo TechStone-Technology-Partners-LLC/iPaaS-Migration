@@ -194,6 +194,7 @@ ANALYZERS = {
     "workato":     {"script": "analyzers/analyze_workato.py",    "arg_style": "source-dir"},
     "celigo":      {"script": "analyzers/analyze_celigo.py",     "arg_style": "source-dir"},
     "webmethods":  {"script": "analyzers/analyze_webmethods.py", "arg_style": "source-dir"},
+    "oracle_soa":  {"script": "analyzers/analyze_oracle_soa.py", "arg_style": "oracle-soa"},
 }
 
 
@@ -225,6 +226,20 @@ def run_analyze(source_system, source_dir, project_name, cwd):
         else:
             # Blank -> pull all recipes via live API
             analyzer_args = ["--project", project_name, "--output", spec_path]
+    elif source_system == "oracle_soa":
+        # Oracle SOA: optional --source-dir for local SARs, otherwise live pull via env vars
+        if source_dir and os.path.isdir(source_dir):
+            analyzer_args = ["--source-dir", source_dir, "--project", project_name, "--output", spec_path]
+        else:
+            # Live pull from Oracle SOA REST API (credentials from .env)
+            analyzer_args = ["--project", project_name, "--output", spec_path]
+            # Pass optional SOA connection overrides from env
+            soa_host = os.environ.get("ORACLE_SOA_HOST", "")
+            soa_port = os.environ.get("ORACLE_SOA_PORT", "7001")
+            partition = os.environ.get("ORACLE_SOA_PARTITION", "default")
+            if soa_host:
+                analyzer_args += ["--soa-host", soa_host, "--soa-port", soa_port,
+                                  "--partition", partition]
     else:
         # analyze_celigo.py / analyze_webmethods.py --source-dir <dir> ...
         analyzer_args = ["--source-dir", source_dir, "--project", project_name, "--output", spec_path]
@@ -370,7 +385,7 @@ Examples:
   python migrate.py --from boomi --to workato --project my-proj --skip-pull --skip-analyze
 """,
     )
-    PLATFORMS = ["boomi", "mulesoft", "workato", "celigo", "webmethods"]
+    PLATFORMS = ["boomi", "mulesoft", "workato", "celigo", "webmethods", "oracle_soa"]
     parser.add_argument("--from", dest="source", required=True,
                         choices=PLATFORMS,
                         help="Source integration platform")
@@ -415,7 +430,7 @@ Examples:
         print("ERROR: --from boomi requires either --boomi-folder or --source-dir", file=sys.stderr)
         sys.exit(1)
 
-    # Workato supports live API pull (no source-dir needed). Others still require local files.
+    # Workato and oracle_soa support live API pull (no source-dir needed). Others require local files.
     file_based_only_sources = ("mulesoft", "celigo", "webmethods")
     if args.source in file_based_only_sources and not args.source_dir and not args.skip_pull and not args.skip_analyze:
         print(f"ERROR: --from {args.source} requires --source-dir <path-to-exported-files>", file=sys.stderr)

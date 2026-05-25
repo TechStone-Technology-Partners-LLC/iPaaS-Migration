@@ -6,9 +6,9 @@ This workspace is a **platform-agnostic integration migration agent**. It migrat
 
 | Role | Supported |
 |---|---|
-| Source (pull + analyze) | Boomi, MuleSoft |
+| Source (pull + analyze) | Boomi, MuleSoft, Oracle SOA Suite / EBS, Workato, Celigo, webMethods.io |
 | Target (generate + push) | Workato, Boomi |
-| Future | Workato (source), SAP, Azure Logic Apps |
+| Future | SAP, Azure Logic Apps |
 
 ## Migration Agent Workflow
 
@@ -54,6 +54,19 @@ Always read `references/MIGRATION_THINKING.md` before starting any migration tas
 python analyzers/analyze_boomi.py active-development/ --project my-project
 python analyzers/analyze_mulesoft.py samples/mulesoft/customer-api/
 python analyzers/analyze_mulesoft.py <path> --output migration-specs/myproject.json
+
+# Oracle SOA Suite — live pull from Oracle SOA REST API (credentials in .env)
+python analyzers/analyze_oracle_soa.py --project my-oracle-project
+
+# Oracle SOA Suite — from local SAR exports
+python analyzers/analyze_oracle_soa.py --source-dir /path/to/sars/ --project my-oracle-project
+
+# Oracle SOA Suite — filter to specific composites
+python analyzers/analyze_oracle_soa.py --composite-filter "Order*" --project orders
+
+# Full pipeline — Oracle SOA → Boomi
+python migrate.py --from oracle_soa --to boomi --project my-oracle-project
+python migrate.py --from oracle_soa --source-dir /path/to/sars/ --to boomi --project my-oracle-project
 ```
 
 **Generators:**
@@ -64,19 +77,29 @@ python generators/generate_workato.py migration-specs/my-project.json --dry-run
 
 ## Required Environment Variables
 
-**Boomi (for pull operations):** Already in `.env` from Boomi Companion setup.
-**Workato (for generate/push):** Add these to `.env`:
-```
-WORKATO_API_TOKEN=<your api token from Settings → API Tokens>
-WORKATO_EMAIL=<your workato account email>
+See `.env.example` for the full annotated list. Key sections:
 
-# Optional: PostgreSQL connection (for auto-creating DB connection in Workato)
-WORKATO_PG_HOST=db.internal
-WORKATO_PG_PORT=5432
-WORKATO_PG_DATABASE=crm
-WORKATO_PG_USERNAME=
-WORKATO_PG_PASSWORD=
-WORKATO_PG_CONN_ID=  # Set this to skip creation and use an existing connection
+**Boomi (for pull operations):** Already in `.env` from Boomi Companion setup.
+
+**Workato (for generate/push):**
+```
+WORKATO_API_TOKEN=<from Settings → API Tokens>
+WORKATO_EMAIL=<your workato email>
+```
+
+**Oracle SOA Suite (for oracle_soa source):**
+```
+ORACLE_SOA_HOST=soaserver.internal
+ORACLE_SOA_PORT=7001
+ORACLE_SOA_USERNAME=weblogic
+ORACLE_SOA_PASSWORD=<password>
+ORACLE_SOA_PARTITION=default          # composite partition, usually "default"
+ORACLE_SOA_EM_PORT=7001               # optional: EM Console port for SAR export
+```
+
+**Anthropic (for LLM enrichment):**
+```
+ANTHROPIC_API_KEY=sk-ant-...
 ```
 
 ## Reference Documentation
@@ -85,6 +108,7 @@ WORKATO_PG_CONN_ID=  # Set this to skip creation and use an existing connection
 - `references/migration_spec_schema.md` — Migration spec JSON schema
 - `references/source-systems/mulesoft_mapping.md` — MuleSoft → canonical spec mapping
 - `references/source-systems/boomi_mapping.md` — Boomi → canonical spec mapping
+- `references/source-systems/oracle_soa_mapping.md` — Oracle SOA Suite / EBS → canonical spec mapping
 - `references/target-systems/workato_mapping.md` — canonical spec → Workato mapping
 
 ## Sample Artifacts
@@ -230,3 +254,33 @@ Folder: `ClaudeCode/MIG_<project>` (folderId `Rjo4NTY2MjA1`)
 5. shape9: Import Salesforce QUERY Attachment operation — filter WHERE `ParentId = DPP_SF_ACCOUNT_ID`
 6. shape11: Configure Box Upload operation — folder = `DPP_BOX_FOLDER_ID`, filename = `DPP_ATTACHMENT_NAME`
 7. Box connector shapes (4, 7, 11): Wire to the Box connection created in step 1
+
+### Oracle SOA Suite → Boomi: EBS Integrations (IN PROGRESS — SETUP PHASE)
+25+ BPEL composites. Pipeline built; awaiting Oracle SOA credentials and composite export.
+
+**Pipeline command (once credentials are in .env):**
+```bash
+# Live pull from Oracle SOA REST API
+python migrate.py --from oracle_soa --to boomi --project oracle_ebs_migration
+
+# OR from exported SAR files
+python migrate.py --from oracle_soa --source-dir /path/to/sars/ --to boomi --project oracle_ebs_migration
+```
+
+**Pre-flight checklist:**
+1. Add Oracle SOA credentials to `.env` (see `.env.example` for all required vars)
+2. Run connector discovery: `bash <skill-path>/scripts/boomi-component-search.sh --name "%Oracle%EBS%" --type "connector-settings,connector-action"`
+3. Run analyzer: `python analyzers/analyze_oracle_soa.py --project oracle_ebs_migration`
+4. Review gaps in generated spec (BPEL `<flow>` parallel execution, `<wait>` timers, Human Tasks)
+5. Run enrichment: `python enrichers/enrich_spec.py migration-specs/oracle_ebs_migration.json`
+6. Generate Boomi processes: `python generators/generate_boomi.py migration-specs/oracle_ebs_migration.json`
+
+**Key mapping decisions to review per composite:**
+- Oracle EBS Adapter → check native connector in account, fallback to DatabaseV2 + PL/SQL
+- Oracle AQ / JMS → Event Streams
+- File/FTP Adapter → Disk V2
+- DB Adapter → DatabaseV2 (direct mapping)
+- `<flow>` parallel → Boomi Branch (sequential — medium severity gap)
+- Oracle Mediator composites → flagged for manual analysis (not auto-migrated)
+- Human Task composites → requires separate Boomi Flow implementation
+
