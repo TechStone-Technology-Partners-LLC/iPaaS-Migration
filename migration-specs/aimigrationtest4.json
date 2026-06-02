@@ -1,0 +1,96 @@
+{
+  "schema_version": "1.0",
+  "source_system": "workato",
+  "source_version": "workato_cloud",
+  "analyzed_at": "2026-05-29T02:56:45.492799+00:00",
+  "project_name": "aimigrationtest4",
+  "source_files_analyzed": [
+    "active-development/workato-source/AIMigrationTest4/AIMigrationTest4.json"
+  ],
+  "summary": {
+    "total_flows": 1,
+    "primary_flows": 1,
+    "sub_flows": 0,
+    "total_connections": 0,
+    "gaps_found": 2,
+    "overall_complexity": "medium"
+  },
+  "connections": {},
+  "integrations": [
+    {
+      "name": "AIMigrationTest4",
+      "source_name": "AIMigrationTest4",
+      "recipe_id": 73034327,
+      "description": "",
+      "flow_type": "primary",
+      "trigger": {
+        "source_tag": "clock:scheduled_event",
+        "type": "scheduler",
+        "label": "a0287513",
+        "requires_review": false,
+        "workato_provider": "clock",
+        "workato_name": "scheduled_event",
+        "schedule": {
+          "time_unit": "days",
+          "trigger_every": "1",
+          "trigger_at": "00:00:00"
+        }
+      },
+      "steps": [
+        {
+          "source_tag": ":",
+          "type": "connector_action",
+          "label": "",
+          "config_ref": "",
+          "requires_review": true,
+          "workato_provider": "",
+          "workato_name": "",
+          "complexity": "low",
+          "sequence": 1
+        },
+        {
+          "source_tag": ":",
+          "type": "connector_action",
+          "label": "04557745",
+          "config_ref": "",
+          "requires_review": true,
+          "workato_provider": "",
+          "workato_name": "",
+          "complexity": "low",
+          "sequence": 2
+        }
+      ],
+      "connections_used": [
+        "js_eval",
+        "clock",
+        "salesforce_marketing_cloud",
+        "rest",
+        "workato_list",
+        "workato_variable",
+        "logger",
+        "workato_custom_code"
+      ],
+      "error_handling": {
+        "has_error_handler": false,
+        "strategies": []
+      }
+    }
+  ],
+  "gaps": [
+    {
+      "flow": "AIMigrationTest4",
+      "step_type": "connector_action",
+      "sequence": 1,
+      "label": "",
+      "note": "Manual review required"
+    },
+    {
+      "flow": "AIMigrationTest4",
+      "step_type": "connector_action",
+      "sequence": 2,
+      "label": "04557745",
+      "note": "Manual review required"
+    }
+  ],
+  "migration_notes": ""
+}

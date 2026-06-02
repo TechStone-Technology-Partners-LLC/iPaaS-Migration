@@ -481,7 +481,14 @@ def workato_client(api_token, email=None):
             "Accept": "application/json",
             "Content-Type": "application/json",
         })
-        base_url = _base_url_for_token(api_token)
+        # Honour WORKATO_BASE_URL env override before falling back to token-prefix detection.
+        # This is required when the token prefix does not match the account region
+        # (e.g. wrkaus- tokens on a US-hosted account).
+        env_override = (
+            os.environ.get("WORKATO_BASE_URL")
+            or _load_env_token("WORKATO_BASE_URL")
+        )
+        base_url = env_override.rstrip("/") if env_override else _base_url_for_token(api_token)
         return s, base_url
     except ImportError:
         print("ERROR: pip install requests", file=sys.stderr)
