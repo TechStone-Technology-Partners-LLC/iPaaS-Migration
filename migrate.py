@@ -194,6 +194,7 @@ ANALYZERS = {
     "workato":     {"script": "analyzers/analyze_workato.py",    "arg_style": "source-dir"},
     "celigo":      {"script": "analyzers/analyze_celigo.py",     "arg_style": "source-dir"},
     "webmethods":  {"script": "analyzers/analyze_webmethods.py", "arg_style": "source-dir"},
+    "oracle_soa":  {"script": "analyzers/analyze_oracle_soa.py", "arg_style": "oracle-soa"},
 }
 
 
@@ -225,6 +226,20 @@ def run_analyze(source_system, source_dir, project_name, cwd):
         else:
             # Blank -> pull all recipes via live API
             analyzer_args = ["--project", project_name, "--output", spec_path]
+    elif source_system == "oracle_soa":
+        # Oracle SOA: optional --source-dir for local SARs, otherwise live pull via env vars
+        if source_dir and os.path.isdir(source_dir):
+            analyzer_args = ["--source-dir", source_dir, "--project", project_name, "--output", spec_path]
+        else:
+            # Live pull from Oracle SOA REST API (credentials from .env)
+            analyzer_args = ["--project", project_name, "--output", spec_path]
+            # Pass optional SOA connection overrides from env
+            soa_host = os.environ.get("ORACLE_SOA_HOST", "")
+            soa_port = os.environ.get("ORACLE_SOA_PORT", "7001")
+            partition = os.environ.get("ORACLE_SOA_PARTITION", "default")
+            if soa_host:
+                analyzer_args += ["--soa-host", soa_host, "--soa-port", soa_port,
+                                  "--partition", partition]
     else:
         # analyze_celigo.py / analyze_webmethods.py --source-dir <dir> ...
         analyzer_args = ["--source-dir", source_dir, "--project", project_name, "--output", spec_path]
@@ -261,6 +276,50 @@ GENERATORS = {
     "boomi":      {"script": "generators/generate_boomi.py",      "dest_flag": "--project"},
     "mulesoft":   {"script": None},   # Future: generate_mulesoft.py
 }
+
+ENRICHER_SCRIPT  = "enrichers/enrich_spec.py"
+VALIDATOR_SCRIPT = "validators/validate_logic.py"
+
+
+def run_enrich(spec_path, cwd, step_limit=None, model="claude-opus-4-7"):
+    """Phase 1.5: LLM enrichment of requires_review steps."""
+    enricher = os.path.join(cwd, ENRICHER_SCRIPT)
+    if not os.path.isfile(enricher):
+        print(f"WARNING: Enricher not found at {enricher} — skipping enrichment", file=sys.stderr)
+        return
+
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        print("WARNING: ANTHROPIC_API_KEY not set — skipping LLM enrichment")
+        return
+
+    args = [spec_path, "--model", model]
+    if step_limit:
+        args += ["--step-limit", str(step_limit)]
+
+    print(f"\n[ENRICH] Running LLM enrichment pass ({model})...")
+    rc = run_python(enricher, args, cwd=cwd)
+    if rc != 0:
+        print(f"WARNING: Enrichment failed (exit {rc}) — continuing with unenriched spec",
+              file=sys.stderr)
+
+
+def run_validate(spec_path, cwd, fail_below=None):
+    """Phase 2.5: Logic preservation validation and coverage report."""
+    validator = os.path.join(cwd, VALIDATOR_SCRIPT)
+    if not os.path.isfile(validator):
+        print(f"WARNING: Validator not found at {validator} — skipping validation", file=sys.stderr)
+        return
+
+    print(f"\n[VALIDATE] Computing logic preservation score...")
+    args = [spec_path]
+    if fail_below is not None:
+        args += ["--fail-below", str(fail_below)]
+    rc = run_python(validator, args, cwd=cwd)
+    if rc != 0 and fail_below is not None:
+        print(f"ERROR: Preservation score below threshold {fail_below}% — migration blocked",
+              file=sys.stderr)
+        sys.exit(1)
 
 
 def run_generate(target_system, spec_path, dest_name, dry_run, cwd):
@@ -326,7 +385,7 @@ Examples:
   python migrate.py --from boomi --to workato --project my-proj --skip-pull --skip-analyze
 """,
     )
-    PLATFORMS = ["boomi", "mulesoft", "workato", "celigo", "webmethods"]
+    PLATFORMS = ["boomi", "mulesoft", "workato", "celigo", "webmethods", "oracle_soa"]
     parser.add_argument("--from", dest="source", required=True,
                         choices=PLATFORMS,
                         help="Source integration platform")
@@ -352,6 +411,16 @@ Examples:
                         help="Skip the pull step (use already-downloaded active-development/ files)")
     parser.add_argument("--skip-analyze", action="store_true",
                         help="Skip the analyze step (use an existing spec in migration-specs/)")
+    parser.add_argument("--skip-enrich", action="store_true",
+                        help="Skip LLM enrichment pass (Phase 1.5) — no ANTHROPIC_API_KEY needed")
+    parser.add_argument("--skip-validate", action="store_true",
+                        help="Skip logic preservation validation (Phase 2.5)")
+    parser.add_argument("--enrich-model", default="claude-opus-4-7",
+                        help="Claude model for enrichment (default: claude-opus-4-7)")
+    parser.add_argument("--enrich-limit", type=int, default=None,
+                        help="Max steps to enrich (useful for cost control during testing)")
+    parser.add_argument("--fail-below", type=float, default=None,
+                        help="Fail migration if logic preservation score < this % (e.g. 80)")
     args = parser.parse_args()
 
     cwd = os.getcwd()
@@ -361,7 +430,7 @@ Examples:
         print("ERROR: --from boomi requires either --boomi-folder or --source-dir", file=sys.stderr)
         sys.exit(1)
 
-    # Workato supports live API pull (no source-dir needed). Others still require local files.
+    # Workato and oracle_soa support live API pull (no source-dir needed). Others require local files.
     file_based_only_sources = ("mulesoft", "celigo", "webmethods")
     if args.source in file_based_only_sources and not args.source_dir and not args.skip_pull and not args.skip_analyze:
         print(f"ERROR: --from {args.source} requires --source-dir <path-to-exported-files>", file=sys.stderr)
@@ -423,14 +492,34 @@ Examples:
             sys.exit(1)
         print(f"\n[ANALYZE] Skipped -- using existing spec: {spec_path}")
 
-    # ── PHASE 3: GENERATE ──────────────────────────────────────────────────
+    # ── PHASE 1.5: ENRICH ─────────────────────────────────────────────────────
+    if not args.skip_enrich and not args.dry_run:
+        run_enrich(spec_path, cwd,
+                   step_limit=args.enrich_limit,
+                   model=args.enrich_model)
+    elif args.skip_enrich:
+        print("\n[ENRICH] Skipped (--skip-enrich)")
+
+    # ── PHASE 2: GENERATE ─────────────────────────────────────────────────────
     run_generate(args.target, spec_path, dest_name, args.dry_run, cwd)
 
-    # ── Summary ────────────────────────────────────────────────────────────
+    # ── PHASE 2.5: VALIDATE ───────────────────────────────────────────────────
+    if not args.skip_validate and not args.dry_run:
+        run_validate(spec_path, cwd, fail_below=args.fail_below)
+    elif args.skip_validate:
+        print("\n[VALIDATE] Skipped (--skip-validate)")
+
+    # ── Summary ────────────────────────────────────────────────────────────────
     print(f"\n{'=' * 50}")
     print(f"Migration complete: {args.source} -> {args.target}")
     print(f"  Project  : {project_name}")
     print(f"  Spec     : migration-specs/{project_name}.json")
+    coverage_report = spec_path.replace(".json", "_coverage_report.json")
+    checklist = spec_path.replace(".json", "_review_checklist.md")
+    if os.path.isfile(coverage_report):
+        print(f"  Coverage : migration-specs/{project_name}_coverage_report.json")
+    if os.path.isfile(checklist):
+        print(f"  Checklist: migration-specs/{project_name}_review_checklist.md")
     output_spec = spec_path.replace(".json", f"_{args.target}_output.json")
     if os.path.isfile(output_spec):
         print(f"  Output   : {os.path.relpath(output_spec)}")
