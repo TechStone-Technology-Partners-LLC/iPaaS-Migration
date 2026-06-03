@@ -1,0 +1,404 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<FLOW VERSION="3.0" CLEANUP="true">
+  <COMMENT>Initialize ConstantValue</COMMENT>
+
+  <!-- nodes -->
+
+<SEQUENCE TIMEOUT="" EXIT-ON="FAILURE">
+  <COMMENT>Initialize</COMMENT>
+
+  <!-- nodes -->
+
+<MAP TIMEOUT="" MODE="STANDALONE">
+  <COMMENT></COMMENT>
+  <MAPTARGET>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <value name="field_usereditable">false</value>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ConstantName</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <array name="field_options" type="value" depth="1">
+          <value>XLinkFunderID</value>
+          <value>WMForXLinkUserID</value>
+          <value>LanguageCode</value>
+          <value>CurrencyCodeUS</value>
+          <value>CountryUS</value>
+          <value>CountryIdUS</value>
+          <value>BlankDate</value>
+          <value>DateFormatDefault</value>
+          <value>TransactionStatusID - Pending Manual Review</value>
+          <value>TransactionStatusID - Pending Customer Match</value>
+          <value>TransactionStatusID - Initial Application Entry</value>
+          <value>OriginatorEntityCode</value>
+          <value>SupplierEntityCode</value>
+          <value>OBNEnabledID</value>
+          <value>COMActiveID</value>
+          <value>ADDEnabledID</value>
+          <value>CNSActiveID</value>
+          <value>BACEnabledID</value>
+          <value>CTCDisabledID</value>
+          <value>CTCEnabledID</value>
+          <value>MainAddrID</value>
+          <value>RemitAddrID</value>
+        </array>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">ConstantsTable</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">2</value>
+        <value name="nillable">true</value>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPTARGET>
+  <MAPSOURCE>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+    </array>
+  </record>
+</Values>
+</MAPSOURCE>
+
+  <!-- nodes -->
+
+<MAPSET NAME="Setter" OVERWRITE="true" VARIABLES="false" FIELD="/ConstantsTable;1;2">
+  <DATA ENCODING="XMLValues" I18N="true">
+
+<Values version="2.0">
+  <array name="xml" type="value" depth="2">
+    <array type="value" depth="1">
+      <value>XLinkFunderID</value>
+      <value>1</value>
+      <value>1 is KEF</value>
+    </array>
+    <array type="value" depth="1">
+      <value>WMForXLinkUserID</value>
+      <value>195</value>
+      <value></value>
+    </array>
+    <array type="value" depth="1">
+      <value>LanguageCode</value>
+      <value>en-us</value>
+      <value>english united states</value>
+    </array>
+    <array type="value" depth="1">
+      <value>CurrencyCodeUS</value>
+      <value>USD</value>
+      <value>US Dollars</value>
+    </array>
+    <array type="value" depth="1">
+      <value>CountryUS</value>
+      <value>US</value>
+      <value>United States</value>
+    </array>
+    <array type="value" depth="1">
+      <value>CountryIdUS</value>
+      <value>2</value>
+      <value>United States</value>
+    </array>
+    <array type="value" depth="1">
+      <value>BlankDate</value>
+      <value>1900-01-01T00:00:00</value>
+      <value>Jan 1 1900</value>
+    </array>
+    <array type="value" depth="1">
+      <value>DateFormatDefault</value>
+      <value>yyyy-MM-dd'T'kk:mm:ss</value>
+      <value>Date format needed for XLink</value>
+    </array>
+    <array type="value" depth="1">
+      <value>TransactionStatusID - Pending Manual Review</value>
+      <value>170</value>
+      <value>Pending Manual Review</value>
+    </array>
+    <array type="value" depth="1">
+      <value>TransactionStatusID - Pending Customer Match</value>
+      <value>45</value>
+      <value>Pending Customer Matching</value>
+    </array>
+    <array type="value" depth="1">
+      <value>TransactionStatusID - Initial Application Entry</value>
+      <value>37</value>
+      <value>Initial Application Entry</value>
+    </array>
+    <array type="value" depth="1">
+      <value>OriginatorEntityCode</value>
+      <value>VDR</value>
+      <value>Originator/Vendor</value>
+    </array>
+    <array type="value" depth="1">
+      <value>SupplierEntityCode</value>
+      <value>SUP</value>
+      <value>Supplier/Source</value>
+    </array>
+    <array type="value" depth="1">
+      <value>OBNEnabledID</value>
+      <value>241</value>
+      <value>Other Business Name</value>
+    </array>
+    <array type="value" depth="1">
+      <value>COMActiveID</value>
+      <value>28</value>
+      <value>Customer</value>
+    </array>
+    <array type="value" depth="1">
+      <value>ADDEnabledID</value>
+      <value>229</value>
+      <value>Address</value>
+    </array>
+    <array type="value" depth="1">
+      <value>CNSActiveID</value>
+      <value>1</value>
+      <value>Consumer - Related Party</value>
+    </array>
+    <array type="value" depth="1">
+      <value>BACEnabledID</value>
+      <value>233</value>
+      <value>Bank Account</value>
+    </array>
+    <array type="value" depth="1">
+      <value>CTCEnabledID</value>
+      <value>58</value>
+      <value>Enable Contact</value>
+    </array>
+    <array type="value" depth="1">
+      <value>CTCDisabledID</value>
+      <value>59</value>
+      <value>Disable Contact</value>
+    </array>
+    <array type="value" depth="1">
+      <value>MainAddrID</value>
+      <value>1</value>
+      <value>Main Address ID</value>
+    </array>
+    <array type="value" depth="1">
+      <value>RemitAddrID</value>
+      <value>6</value>
+      <value>Remit to Address ID</value>
+    </array>
+    <array type="value" depth="1">
+      <value>BillingAddrID</value>
+      <value>5</value>
+      <value>Billing Address ID</value>
+    </array>
+  </array>
+  <record name="type" javaclass="com.wm.util.Values">
+    <value name="node_type">unknown</value>
+    <value name="field_name">ConstantsTable</value>
+    <value name="field_type">string</value>
+    <value name="field_dim">2</value>
+    <value name="nillable">true</value>
+  </record>
+</Values>
+</DATA>
+</MAPSET>
+</MAP>
+</SEQUENCE>
+
+<SEQUENCE TIMEOUT="" EXIT-ON="FAILURE">
+  <COMMENT>return the value</COMMENT>
+
+  <!-- nodes -->
+
+<MAP MODE="STANDALONE">
+  <COMMENT></COMMENT>
+  <MAPTARGET>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <value name="field_usereditable">false</value>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ConstantName</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <array name="field_options" type="value" depth="1">
+          <value>XLinkFunderID</value>
+          <value>WMForXLinkUserID</value>
+          <value>LanguageCode</value>
+          <value>CurrencyCodeUS</value>
+          <value>CountryUS</value>
+          <value>CountryIdUS</value>
+          <value>BlankDate</value>
+          <value>DateFormatDefault</value>
+          <value>TransactionStatusID - Pending Manual Review</value>
+          <value>TransactionStatusID - Pending Customer Match</value>
+          <value>TransactionStatusID - Initial Application Entry</value>
+          <value>OriginatorEntityCode</value>
+          <value>SupplierEntityCode</value>
+        </array>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">ConstantsTable</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">2</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ConstantValue</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPTARGET>
+  <MAPSOURCE>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <value name="field_usereditable">false</value>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ConstantName</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <array name="field_options" type="value" depth="1">
+          <value>XLinkFunderID</value>
+          <value>WMForXLinkUserID</value>
+          <value>LanguageCode</value>
+          <value>CurrencyCodeUS</value>
+          <value>CountryUS</value>
+          <value>CountryIdUS</value>
+          <value>BlankDate</value>
+          <value>DateFormatDefault</value>
+          <value>TransactionStatusID - Pending Manual Review</value>
+          <value>TransactionStatusID - Pending Customer Match</value>
+          <value>TransactionStatusID - Initial Application Entry</value>
+          <value>OriginatorEntityCode</value>
+          <value>SupplierEntityCode</value>
+        </array>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">ConstantsTable</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">2</value>
+        <value name="nillable">true</value>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPSOURCE>
+
+  <!-- nodes -->
+
+<MAPINVOKE SERVICE="pub.string:lookupTable" VALIDATE-IN="$none" VALIDATE-OUT="$none" INVOKE-ORDER="0">
+
+  <!-- nodes -->
+
+<MAP MODE="INVOKEINPUT">
+
+  <!-- nodes -->
+
+<MAPCOPY NAME="Link" FROM="/ConstantsTable;1;2" TO="/lookupTable;1;2">
+</MAPCOPY>
+
+<MAPSET NAME="Setter" OVERWRITE="true" VARIABLES="false" FIELD="/keyColumnIndex;1;0">
+  <DATA ENCODING="XMLValues" I18N="true">
+
+<Values version="2.0">
+  <value name="xml">0</value>
+  <record name="type" javaclass="com.wm.util.Values">
+    <value name="node_type">unknown</value>
+    <value name="field_name">keyColumnIndex</value>
+    <value name="field_type">string</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+  </record>
+</Values>
+</DATA>
+</MAPSET>
+
+<MAPSET NAME="Setter" OVERWRITE="true" VARIABLES="false" FIELD="/valueColumnIndex;1;0">
+  <DATA ENCODING="XMLValues" I18N="true">
+
+<Values version="2.0">
+  <value name="xml">1</value>
+  <record name="type" javaclass="com.wm.util.Values">
+    <value name="node_type">unknown</value>
+    <value name="field_name">valueColumnIndex</value>
+    <value name="field_type">string</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+  </record>
+</Values>
+</DATA>
+</MAPSET>
+
+<MAPCOPY NAME="Link" FROM="/ConstantName;1;0" TO="/key;1;0">
+</MAPCOPY>
+</MAP>
+
+<MAP MODE="INVOKEOUTPUT">
+
+  <!-- nodes -->
+
+<MAPCOPY NAME="Link" FROM="/value;1;0" TO="/ConstantValue;1;0">
+</MAPCOPY>
+</MAP>
+</MAPINVOKE>
+
+<MAPDELETE NAME="Dropper" FIELD="/ConstantName;1;0">
+</MAPDELETE>
+
+<MAPDELETE NAME="Dropper" FIELD="/ConstantsTable;1;2">
+</MAPDELETE>
+</MAP>
+</SEQUENCE>
+</FLOW>

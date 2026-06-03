@@ -1,0 +1,737 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<FLOW VERSION="3.0" CLEANUP="true">
+  <COMMENT>Create Status Lookup Table</COMMENT>
+
+  <!-- nodes -->
+
+<MAP TIMEOUT="" MODE="STANDALONE">
+  <COMMENT>Create State Code  Lookup Table and Trim State Name</COMMENT>
+  <MAPTARGET>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">stateName</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">stateCodes</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">2</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">upperCaseStateName</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPTARGET>
+  <MAPSOURCE>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">stateName</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPSOURCE>
+
+  <!-- nodes -->
+
+<MAPINVOKE SERVICE="pub.string:trim" INVOKE-ORDER="0">
+
+  <!-- nodes -->
+
+<MAP MODE="INVOKEINPUT">
+
+  <!-- nodes -->
+
+<MAPCOPY NAME="Link" FROM="/stateName;1;0" TO="/inString;1;0">
+</MAPCOPY>
+</MAP>
+
+<MAP MODE="INVOKEOUTPUT">
+
+  <!-- nodes -->
+
+<MAPCOPY NAME="Link" FROM="/value;1;0" TO="/upperCaseStateName;1;0">
+</MAPCOPY>
+</MAP>
+</MAPINVOKE>
+
+<MAPSET NAME="Setter" OVERWRITE="true" VARIABLES="true" FIELD="/stateCodes;1;2">
+  <DATA ENCODING="XMLValues" I18N="true">
+
+<Values version="2.0">
+  <array name="xml" type="value" depth="2">
+    <array type="value" depth="1">
+      <value>ALABAMA</value>
+      <value>AL</value>
+    </array>
+    <array type="value" depth="1">
+      <value>ALASKA</value>
+      <value>AK</value>
+    </array>
+    <array type="value" depth="1">
+      <value>AMERICAN SAMOA</value>
+      <value>AS</value>
+    </array>
+    <array type="value" depth="1">
+      <value>ARIZONA</value>
+      <value>AZ</value>
+    </array>
+    <array type="value" depth="1">
+      <value>ARKANSAS</value>
+      <value>AR</value>
+    </array>
+    <array type="value" depth="1">
+      <value>CALIFORNIA</value>
+      <value>CA</value>
+    </array>
+    <array type="value" depth="1">
+      <value>COLORADO</value>
+      <value>CO</value>
+    </array>
+    <array type="value" depth="1">
+      <value>CONNECTICUT</value>
+      <value>CT</value>
+    </array>
+    <array type="value" depth="1">
+      <value>DELAWARE</value>
+      <value>DE</value>
+    </array>
+    <array type="value" depth="1">
+      <value>DISTRICT OF COLUMBIA</value>
+      <value>DC</value>
+    </array>
+    <array type="value" depth="1">
+      <value>FEDERATED STATES OF MICRONESIA</value>
+      <value>FM</value>
+    </array>
+    <array type="value" depth="1">
+      <value>FLORIDA</value>
+      <value>FL</value>
+    </array>
+    <array type="value" depth="1">
+      <value>GEORGIA</value>
+      <value>GA</value>
+    </array>
+    <array type="value" depth="1">
+      <value>GUAM</value>
+      <value>GU</value>
+    </array>
+    <array type="value" depth="1">
+      <value>HAWAII</value>
+      <value>HI</value>
+    </array>
+    <array type="value" depth="1">
+      <value>IDAHO</value>
+      <value>ID</value>
+    </array>
+    <array type="value" depth="1">
+      <value>ILLINOIS</value>
+      <value>IL</value>
+    </array>
+    <array type="value" depth="1">
+      <value>INDIANA</value>
+      <value>IN</value>
+    </array>
+    <array type="value" depth="1">
+      <value>IOWA</value>
+      <value>IA</value>
+    </array>
+    <array type="value" depth="1">
+      <value>KANSAS</value>
+      <value>KS</value>
+    </array>
+    <array type="value" depth="1">
+      <value>KENTUCKY</value>
+      <value>KY</value>
+    </array>
+    <array type="value" depth="1">
+      <value>LOUISIANA</value>
+      <value>LA</value>
+    </array>
+    <array type="value" depth="1">
+      <value>MAINE</value>
+      <value>ME</value>
+    </array>
+    <array type="value" depth="1">
+      <value>MARSHALL ISLANDS</value>
+      <value>MH</value>
+    </array>
+    <array type="value" depth="1">
+      <value>MARYLAND</value>
+      <value>MD</value>
+    </array>
+    <array type="value" depth="1">
+      <value>MASSACHUSETTS</value>
+      <value>MA</value>
+    </array>
+    <array type="value" depth="1">
+      <value>MICHIGAN</value>
+      <value>MI</value>
+    </array>
+    <array type="value" depth="1">
+      <value>MINNESOTA</value>
+      <value>MN</value>
+    </array>
+    <array type="value" depth="1">
+      <value>MISSISSIPPI</value>
+      <value>MS</value>
+    </array>
+    <array type="value" depth="1">
+      <value>MISSOURI</value>
+      <value>MO</value>
+    </array>
+    <array type="value" depth="1">
+      <value>MONTANA</value>
+      <value>MT</value>
+    </array>
+    <array type="value" depth="1">
+      <value>NEBRASKA</value>
+      <value>NE</value>
+    </array>
+    <array type="value" depth="1">
+      <value>NEVADA</value>
+      <value>NV</value>
+    </array>
+    <array type="value" depth="1">
+      <value>NEW HAMPSHIRE</value>
+      <value>NH</value>
+    </array>
+    <array type="value" depth="1">
+      <value>NEW JERSEY</value>
+      <value>NJ</value>
+    </array>
+    <array type="value" depth="1">
+      <value>NEW MEXICO</value>
+      <value>NM</value>
+    </array>
+    <array type="value" depth="1">
+      <value>NEW YORK</value>
+      <value>NY</value>
+    </array>
+    <array type="value" depth="1">
+      <value>NORTH CAROLINA</value>
+      <value>NC</value>
+    </array>
+    <array type="value" depth="1">
+      <value>NORTH DAKOTA</value>
+      <value>ND</value>
+    </array>
+    <array type="value" depth="1">
+      <value>NORTHERN MARIANA ISLANDS</value>
+      <value>MP</value>
+    </array>
+    <array type="value" depth="1">
+      <value>OHIO</value>
+      <value>OH</value>
+    </array>
+    <array type="value" depth="1">
+      <value>OKLAHOMA</value>
+      <value>OK</value>
+    </array>
+    <array type="value" depth="1">
+      <value>OREGON</value>
+      <value>OR</value>
+    </array>
+    <array type="value" depth="1">
+      <value>PALAU</value>
+      <value>PW</value>
+    </array>
+    <array type="value" depth="1">
+      <value>PENNSYLVANIA</value>
+      <value>PA</value>
+    </array>
+    <array type="value" depth="1">
+      <value>PUERTO RICO</value>
+      <value>PR</value>
+    </array>
+    <array type="value" depth="1">
+      <value>RHODE ISLAND</value>
+      <value>RI</value>
+    </array>
+    <array type="value" depth="1">
+      <value>SOUTH CAROLINA</value>
+      <value>SC</value>
+    </array>
+    <array type="value" depth="1">
+      <value>SOUTH DAKOTA</value>
+      <value>SD</value>
+    </array>
+    <array type="value" depth="1">
+      <value>TENNESSEE</value>
+      <value>TN</value>
+    </array>
+    <array type="value" depth="1">
+      <value>TEXAS</value>
+      <value>TX</value>
+    </array>
+    <array type="value" depth="1">
+      <value>UTAH</value>
+      <value>UT</value>
+    </array>
+    <array type="value" depth="1">
+      <value>VERMONT</value>
+      <value>VT</value>
+    </array>
+    <array type="value" depth="1">
+      <value>VIRGIN ISLANDS</value>
+      <value>VI</value>
+    </array>
+    <array type="value" depth="1">
+      <value>VIRGINIA</value>
+      <value>VA</value>
+    </array>
+    <array type="value" depth="1">
+      <value>WASHINGTON</value>
+      <value>WA</value>
+    </array>
+    <array type="value" depth="1">
+      <value>WEST VIRGINIA</value>
+      <value>WV</value>
+    </array>
+    <array type="value" depth="1">
+      <value>WISCONSIN</value>
+      <value>WI</value>
+    </array>
+    <array type="value" depth="1">
+      <value>WYOMING</value>
+      <value>WY</value>
+    </array>
+  </array>
+  <record name="type" javaclass="com.wm.util.Values">
+    <value name="node_type">unknown</value>
+    <value name="field_name">stateCodes</value>
+    <value name="field_type">string</value>
+    <value name="field_dim">2</value>
+    <value name="nillable">true</value>
+  </record>
+</Values>
+</DATA>
+</MAPSET>
+</MAP>
+
+<MAP TIMEOUT="" MODE="STANDALONE">
+  <COMMENT>Convert state name to uppercase</COMMENT>
+  <MAPTARGET>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">stateName</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">stateCodes</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">2</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">upperCaseStateName</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPTARGET>
+  <MAPSOURCE>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">stateName</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">stateCodes</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">2</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">upperCaseStateName</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPSOURCE>
+
+  <!-- nodes -->
+
+<MAPINVOKE SERVICE="pub.string:toUpper" INVOKE-ORDER="0">
+
+  <!-- nodes -->
+
+<MAP MODE="INVOKEINPUT">
+
+  <!-- nodes -->
+
+<MAPCOPY NAME="Link" FROM="/upperCaseStateName;1;0" TO="/inString;1;0">
+</MAPCOPY>
+</MAP>
+
+<MAP MODE="INVOKEOUTPUT">
+
+  <!-- nodes -->
+
+<MAPCOPY NAME="Link" FROM="/value;1;0" TO="/upperCaseStateName;1;0">
+</MAPCOPY>
+</MAP>
+</MAPINVOKE>
+</MAP>
+
+<MAP TIMEOUT="" MODE="STANDALONE">
+  <COMMENT>Look up state code</COMMENT>
+  <MAPTARGET>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">stateCode</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">stateName</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPTARGET>
+  <MAPSOURCE>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">stateName</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">stateCodes</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">2</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">upperCaseStateName</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPSOURCE>
+
+  <!-- nodes -->
+
+<MAPINVOKE SERVICE="pub.string:lookupTable" VALIDATE-IN="$none" VALIDATE-OUT="$none" INVOKE-ORDER="0">
+
+  <!-- nodes -->
+
+<MAP MODE="INVOKEINPUT">
+
+  <!-- nodes -->
+
+<MAPSET NAME="Setter" OVERWRITE="true" VARIABLES="false" FIELD="/keyColumnIndex;1;0">
+  <DATA ENCODING="XMLValues" I18N="true">
+
+<Values version="2.0">
+  <value name="xml">0</value>
+  <record name="type" javaclass="com.wm.util.Values">
+    <value name="node_type">unknown</value>
+    <value name="field_name">keyColumnIndex</value>
+    <value name="field_type">string</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+  </record>
+</Values>
+</DATA>
+</MAPSET>
+
+<MAPSET NAME="Setter" OVERWRITE="true" VARIABLES="false" FIELD="/valueColumnIndex;1;0">
+  <DATA ENCODING="XMLValues" I18N="true">
+
+<Values version="2.0">
+  <value name="xml">1</value>
+  <record name="type" javaclass="com.wm.util.Values">
+    <value name="node_type">unknown</value>
+    <value name="field_name">valueColumnIndex</value>
+    <value name="field_type">string</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+  </record>
+</Values>
+</DATA>
+</MAPSET>
+
+<MAPCOPY NAME="Link" FROM="/stateCodes;1;2" TO="/lookupTable;1;2">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/upperCaseStateName;1;0" TO="/key;1;0">
+</MAPCOPY>
+</MAP>
+
+<MAP MODE="INVOKEOUTPUT">
+
+  <!-- nodes -->
+
+<MAPCOPY NAME="Link" FROM="/value;1;0" TO="/stateCode;1;0">
+</MAPCOPY>
+</MAP>
+</MAPINVOKE>
+
+<MAPDELETE NAME="Dropper" FIELD="/stateCodes;1;2">
+</MAPDELETE>
+
+<MAPDELETE NAME="Dropper" FIELD="/upperCaseStateName;1;0">
+</MAPDELETE>
+</MAP>
+
+<BRANCH TIMEOUT="" SWITCH="/stateCode">
+  <COMMENT></COMMENT>
+
+  <!-- nodes -->
+
+<MAP NAME="$null" TIMEOUT="" MODE="STANDALONE">
+  <COMMENT>If state code does not exist use original state name</COMMENT>
+  <MAPTARGET>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">stateCode</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">stateName</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPTARGET>
+  <MAPSOURCE>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">stateCode</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">stateName</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPSOURCE>
+
+  <!-- nodes -->
+
+<MAPCOPY NAME="Link" FROM="/stateName;1;0" TO="/stateCode;1;0">
+</MAPCOPY>
+</MAP>
+</BRANCH>
+
+<MAP TIMEOUT="" MODE="STANDALONE">
+  <COMMENT>cleanup</COMMENT>
+  <MAPTARGET>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+    </array>
+  </record>
+</Values>
+</MAPTARGET>
+  <MAPSOURCE>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">stateCode</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">stateName</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPSOURCE>
+
+  <!-- nodes -->
+
+<MAPDELETE NAME="Dropper" FIELD="/stateName;1;0">
+</MAPDELETE>
+</MAP>
+</FLOW>

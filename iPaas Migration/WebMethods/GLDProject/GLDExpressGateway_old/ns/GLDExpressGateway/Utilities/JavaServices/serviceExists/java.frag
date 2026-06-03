@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<Values version="2.0">
+  <value name="name">serviceExists</value>
+  <value name="encodeutf8">true</value>
+  <value name="body">SURhdGFDdXJzb3IgcGMgPSBwaXBlbGluZS5nZXRDdXJzb3IoKTsgCgpTdHJpbmcgc3RyRm9sZGVy
+TmFtZSA9ICIiOyAKU3RyaW5nIHN0clNlcnZpY2VOYW1lID0gIiI7IAoKaWYocGMuZmlyc3QoImZv
+bGRlck5hbWUiKSkgCnN0ckZvbGRlck5hbWUgPSAoU3RyaW5nKXBjLmdldFZhbHVlKCk7IAoKaWYo
+cGMuZmlyc3QoInNlcnZpY2VOYW1lIikpIApzdHJTZXJ2aWNlTmFtZSA9IChTdHJpbmcpcGMuZ2V0
+VmFsdWUoKTsgCgpTdHJpbmcgc3RyUmVzdWx0ID0gIkZhbHNlIjsgCgpOU05hbWUgbnNuYW1lID0g
+TlNOYW1lLmNyZWF0ZShzdHJGb2xkZXJOYW1lLHN0clNlcnZpY2VOYW1lKTsgCk5hbWVzcGFjZSBu
+YW1lc3AgPSBOYW1lc3BhY2UuY3VycmVudCgpOyAKCmlmKCBuYW1lc3Aubm9kZUV4aXN0cyhuc25h
+bWUpKSAKc3RyUmVzdWx0ID0gIlRydWUiOyAKCnBjLmluc2VydEFmdGVyKCJSZXN1bHQiLHN0clJl
+c3VsdCk7IApwYy5kZXN0cm95KCk7IA==</value>
+</Values>

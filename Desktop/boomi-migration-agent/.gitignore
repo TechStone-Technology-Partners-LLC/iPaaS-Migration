@@ -1,12 +1,17 @@
-# Credentials
+# Credentials - never commit
 .env
 .env.local
 
+# Boomi platform XML (account-specific IDs, encoded folder references)
+active-development/
+
+# Generated migration outputs
+wmio-output/
+migration-specs/*_output.json
+migration-specs/workato-*.json
+
 # Sync state
 .sync-state/
-
-# Migration specs (generated output — commit intentionally)
-# migration-specs/
 
 # Activity log
 .activity-log/
@@ -19,5 +24,12 @@ __pycache__/
 *.pyc
 venv/
 
+# Claude Code local settings
+.claude/settings.local.json
+
+# Conversation exports
+*.jsonl
+
 # OS
 .DS_Store
+Thumbs.db

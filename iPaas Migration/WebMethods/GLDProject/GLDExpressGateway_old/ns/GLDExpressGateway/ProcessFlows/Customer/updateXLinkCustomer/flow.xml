@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<FLOW VERSION="3.0" CLEANUP="true">
+  <COMMENT>Map from Lpk to Customer doc type</COMMENT>
+
+  <!-- nodes -->
+
+<MAP MODE="STANDALONE">
+  <COMMENT>Map from Lpk to Customer doc type</COMMENT>
+  <MAPTARGET>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="field_name">Customer</value>
+        <value name="field_type">recref</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+        <value name="rec_ref">GLDExpressGateway.DocumentTypes.Customer:Customer</value>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPTARGET>
+  <MAPSOURCE>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">LpkTriggerData</value>
+        <value name="field_type">recref</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+        <value name="rec_closed">true</value>
+        <value name="rec_ref">GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData</value>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPSOURCE>
+
+  <!-- nodes -->
+
+<MAPCOPY NAME="Link" FROM="/LpkTriggerData;4;0;GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData/RCUChangeData;4;0;GLDExpressGateway.DocumentTypes.Customer:RCUChangeData/selectRCUChangeOutput;2;0/results;2;1/cus_s;1;0" TO="/Customer;4;0;GLDExpressGateway.DocumentTypes.Customer:Customer/customerNumber;1;0">
+</MAPCOPY>
+
+<MAPDELETE NAME="Dropper" FIELD="/LpkTriggerData;4;0;GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData">
+</MAPDELETE>
+
+<MAPCOPY NAME="Link" FROM="/LpkTriggerData;4;0;GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData/RCUChangeData;4;0;GLDExpressGateway.DocumentTypes.Customer:RCUChangeData/selectRCUChangeOutput;2;0/results;2;1/def_por_s;1;0" TO="/Customer;4;0;GLDExpressGateway.DocumentTypes.Customer:Customer/businessInformation;4;0;GLDExpressGateway.DocumentTypes.Customer:BusinessInformation/defaultPortfolio;1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/LpkTriggerData;4;0;GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData/RCXChangeData;4;0;GLDExpressGateway.DocumentTypes.Customer:RCXChangeData/selectRCXChangeOutput;2;0/results;2;1/ss_s;1;0" TO="/Customer;4;0;GLDExpressGateway.DocumentTypes.Customer:Customer/businessInformation;4;0;GLDExpressGateway.DocumentTypes.Customer:BusinessInformation/taxId;1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/LpkTriggerData;4;0;GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData/RCUChangeData;4;0;GLDExpressGateway.DocumentTypes.Customer:RCUChangeData/selectRCUChangeOutput;2;0/results;2;1/nam_long_s;1;0" TO="/Customer;4;0;GLDExpressGateway.DocumentTypes.Customer:Customer/businessInformation;4;0;GLDExpressGateway.DocumentTypes.Customer:BusinessInformation/name;1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/LpkTriggerData;4;0;GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData/RCUChangeData;4;0;GLDExpressGateway.DocumentTypes.Customer:RCUChangeData/selectRCUChangeOutput;2;0/results;2;1/add_s;1;0" TO="/Customer;4;0;GLDExpressGateway.DocumentTypes.Customer:Customer/businessInformation;4;0;GLDExpressGateway.DocumentTypes.Customer:BusinessInformation/address;4;0;GLDExpressGateway.DocumentTypes.Customer:Address/addressLine1;1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/LpkTriggerData;4;0;GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData/RCUChangeData;4;0;GLDExpressGateway.DocumentTypes.Customer:RCUChangeData/selectRCUChangeOutput;2;0/results;2;1/cty_s;1;0" TO="/Customer;4;0;GLDExpressGateway.DocumentTypes.Customer:Customer/businessInformation;4;0;GLDExpressGateway.DocumentTypes.Customer:BusinessInformation/address;4;0;GLDExpressGateway.DocumentTypes.Customer:Address/city;1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/LpkTriggerData;4;0;GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData/RCUChangeData;4;0;GLDExpressGateway.DocumentTypes.Customer:RCUChangeData/selectRCUChangeOutput;2;0/results;2;1/st_s;1;0" TO="/Customer;4;0;GLDExpressGateway.DocumentTypes.Customer:Customer/businessInformation;4;0;GLDExpressGateway.DocumentTypes.Customer:BusinessInformation/address;4;0;GLDExpressGateway.DocumentTypes.Customer:Address/state;1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/LpkTriggerData;4;0;GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData/RCUChangeData;4;0;GLDExpressGateway.DocumentTypes.Customer:RCUChangeData/selectRCUChangeOutput;2;0/results;2;1/zip_s;1;0" TO="/Customer;4;0;GLDExpressGateway.DocumentTypes.Customer:Customer/businessInformation;4;0;GLDExpressGateway.DocumentTypes.Customer:BusinessInformation/address;4;0;GLDExpressGateway.DocumentTypes.Customer:Address/postal;1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/LpkTriggerData;4;0;GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData/RCUChangeData;4;0;GLDExpressGateway.DocumentTypes.Customer:RCUChangeData/selectRCUChangeOutput;2;0/results;2;1/bus_phn_s;1;0" TO="/Customer;4;0;GLDExpressGateway.DocumentTypes.Customer:Customer/businessInformation;4;0;GLDExpressGateway.DocumentTypes.Customer:BusinessInformation/phoneNumber;1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/LpkTriggerData;4;0;GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData/RCUChangeData;4;0;GLDExpressGateway.DocumentTypes.Customer:RCUChangeData/selectRCUChangeOutput;2;0/results;2;1/email_s;1;0" TO="/Customer;4;0;GLDExpressGateway.DocumentTypes.Customer:Customer/businessInformation;4;0;GLDExpressGateway.DocumentTypes.Customer:BusinessInformation/eMailAddress;1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/LpkTriggerData;4;0;GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData/RUDChangeData;4;0;GLDExpressGateway.DocumentTypes.Customer:RUDChangeData/selectRUDChangeOutput;2;0/results;2;1/field24_s;1;0" TO="/Customer;4;0;GLDExpressGateway.DocumentTypes.Customer:Customer/businessInformation;4;0;GLDExpressGateway.DocumentTypes.Customer:BusinessInformation/dunsNumber;1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/LpkTriggerData;4;0;GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData/RCUChangeData;4;0;GLDExpressGateway.DocumentTypes.Customer:RCUChangeData/selectRCUChangeOutput;2;0/results;2;1/par_cus_s;1;0" TO="/Customer;4;0;GLDExpressGateway.DocumentTypes.Customer:Customer/parentCustomerNumber;1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/LpkTriggerData;4;0;GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData/RUDChangeData;4;0;GLDExpressGateway.DocumentTypes.Customer:RUDChangeData/selectRUDChangeOutput;2;0/results;2;1/field25_s;1;0" TO="/Customer;4;0;GLDExpressGateway.DocumentTypes.Customer:Customer/dnbGlobalParentId;1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/LpkTriggerData;4;0;GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData/RUDChangeData;4;0;GLDExpressGateway.DocumentTypes.Customer:RUDChangeData/selectRUDChangeOutput;2;0/results;2;1/field26_s;1;0" TO="/Customer;4;0;GLDExpressGateway.DocumentTypes.Customer:Customer/dnbDomesticParentId;1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/LpkTriggerData;4;0;GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData/RUDChangeData;4;0;GLDExpressGateway.DocumentTypes.Customer:RUDChangeData/selectRUDChangeOutput;2;0/results;2;1/field2_s;1;0" TO="/Customer;4;0;GLDExpressGateway.DocumentTypes.Customer:Customer/type;1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/LpkTriggerData;4;0;GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData/RUDChangeData;4;0;GLDExpressGateway.DocumentTypes.Customer:RUDChangeData/selectRUDChangeOutput;2;0/results;2;1/field3_s;1;0" TO="/Customer;4;0;GLDExpressGateway.DocumentTypes.Customer:Customer/riskRating;1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/LpkTriggerData;4;0;GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData/RUDChangeData;4;0;GLDExpressGateway.DocumentTypes.Customer:RUDChangeData/selectRUDChangeOutput;2;0/results;2;1/field4_s;1;0" TO="/Customer;4;0;GLDExpressGateway.DocumentTypes.Customer:Customer/dateRiskRatingAssigned;1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/LpkTriggerData;4;0;GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData/RUDChangeData;4;0;GLDExpressGateway.DocumentTypes.Customer:RUDChangeData/selectRUDChangeOutput;2;0/results;2;1/field5_s;1;0" TO="/Customer;4;0;GLDExpressGateway.DocumentTypes.Customer:Customer/currentFinancialStatement;1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/LpkTriggerData;4;0;GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData/RUDChangeData;4;0;GLDExpressGateway.DocumentTypes.Customer:RUDChangeData/selectRUDChangeOutput;2;0/results;2;1/field6_s;1;0" TO="/Customer;4;0;GLDExpressGateway.DocumentTypes.Customer:Customer/fiscalYearEnd;1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/LpkTriggerData;4;0;GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData/RUDChangeData;4;0;GLDExpressGateway.DocumentTypes.Customer:RUDChangeData/selectRUDChangeOutput;2;0/results;2;1/field7_s;1;0" TO="/Customer;4;0;GLDExpressGateway.DocumentTypes.Customer:Customer/standardAndPoorsDebtRating;4;0;GLDExpressGateway.DocumentTypes.Customer:DebtCustomerRating/rating;1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/LpkTriggerData;4;0;GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData/RUDChangeData;4;0;GLDExpressGateway.DocumentTypes.Customer:RUDChangeData/selectRUDChangeOutput;2;0/results;2;1/field8_s;1;0" TO="/Customer;4;0;GLDExpressGateway.DocumentTypes.Customer:Customer/standardAndPoorsDebtRating;4;0;GLDExpressGateway.DocumentTypes.Customer:DebtCustomerRating/dateOfRating;1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/LpkTriggerData;4;0;GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData/RUDChangeData;4;0;GLDExpressGateway.DocumentTypes.Customer:RUDChangeData/selectRUDChangeOutput;2;0/results;2;1/field9_s;1;0" TO="/Customer;4;0;GLDExpressGateway.DocumentTypes.Customer:Customer/standardAndPoorsDebtRating;4;0;GLDExpressGateway.DocumentTypes.Customer:DebtCustomerRating/typeOfRating;1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/LpkTriggerData;4;0;GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData/RUDChangeData;4;0;GLDExpressGateway.DocumentTypes.Customer:RUDChangeData/selectRUDChangeOutput;2;0/results;2;1/field10_s;1;0" TO="/Customer;4;0;GLDExpressGateway.DocumentTypes.Customer:Customer/moodysDebtRating;4;0;GLDExpressGateway.DocumentTypes.Customer:DebtCustomerRating/rating;1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/LpkTriggerData;4;0;GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData/RUDChangeData;4;0;GLDExpressGateway.DocumentTypes.Customer:RUDChangeData/selectRUDChangeOutput;2;0/results;2;1/field11_s;1;0" TO="/Customer;4;0;GLDExpressGateway.DocumentTypes.Customer:Customer/moodysDebtRating;4;0;GLDExpressGateway.DocumentTypes.Customer:DebtCustomerRating/dateOfRating;1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/LpkTriggerData;4;0;GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData/RUDChangeData;4;0;GLDExpressGateway.DocumentTypes.Customer:RUDChangeData/selectRUDChangeOutput;2;0/results;2;1/field12_s;1;0" TO="/Customer;4;0;GLDExpressGateway.DocumentTypes.Customer:Customer/moodysDebtRating;4;0;GLDExpressGateway.DocumentTypes.Customer:DebtCustomerRating/typeOfRating;1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/LpkTriggerData;4;0;GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData/RUDChangeData;4;0;GLDExpressGateway.DocumentTypes.Customer:RUDChangeData/selectRUDChangeOutput;2;0/results;2;1/field13_s;1;0" TO="/Customer;4;0;GLDExpressGateway.DocumentTypes.Customer:Customer/otherDebtRatingAgency;1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/LpkTriggerData;4;0;GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData/RUDChangeData;4;0;GLDExpressGateway.DocumentTypes.Customer:RUDChangeData/selectRUDChangeOutput;2;0/results;2;1/field14_s;1;0" TO="/Customer;4;0;GLDExpressGateway.DocumentTypes.Customer:Customer/otherDebtRating;4;0;GLDExpressGateway.DocumentTypes.Customer:DebtCustomerRating/rating;1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/LpkTriggerData;4;0;GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData/RUDChangeData;4;0;GLDExpressGateway.DocumentTypes.Customer:RUDChangeData/selectRUDChangeOutput;2;0/results;2;1/field15_s;1;0" TO="/Customer;4;0;GLDExpressGateway.DocumentTypes.Customer:Customer/otherDebtRating;4;0;GLDExpressGateway.DocumentTypes.Customer:DebtCustomerRating/dateOfRating;1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/LpkTriggerData;4;0;GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData/RUDChangeData;4;0;GLDExpressGateway.DocumentTypes.Customer:RUDChangeData/selectRUDChangeOutput;2;0/results;2;1/field16_s;1;0" TO="/Customer;4;0;GLDExpressGateway.DocumentTypes.Customer:Customer/otherDebtRating;4;0;GLDExpressGateway.DocumentTypes.Customer:DebtCustomerRating/typeOfRating;1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/LpkTriggerData;4;0;GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData/RUDChangeData;4;0;GLDExpressGateway.DocumentTypes.Customer:RUDChangeData/selectRUDChangeOutput;2;0/results;2;1/field17_s;1;0" TO="/Customer;4;0;GLDExpressGateway.DocumentTypes.Customer:Customer/initialCustomerRating;1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/LpkTriggerData;4;0;GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData/RUDChangeData;4;0;GLDExpressGateway.DocumentTypes.Customer:RUDChangeData/selectRUDChangeOutput;2;0/results;2;1/field18_s;1;0" TO="/Customer;4;0;GLDExpressGateway.DocumentTypes.Customer:Customer/dateOfInitialRating;1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/LpkTriggerData;4;0;GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData/RUDChangeData;4;0;GLDExpressGateway.DocumentTypes.Customer:RUDChangeData/selectRUDChangeOutput;2;0/results;2;1/field19_s;1;0" TO="/Customer;4;0;GLDExpressGateway.DocumentTypes.Customer:Customer/probabilityOfDefault;1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/LpkTriggerData;4;0;GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData/RUDChangeData;4;0;GLDExpressGateway.DocumentTypes.Customer:RUDChangeData/selectRUDChangeOutput;2;0/results;2;1/field20_s;1;0" TO="/Customer;4;0;GLDExpressGateway.DocumentTypes.Customer:Customer/pdCalculatedByKts;1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/LpkTriggerData;4;0;GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData/RUDChangeData;4;0;GLDExpressGateway.DocumentTypes.Customer:RUDChangeData/selectRUDChangeOutput;2;0/results;2;1/field21_s;1;0" TO="/Customer;4;0;GLDExpressGateway.DocumentTypes.Customer:Customer/sicCode;1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/LpkTriggerData;4;0;GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData/RUDChangeData;4;0;GLDExpressGateway.DocumentTypes.Customer:RUDChangeData/selectRUDChangeOutput;2;0/results;2;1/field22_s;1;0" TO="/Customer;4;0;GLDExpressGateway.DocumentTypes.Customer:Customer/naicsCode;1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/LpkTriggerData;4;0;GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData/RUDChangeData;4;0;GLDExpressGateway.DocumentTypes.Customer:RUDChangeData/selectRUDChangeOutput;2;0/results;2;1/field23_s;1;0" TO="/Customer;4;0;GLDExpressGateway.DocumentTypes.Customer:Customer/experianId;1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/LpkTriggerData;4;0;GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData/RUDChangeData;4;0;GLDExpressGateway.DocumentTypes.Customer:RUDChangeData/selectRUDChangeOutput;2;0/results;2;1/field28_s;1;0" TO="/Customer;4;0;GLDExpressGateway.DocumentTypes.Customer:Customer/tickerSymbol;1;0">
+</MAPCOPY>
+</MAP>
+
+<MAP MODE="STANDALONE">
+  <COMMENT></COMMENT>
+</MAP>
+
+<MAP MODE="STANDALONE">
+  <COMMENT>==== Get Current XLink Customer Info - this should be a call to XLink service =====</COMMENT>
+</MAP>
+
+<INVOKE TIMEOUT="" SERVICE="GLDExpressGateway.ProcessFlows.Customer:determineXLinkCustomerAction" VALIDATE-IN="$none" VALIDATE-OUT="$none">
+  <COMMENT></COMMENT>
+
+  <!-- nodes -->
+
+<MAP MODE="INPUT">
+</MAP>
+
+<MAP MODE="OUTPUT">
+  <MAPTARGET>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">LpkTriggerData</value>
+        <value name="field_type">recref</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+        <value name="rec_closed">true</value>
+        <value name="rec_ref">GLDExpressGateway.DocumentTypes.LpkCustomer:LpkTriggerData</value>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPTARGET>
+  <MAPSOURCE>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+    </array>
+  </record>
+</Values>
+</MAPSOURCE>
+
+  <!-- nodes -->
+
+<MAPDELETE NAME="Dropper" FIELD="/LpkTriggerData;4;0;GLDExpressGateway.DocumentTypes.Customer:LpkTriggerData">
+</MAPDELETE>
+</MAP>
+</INVOKE>
+</FLOW>

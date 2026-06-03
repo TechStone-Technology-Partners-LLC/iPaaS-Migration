@@ -1,0 +1,2392 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<Values version="2.0">
+  <record name="record" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="node_nsName">GLDExpressGateway.DocumentTypes.Canonical.KEFIntegrationSoap:Canonical_KEFCustomerSearchSoapOut</value>
+    <value name="node_pkg">GLDExpressGateway</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">tns1:KEFCustomerSearchResponse</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="field_opt">true</value>
+        <value name="nillable">true</value>
+        <value name="field_xmlns">http://tempuri.org/</value>
+        <array name="rec_fields" type="record" depth="1">
+          <record javaclass="com.wm.util.Values">
+            <value name="node_type">record</value>
+            <value name="field_name">tns1:KEFCustomerSearchResult</value>
+            <value name="field_type">record</value>
+            <value name="field_dim">0</value>
+            <value name="field_opt">true</value>
+            <value name="nillable">false</value>
+            <value name="field_xmlns">http://tempuri.org/</value>
+            <array name="rec_fields" type="record" depth="1">
+              <record javaclass="com.wm.util.Values">
+                <value name="node_type">record</value>
+                <value name="node_comment"></value>
+                <record name="node_hints" javaclass="com.wm.util.Values">
+                  <value name="field_largerEditor">false</value>
+                  <value name="field_password">false</value>
+                </record>
+                <value name="field_name">tns1:customerCompaniesSearchResults</value>
+                <value name="field_type">record</value>
+                <value name="field_dim">0</value>
+                <value name="field_opt">true</value>
+                <value name="nillable">false</value>
+                <value name="field_xmlns">http://tempuri.org/</value>
+                <array name="rec_fields" type="record" depth="1">
+                  <record javaclass="com.wm.util.Values">
+                    <value name="node_type">record</value>
+                    <value name="node_comment"></value>
+                    <record name="node_hints" javaclass="com.wm.util.Values">
+                      <value name="field_largerEditor">false</value>
+                      <value name="field_password">false</value>
+                    </record>
+                    <value name="field_name">tns1:customerCompanySearchResults</value>
+                    <value name="field_type">record</value>
+                    <value name="field_dim">1</value>
+                    <value name="field_opt">true</value>
+                    <value name="nillable">true</value>
+                    <value name="field_xmlns">http://tempuri.org/</value>
+                    <array name="rec_fields" type="record" depth="1">
+                      <record javaclass="com.wm.util.Values">
+                        <value name="node_type">record</value>
+                        <value name="field_name">tns1:companyId</value>
+                        <value name="field_type">string</value>
+                        <value name="field_dim">0</value>
+                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                          <value name="contentType">1</value>
+                          <value name="internalType">reference</value>
+                          <value name="dataTypeVersion">dtVersion2</value>
+                          <array name="targetNames" type="record" depth="1">
+                            <record javaclass="com.wm.util.Values">
+                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                              <value name="ncName">int</value>
+                            </record>
+                          </array>
+                        </record>
+                        <value name="nillable">false</value>
+                        <value name="field_xmlns">http://tempuri.org/</value>
+                      </record>
+                      <record javaclass="com.wm.util.Values">
+                        <value name="node_type">record</value>
+                        <value name="field_name">tns1:integrationCode</value>
+                        <value name="field_type">string</value>
+                        <value name="field_dim">0</value>
+                        <value name="field_opt">true</value>
+                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                          <value name="contentType">1</value>
+                          <value name="internalType">reference</value>
+                          <value name="dataTypeVersion">dtVersion2</value>
+                          <array name="targetNames" type="record" depth="1">
+                            <record javaclass="com.wm.util.Values">
+                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                              <value name="ncName">string</value>
+                            </record>
+                          </array>
+                        </record>
+                        <value name="nillable">false</value>
+                        <value name="field_xmlns">http://tempuri.org/</value>
+                      </record>
+                      <record javaclass="com.wm.util.Values">
+                        <value name="node_type">record</value>
+                        <value name="field_name">tns1:legalName</value>
+                        <value name="field_type">string</value>
+                        <value name="field_dim">0</value>
+                        <value name="field_opt">true</value>
+                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                          <value name="contentType">1</value>
+                          <value name="internalType">reference</value>
+                          <value name="dataTypeVersion">dtVersion2</value>
+                          <array name="targetNames" type="record" depth="1">
+                            <record javaclass="com.wm.util.Values">
+                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                              <value name="ncName">string</value>
+                            </record>
+                          </array>
+                        </record>
+                        <value name="nillable">false</value>
+                        <value name="field_xmlns">http://tempuri.org/</value>
+                      </record>
+                      <record javaclass="com.wm.util.Values">
+                        <value name="node_type">record</value>
+                        <value name="node_comment"></value>
+                        <record name="node_hints" javaclass="com.wm.util.Values">
+                          <null name="field_usereditable"/>
+                          <value name="field_largerEditor">false</value>
+                          <value name="field_password">false</value>
+                        </record>
+                        <value name="field_name">tns1:businessName</value>
+                        <value name="field_type">string</value>
+                        <value name="field_dim">0</value>
+                        <value name="field_opt">true</value>
+                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                          <value name="contentType">1</value>
+                          <value name="internalType">reference</value>
+                          <value name="dataTypeVersion">dtVersion2</value>
+                          <array name="targetNames" type="record" depth="1">
+                            <record javaclass="com.wm.util.Values">
+                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                              <value name="ncName">string</value>
+                            </record>
+                          </array>
+                        </record>
+                        <value name="nillable">false</value>
+                        <value name="field_xmlns">http://tempuri.org/</value>
+                      </record>
+                      <record javaclass="com.wm.util.Values">
+                        <value name="node_type">record</value>
+                        <value name="field_name">tns1:otherBusinessNames</value>
+                        <value name="field_type">record</value>
+                        <value name="field_dim">0</value>
+                        <value name="field_opt">true</value>
+                        <value name="nillable">false</value>
+                        <value name="field_xmlns">http://tempuri.org/</value>
+                        <array name="rec_fields" type="record" depth="1">
+                          <record javaclass="com.wm.util.Values">
+                            <value name="node_type">record</value>
+                            <value name="field_name">tns1:otherBusinessName</value>
+                            <value name="field_type">string</value>
+                            <value name="field_dim">1</value>
+                            <value name="field_opt">true</value>
+                            <record name="field_content_type" javaclass="com.wm.util.Values">
+                              <value name="contentType">1</value>
+                              <value name="internalType">reference</value>
+                              <value name="dataTypeVersion">dtVersion2</value>
+                              <array name="targetNames" type="record" depth="1">
+                                <record javaclass="com.wm.util.Values">
+                                  <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                  <value name="ncName">string</value>
+                                </record>
+                              </array>
+                            </record>
+                            <value name="nillable">true</value>
+                            <value name="field_xmlns">http://tempuri.org/</value>
+                          </record>
+                        </array>
+                        <value name="rec_closed">true</value>
+                        <record name="schemaType" javaclass="com.wm.util.Values">
+                          <value name="xmlns">http://tempuri.org/</value>
+                          <value name="ncName">ArrayOfString1</value>
+                        </record>
+                      </record>
+                      <record javaclass="com.wm.util.Values">
+                        <value name="node_type">record</value>
+                        <value name="field_name">tns1:customerCompanyAddressesResponse</value>
+                        <value name="field_type">record</value>
+                        <value name="field_dim">0</value>
+                        <value name="field_opt">true</value>
+                        <value name="nillable">false</value>
+                        <value name="field_xmlns">http://tempuri.org/</value>
+                        <array name="rec_fields" type="record" depth="1">
+                          <record javaclass="com.wm.util.Values">
+                            <value name="node_type">record</value>
+                            <value name="field_name">tns1:customerCompanyAddressesResponse</value>
+                            <value name="field_type">record</value>
+                            <value name="field_dim">1</value>
+                            <value name="field_opt">true</value>
+                            <value name="nillable">true</value>
+                            <value name="field_xmlns">http://tempuri.org/</value>
+                            <array name="rec_fields" type="record" depth="1">
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="field_name">tns1:addressId</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">int</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="field_name">tns1:addressTypeCode</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <value name="field_opt">true</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">string</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="field_name">tns1:addressLine1</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <value name="field_opt">true</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">string</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="field_name">tns1:addressLine2</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <value name="field_opt">true</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">string</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="field_name">tns1:addressLine3</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <value name="field_opt">true</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">string</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="field_name">tns1:city</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <value name="field_opt">true</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">string</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="field_name">tns1:county</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <value name="field_opt">true</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">string</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="field_name">tns1:postalCode</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <value name="field_opt">true</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">string</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="field_name">tns1:provinceId</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">int</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="field_name">tns1:province</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <value name="field_opt">true</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">string</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="field_name">tns1:countryId</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">int</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="field_name">tns1:country</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <value name="field_opt">true</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">string</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="field_name">tns1:isSuspectAddress</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">boolean</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="field_name">tns1:integrationCode</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <value name="field_opt">true</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">string</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="field_name">tns1:moveInDate</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">dateTime</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="field_name">tns1:moveOutDate</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">dateTime</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="field_name">tns1:customerSearchAddressCategories</value>
+                                <value name="field_type">record</value>
+                                <value name="field_dim">0</value>
+                                <value name="field_opt">true</value>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                                <array name="rec_fields" type="record" depth="1">
+                                  <record javaclass="com.wm.util.Values">
+                                    <value name="node_type">record</value>
+                                    <value name="field_name">tns1:customerSearchAddressCategory</value>
+                                    <value name="field_type">record</value>
+                                    <value name="field_dim">1</value>
+                                    <value name="field_opt">true</value>
+                                    <value name="nillable">true</value>
+                                    <value name="field_xmlns">http://tempuri.org/</value>
+                                    <array name="rec_fields" type="record" depth="1">
+                                      <record javaclass="com.wm.util.Values">
+                                        <value name="node_type">record</value>
+                                        <value name="node_comment"></value>
+                                        <record name="node_hints" javaclass="com.wm.util.Values">
+                                          <null name="field_usereditable"/>
+                                          <value name="field_largerEditor">false</value>
+                                          <value name="field_password">false</value>
+                                        </record>
+                                        <value name="field_name">tns1:addressCategoryId</value>
+                                        <value name="field_type">string</value>
+                                        <value name="field_dim">0</value>
+                                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                                          <value name="contentType">1</value>
+                                          <value name="internalType">reference</value>
+                                          <value name="dataTypeVersion">dtVersion2</value>
+                                          <array name="targetNames" type="record" depth="1">
+                                            <record javaclass="com.wm.util.Values">
+                                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                              <value name="ncName">short</value>
+                                            </record>
+                                          </array>
+                                        </record>
+                                        <value name="nillable">false</value>
+                                        <value name="field_xmlns">http://tempuri.org/</value>
+                                      </record>
+                                      <record javaclass="com.wm.util.Values">
+                                        <value name="node_type">record</value>
+                                        <value name="field_name">tns1:category</value>
+                                        <value name="field_type">string</value>
+                                        <value name="field_dim">0</value>
+                                        <value name="field_opt">true</value>
+                                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                                          <value name="contentType">1</value>
+                                          <value name="internalType">reference</value>
+                                          <value name="dataTypeVersion">dtVersion2</value>
+                                          <array name="targetNames" type="record" depth="1">
+                                            <record javaclass="com.wm.util.Values">
+                                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                              <value name="ncName">string</value>
+                                            </record>
+                                          </array>
+                                        </record>
+                                        <value name="nillable">false</value>
+                                        <value name="field_xmlns">http://tempuri.org/</value>
+                                      </record>
+                                    </array>
+                                    <value name="rec_closed">true</value>
+                                    <record name="schemaType" javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://tempuri.org/</value>
+                                      <value name="ncName">KEFCustomerSearchAddressCategoryResponse</value>
+                                    </record>
+                                  </record>
+                                </array>
+                                <value name="rec_closed">true</value>
+                                <record name="schemaType" javaclass="com.wm.util.Values">
+                                  <value name="xmlns">http://tempuri.org/</value>
+                                  <value name="ncName">ArrayOfKEFCustomerSearchAddressCategoryResponse</value>
+                                </record>
+                              </record>
+                            </array>
+                            <value name="rec_closed">true</value>
+                            <record name="schemaType" javaclass="com.wm.util.Values">
+                              <value name="xmlns">http://tempuri.org/</value>
+                              <value name="ncName">KEFCustomerSearchAddressResponse</value>
+                            </record>
+                          </record>
+                        </array>
+                        <value name="rec_closed">true</value>
+                        <record name="schemaType" javaclass="com.wm.util.Values">
+                          <value name="xmlns">http://tempuri.org/</value>
+                          <value name="ncName">ArrayOfKEFCustomerSearchAddressResponse</value>
+                        </record>
+                      </record>
+                      <record javaclass="com.wm.util.Values">
+                        <value name="node_type">record</value>
+                        <value name="field_name">tns1:phoneNumber</value>
+                        <value name="field_type">string</value>
+                        <value name="field_dim">0</value>
+                        <value name="field_opt">true</value>
+                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                          <value name="contentType">1</value>
+                          <value name="internalType">reference</value>
+                          <value name="dataTypeVersion">dtVersion2</value>
+                          <array name="targetNames" type="record" depth="1">
+                            <record javaclass="com.wm.util.Values">
+                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                              <value name="ncName">string</value>
+                            </record>
+                          </array>
+                        </record>
+                        <value name="nillable">false</value>
+                        <value name="field_xmlns">http://tempuri.org/</value>
+                      </record>
+                      <record javaclass="com.wm.util.Values">
+                        <value name="node_type">record</value>
+                        <value name="field_name">tns1:taxNumber</value>
+                        <value name="field_type">string</value>
+                        <value name="field_dim">0</value>
+                        <value name="field_opt">true</value>
+                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                          <value name="contentType">1</value>
+                          <value name="internalType">reference</value>
+                          <value name="dataTypeVersion">dtVersion2</value>
+                          <array name="targetNames" type="record" depth="1">
+                            <record javaclass="com.wm.util.Values">
+                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                              <value name="ncName">string</value>
+                            </record>
+                          </array>
+                        </record>
+                        <value name="nillable">false</value>
+                        <value name="field_xmlns">http://tempuri.org/</value>
+                      </record>
+                      <record javaclass="com.wm.util.Values">
+                        <value name="node_type">record</value>
+                        <value name="field_name">tns1:dunsNumber</value>
+                        <value name="field_type">string</value>
+                        <value name="field_dim">0</value>
+                        <value name="field_opt">true</value>
+                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                          <value name="contentType">1</value>
+                          <value name="internalType">reference</value>
+                          <value name="dataTypeVersion">dtVersion2</value>
+                          <array name="targetNames" type="record" depth="1">
+                            <record javaclass="com.wm.util.Values">
+                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                              <value name="ncName">string</value>
+                            </record>
+                          </array>
+                        </record>
+                        <value name="nillable">false</value>
+                        <value name="field_xmlns">http://tempuri.org/</value>
+                      </record>
+                      <record javaclass="com.wm.util.Values">
+                        <value name="node_type">record</value>
+                        <value name="field_name">tns1:lesseeDUNSNumbers</value>
+                        <value name="field_type">record</value>
+                        <value name="field_dim">0</value>
+                        <value name="field_opt">true</value>
+                        <value name="nillable">false</value>
+                        <value name="field_xmlns">http://tempuri.org/</value>
+                        <array name="rec_fields" type="record" depth="1">
+                          <record javaclass="com.wm.util.Values">
+                            <value name="node_type">record</value>
+                            <value name="field_name">tns1:lesseeDUNSNumber</value>
+                            <value name="field_type">string</value>
+                            <value name="field_dim">1</value>
+                            <value name="field_opt">true</value>
+                            <record name="field_content_type" javaclass="com.wm.util.Values">
+                              <value name="contentType">1</value>
+                              <value name="internalType">reference</value>
+                              <value name="dataTypeVersion">dtVersion2</value>
+                              <array name="targetNames" type="record" depth="1">
+                                <record javaclass="com.wm.util.Values">
+                                  <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                  <value name="ncName">string</value>
+                                </record>
+                              </array>
+                            </record>
+                            <value name="nillable">true</value>
+                            <value name="field_xmlns">http://tempuri.org/</value>
+                          </record>
+                        </array>
+                        <value name="rec_closed">true</value>
+                        <record name="schemaType" javaclass="com.wm.util.Values">
+                          <value name="xmlns">http://tempuri.org/</value>
+                          <value name="ncName">ArrayOfString2</value>
+                        </record>
+                      </record>
+                      <record javaclass="com.wm.util.Values">
+                        <value name="node_type">record</value>
+                        <value name="field_name">tns1:statusDescription</value>
+                        <value name="field_type">string</value>
+                        <value name="field_dim">0</value>
+                        <value name="field_opt">true</value>
+                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                          <value name="contentType">1</value>
+                          <value name="internalType">reference</value>
+                          <value name="dataTypeVersion">dtVersion2</value>
+                          <array name="targetNames" type="record" depth="1">
+                            <record javaclass="com.wm.util.Values">
+                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                              <value name="ncName">string</value>
+                            </record>
+                          </array>
+                        </record>
+                        <value name="nillable">false</value>
+                        <value name="field_xmlns">http://tempuri.org/</value>
+                      </record>
+                      <record javaclass="com.wm.util.Values">
+                        <value name="node_type">record</value>
+                        <value name="node_comment"></value>
+                        <record name="node_hints" javaclass="com.wm.util.Values">
+                          <value name="field_largerEditor">false</value>
+                          <value name="field_password">false</value>
+                        </record>
+                        <value name="field_name">tns1:customerCompanyContactsResponse</value>
+                        <value name="field_type">record</value>
+                        <value name="field_dim">0</value>
+                        <value name="field_opt">true</value>
+                        <value name="nillable">false</value>
+                        <value name="field_xmlns">http://tempuri.org/</value>
+                        <array name="rec_fields" type="record" depth="1">
+                          <record javaclass="com.wm.util.Values">
+                            <value name="node_type">record</value>
+                            <value name="field_name">tns1:customerCompanyContactResponse</value>
+                            <value name="field_type">record</value>
+                            <value name="field_dim">1</value>
+                            <value name="field_opt">true</value>
+                            <value name="nillable">true</value>
+                            <value name="field_xmlns">http://tempuri.org/</value>
+                            <array name="rec_fields" type="record" depth="1">
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="node_comment"></value>
+                                <record name="node_hints" javaclass="com.wm.util.Values">
+                                  <null name="field_usereditable"/>
+                                  <value name="field_largerEditor">false</value>
+                                  <value name="field_password">false</value>
+                                </record>
+                                <value name="field_name">tns1:ContactID</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">int</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">true</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="node_comment"></value>
+                                <record name="node_hints" javaclass="com.wm.util.Values">
+                                  <null name="field_usereditable"/>
+                                  <value name="field_largerEditor">false</value>
+                                  <value name="field_password">false</value>
+                                </record>
+                                <value name="field_name">tns1:FirstName</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <value name="field_opt">true</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">string</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="node_comment"></value>
+                                <record name="node_hints" javaclass="com.wm.util.Values">
+                                  <null name="field_usereditable"/>
+                                  <value name="field_largerEditor">false</value>
+                                  <value name="field_password">false</value>
+                                </record>
+                                <value name="field_name">tns1:LastName</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <value name="field_opt">true</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">string</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="node_comment"></value>
+                                <record name="node_hints" javaclass="com.wm.util.Values">
+                                  <null name="field_usereditable"/>
+                                  <value name="field_largerEditor">false</value>
+                                  <value name="field_password">false</value>
+                                </record>
+                                <value name="field_name">tns1:Title</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <value name="field_opt">true</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">string</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="node_comment"></value>
+                                <record name="node_hints" javaclass="com.wm.util.Values">
+                                  <null name="field_usereditable"/>
+                                  <value name="field_largerEditor">false</value>
+                                  <value name="field_password">false</value>
+                                </record>
+                                <value name="field_name">tns1:PhoneNumber</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <value name="field_opt">true</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">string</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="node_comment"></value>
+                                <record name="node_hints" javaclass="com.wm.util.Values">
+                                  <null name="field_usereditable"/>
+                                  <value name="field_largerEditor">false</value>
+                                  <value name="field_password">false</value>
+                                </record>
+                                <value name="field_name">tns1:Extention</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <value name="field_opt">true</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">string</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="node_comment"></value>
+                                <record name="node_hints" javaclass="com.wm.util.Values">
+                                  <null name="field_usereditable"/>
+                                  <value name="field_largerEditor">false</value>
+                                  <value name="field_password">false</value>
+                                </record>
+                                <value name="field_name">tns1:FaxNumber</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <value name="field_opt">true</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">string</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="node_comment"></value>
+                                <record name="node_hints" javaclass="com.wm.util.Values">
+                                  <null name="field_usereditable"/>
+                                  <value name="field_largerEditor">false</value>
+                                  <value name="field_password">false</value>
+                                </record>
+                                <value name="field_name">tns1:Email</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <value name="field_opt">true</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">string</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="node_comment"></value>
+                                <record name="node_hints" javaclass="com.wm.util.Values">
+                                  <null name="field_usereditable"/>
+                                  <value name="field_largerEditor">false</value>
+                                  <value name="field_password">false</value>
+                                </record>
+                                <value name="field_name">tns1:ContactType</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <value name="field_opt">true</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">string</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="node_comment"></value>
+                                <record name="node_hints" javaclass="com.wm.util.Values">
+                                  <null name="field_usereditable"/>
+                                  <value name="field_largerEditor">false</value>
+                                  <value name="field_password">false</value>
+                                </record>
+                                <value name="field_name">tns1:IntegrationCode</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <value name="field_opt">true</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">string</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="node_comment"></value>
+                                <record name="node_hints" javaclass="com.wm.util.Values">
+                                  <value name="field_largerEditor">false</value>
+                                  <value name="field_password">false</value>
+                                </record>
+                                <value name="field_name">tns1:contactAddressResponses</value>
+                                <value name="field_type">record</value>
+                                <value name="field_dim">0</value>
+                                <value name="field_opt">true</value>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                                <array name="rec_fields" type="record" depth="1">
+                                  <record javaclass="com.wm.util.Values">
+                                    <value name="node_type">record</value>
+                                    <value name="field_name">tns1:contactAddressResponse</value>
+                                    <value name="field_type">record</value>
+                                    <value name="field_dim">1</value>
+                                    <value name="field_opt">true</value>
+                                    <value name="nillable">true</value>
+                                    <value name="field_xmlns">http://tempuri.org/</value>
+                                    <array name="rec_fields" type="record" depth="1">
+                                      <record javaclass="com.wm.util.Values">
+                                        <value name="node_type">record</value>
+                                        <value name="field_name">tns1:addressId</value>
+                                        <value name="field_type">string</value>
+                                        <value name="field_dim">0</value>
+                                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                                          <value name="contentType">1</value>
+                                          <value name="internalType">reference</value>
+                                          <value name="dataTypeVersion">dtVersion2</value>
+                                          <array name="targetNames" type="record" depth="1">
+                                            <record javaclass="com.wm.util.Values">
+                                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                              <value name="ncName">int</value>
+                                            </record>
+                                          </array>
+                                        </record>
+                                        <value name="nillable">false</value>
+                                        <value name="field_xmlns">http://tempuri.org/</value>
+                                      </record>
+                                      <record javaclass="com.wm.util.Values">
+                                        <value name="node_type">record</value>
+                                        <value name="field_name">tns1:addressTypeCode</value>
+                                        <value name="field_type">string</value>
+                                        <value name="field_dim">0</value>
+                                        <value name="field_opt">true</value>
+                                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                                          <value name="contentType">1</value>
+                                          <value name="internalType">reference</value>
+                                          <value name="dataTypeVersion">dtVersion2</value>
+                                          <array name="targetNames" type="record" depth="1">
+                                            <record javaclass="com.wm.util.Values">
+                                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                              <value name="ncName">string</value>
+                                            </record>
+                                          </array>
+                                        </record>
+                                        <value name="nillable">false</value>
+                                        <value name="field_xmlns">http://tempuri.org/</value>
+                                      </record>
+                                      <record javaclass="com.wm.util.Values">
+                                        <value name="node_type">record</value>
+                                        <value name="node_comment"></value>
+                                        <record name="node_hints" javaclass="com.wm.util.Values">
+                                          <null name="field_usereditable"/>
+                                          <value name="field_largerEditor">false</value>
+                                          <value name="field_password">false</value>
+                                        </record>
+                                        <value name="field_name">tns1:addressLine1</value>
+                                        <value name="field_type">string</value>
+                                        <value name="field_dim">0</value>
+                                        <value name="field_opt">true</value>
+                                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                                          <value name="contentType">1</value>
+                                          <value name="internalType">reference</value>
+                                          <value name="dataTypeVersion">dtVersion2</value>
+                                          <array name="targetNames" type="record" depth="1">
+                                            <record javaclass="com.wm.util.Values">
+                                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                              <value name="ncName">string</value>
+                                            </record>
+                                          </array>
+                                        </record>
+                                        <value name="nillable">false</value>
+                                        <value name="field_xmlns">http://tempuri.org/</value>
+                                      </record>
+                                      <record javaclass="com.wm.util.Values">
+                                        <value name="node_type">record</value>
+                                        <value name="field_name">tns1:addressLine2</value>
+                                        <value name="field_type">string</value>
+                                        <value name="field_dim">0</value>
+                                        <value name="field_opt">true</value>
+                                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                                          <value name="contentType">1</value>
+                                          <value name="internalType">reference</value>
+                                          <value name="dataTypeVersion">dtVersion2</value>
+                                          <array name="targetNames" type="record" depth="1">
+                                            <record javaclass="com.wm.util.Values">
+                                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                              <value name="ncName">string</value>
+                                            </record>
+                                          </array>
+                                        </record>
+                                        <value name="nillable">false</value>
+                                        <value name="field_xmlns">http://tempuri.org/</value>
+                                      </record>
+                                      <record javaclass="com.wm.util.Values">
+                                        <value name="node_type">record</value>
+                                        <value name="field_name">tns1:addressLine3</value>
+                                        <value name="field_type">string</value>
+                                        <value name="field_dim">0</value>
+                                        <value name="field_opt">true</value>
+                                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                                          <value name="contentType">1</value>
+                                          <value name="internalType">reference</value>
+                                          <value name="dataTypeVersion">dtVersion2</value>
+                                          <array name="targetNames" type="record" depth="1">
+                                            <record javaclass="com.wm.util.Values">
+                                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                              <value name="ncName">string</value>
+                                            </record>
+                                          </array>
+                                        </record>
+                                        <value name="nillable">false</value>
+                                        <value name="field_xmlns">http://tempuri.org/</value>
+                                      </record>
+                                      <record javaclass="com.wm.util.Values">
+                                        <value name="node_type">record</value>
+                                        <value name="field_name">tns1:city</value>
+                                        <value name="field_type">string</value>
+                                        <value name="field_dim">0</value>
+                                        <value name="field_opt">true</value>
+                                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                                          <value name="contentType">1</value>
+                                          <value name="internalType">reference</value>
+                                          <value name="dataTypeVersion">dtVersion2</value>
+                                          <array name="targetNames" type="record" depth="1">
+                                            <record javaclass="com.wm.util.Values">
+                                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                              <value name="ncName">string</value>
+                                            </record>
+                                          </array>
+                                        </record>
+                                        <value name="nillable">false</value>
+                                        <value name="field_xmlns">http://tempuri.org/</value>
+                                      </record>
+                                      <record javaclass="com.wm.util.Values">
+                                        <value name="node_type">record</value>
+                                        <value name="field_name">tns1:county</value>
+                                        <value name="field_type">string</value>
+                                        <value name="field_dim">0</value>
+                                        <value name="field_opt">true</value>
+                                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                                          <value name="contentType">1</value>
+                                          <value name="internalType">reference</value>
+                                          <value name="dataTypeVersion">dtVersion2</value>
+                                          <array name="targetNames" type="record" depth="1">
+                                            <record javaclass="com.wm.util.Values">
+                                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                              <value name="ncName">string</value>
+                                            </record>
+                                          </array>
+                                        </record>
+                                        <value name="nillable">false</value>
+                                        <value name="field_xmlns">http://tempuri.org/</value>
+                                      </record>
+                                      <record javaclass="com.wm.util.Values">
+                                        <value name="node_type">record</value>
+                                        <value name="field_name">tns1:postalCode</value>
+                                        <value name="field_type">string</value>
+                                        <value name="field_dim">0</value>
+                                        <value name="field_opt">true</value>
+                                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                                          <value name="contentType">1</value>
+                                          <value name="internalType">reference</value>
+                                          <value name="dataTypeVersion">dtVersion2</value>
+                                          <array name="targetNames" type="record" depth="1">
+                                            <record javaclass="com.wm.util.Values">
+                                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                              <value name="ncName">string</value>
+                                            </record>
+                                          </array>
+                                        </record>
+                                        <value name="nillable">false</value>
+                                        <value name="field_xmlns">http://tempuri.org/</value>
+                                      </record>
+                                      <record javaclass="com.wm.util.Values">
+                                        <value name="node_type">record</value>
+                                        <value name="field_name">tns1:provinceId</value>
+                                        <value name="field_type">string</value>
+                                        <value name="field_dim">0</value>
+                                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                                          <value name="contentType">1</value>
+                                          <value name="internalType">reference</value>
+                                          <value name="dataTypeVersion">dtVersion2</value>
+                                          <array name="targetNames" type="record" depth="1">
+                                            <record javaclass="com.wm.util.Values">
+                                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                              <value name="ncName">int</value>
+                                            </record>
+                                          </array>
+                                        </record>
+                                        <value name="nillable">false</value>
+                                        <value name="field_xmlns">http://tempuri.org/</value>
+                                      </record>
+                                      <record javaclass="com.wm.util.Values">
+                                        <value name="node_type">record</value>
+                                        <value name="field_name">tns1:province</value>
+                                        <value name="field_type">string</value>
+                                        <value name="field_dim">0</value>
+                                        <value name="field_opt">true</value>
+                                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                                          <value name="contentType">1</value>
+                                          <value name="internalType">reference</value>
+                                          <value name="dataTypeVersion">dtVersion2</value>
+                                          <array name="targetNames" type="record" depth="1">
+                                            <record javaclass="com.wm.util.Values">
+                                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                              <value name="ncName">string</value>
+                                            </record>
+                                          </array>
+                                        </record>
+                                        <value name="nillable">false</value>
+                                        <value name="field_xmlns">http://tempuri.org/</value>
+                                      </record>
+                                      <record javaclass="com.wm.util.Values">
+                                        <value name="node_type">record</value>
+                                        <value name="field_name">tns1:countryId</value>
+                                        <value name="field_type">string</value>
+                                        <value name="field_dim">0</value>
+                                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                                          <value name="contentType">1</value>
+                                          <value name="internalType">reference</value>
+                                          <value name="dataTypeVersion">dtVersion2</value>
+                                          <array name="targetNames" type="record" depth="1">
+                                            <record javaclass="com.wm.util.Values">
+                                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                              <value name="ncName">int</value>
+                                            </record>
+                                          </array>
+                                        </record>
+                                        <value name="nillable">false</value>
+                                        <value name="field_xmlns">http://tempuri.org/</value>
+                                      </record>
+                                      <record javaclass="com.wm.util.Values">
+                                        <value name="node_type">record</value>
+                                        <value name="field_name">tns1:country</value>
+                                        <value name="field_type">string</value>
+                                        <value name="field_dim">0</value>
+                                        <value name="field_opt">true</value>
+                                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                                          <value name="contentType">1</value>
+                                          <value name="internalType">reference</value>
+                                          <value name="dataTypeVersion">dtVersion2</value>
+                                          <array name="targetNames" type="record" depth="1">
+                                            <record javaclass="com.wm.util.Values">
+                                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                              <value name="ncName">string</value>
+                                            </record>
+                                          </array>
+                                        </record>
+                                        <value name="nillable">false</value>
+                                        <value name="field_xmlns">http://tempuri.org/</value>
+                                      </record>
+                                      <record javaclass="com.wm.util.Values">
+                                        <value name="node_type">record</value>
+                                        <value name="field_name">tns1:isSuspectAddress</value>
+                                        <value name="field_type">string</value>
+                                        <value name="field_dim">0</value>
+                                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                                          <value name="contentType">1</value>
+                                          <value name="internalType">reference</value>
+                                          <value name="dataTypeVersion">dtVersion2</value>
+                                          <array name="targetNames" type="record" depth="1">
+                                            <record javaclass="com.wm.util.Values">
+                                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                              <value name="ncName">boolean</value>
+                                            </record>
+                                          </array>
+                                        </record>
+                                        <value name="nillable">false</value>
+                                        <value name="field_xmlns">http://tempuri.org/</value>
+                                      </record>
+                                      <record javaclass="com.wm.util.Values">
+                                        <value name="node_type">record</value>
+                                        <value name="field_name">tns1:integrationCode</value>
+                                        <value name="field_type">string</value>
+                                        <value name="field_dim">0</value>
+                                        <value name="field_opt">true</value>
+                                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                                          <value name="contentType">1</value>
+                                          <value name="internalType">reference</value>
+                                          <value name="dataTypeVersion">dtVersion2</value>
+                                          <array name="targetNames" type="record" depth="1">
+                                            <record javaclass="com.wm.util.Values">
+                                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                              <value name="ncName">string</value>
+                                            </record>
+                                          </array>
+                                        </record>
+                                        <value name="nillable">false</value>
+                                        <value name="field_xmlns">http://tempuri.org/</value>
+                                      </record>
+                                      <record javaclass="com.wm.util.Values">
+                                        <value name="node_type">record</value>
+                                        <value name="field_name">tns1:moveInDate</value>
+                                        <value name="field_type">string</value>
+                                        <value name="field_dim">0</value>
+                                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                                          <value name="contentType">1</value>
+                                          <value name="internalType">reference</value>
+                                          <value name="dataTypeVersion">dtVersion2</value>
+                                          <array name="targetNames" type="record" depth="1">
+                                            <record javaclass="com.wm.util.Values">
+                                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                              <value name="ncName">dateTime</value>
+                                            </record>
+                                          </array>
+                                        </record>
+                                        <value name="nillable">false</value>
+                                        <value name="field_xmlns">http://tempuri.org/</value>
+                                      </record>
+                                      <record javaclass="com.wm.util.Values">
+                                        <value name="node_type">record</value>
+                                        <value name="node_comment"></value>
+                                        <record name="node_hints" javaclass="com.wm.util.Values">
+                                          <null name="field_usereditable"/>
+                                          <value name="field_largerEditor">false</value>
+                                          <value name="field_password">false</value>
+                                        </record>
+                                        <value name="field_name">tns1:moveOutDate</value>
+                                        <value name="field_type">string</value>
+                                        <value name="field_dim">0</value>
+                                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                                          <value name="contentType">1</value>
+                                          <value name="internalType">reference</value>
+                                          <value name="dataTypeVersion">dtVersion2</value>
+                                          <array name="targetNames" type="record" depth="1">
+                                            <record javaclass="com.wm.util.Values">
+                                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                              <value name="ncName">dateTime</value>
+                                            </record>
+                                          </array>
+                                        </record>
+                                        <value name="nillable">false</value>
+                                        <value name="field_xmlns">http://tempuri.org/</value>
+                                      </record>
+                                      <record javaclass="com.wm.util.Values">
+                                        <value name="node_type">record</value>
+                                        <value name="node_comment"></value>
+                                        <record name="node_hints" javaclass="com.wm.util.Values">
+                                          <null name="field_usereditable"/>
+                                          <value name="field_largerEditor">false</value>
+                                          <value name="field_password">false</value>
+                                        </record>
+                                        <value name="field_name">tns1:status</value>
+                                        <value name="field_type">string</value>
+                                        <value name="field_dim">0</value>
+                                        <value name="field_opt">true</value>
+                                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                                          <value name="contentType">1</value>
+                                          <value name="internalType">reference</value>
+                                          <value name="dataTypeVersion">dtVersion2</value>
+                                          <array name="targetNames" type="record" depth="1">
+                                            <record javaclass="com.wm.util.Values">
+                                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                              <value name="ncName">string</value>
+                                            </record>
+                                          </array>
+                                        </record>
+                                        <value name="nillable">false</value>
+                                        <value name="field_xmlns">http://tempuri.org/</value>
+                                      </record>
+                                      <record javaclass="com.wm.util.Values">
+                                        <value name="node_type">record</value>
+                                        <value name="field_name">tns1:customerSearchAddressCategories</value>
+                                        <value name="field_type">record</value>
+                                        <value name="field_dim">0</value>
+                                        <value name="field_opt">true</value>
+                                        <value name="nillable">false</value>
+                                        <value name="field_xmlns">http://tempuri.org/</value>
+                                        <array name="rec_fields" type="record" depth="1">
+                                          <record javaclass="com.wm.util.Values">
+                                            <value name="node_type">record</value>
+                                            <value name="field_name">tns1:customerSearchAddressCategory</value>
+                                            <value name="field_type">record</value>
+                                            <value name="field_dim">1</value>
+                                            <value name="field_opt">true</value>
+                                            <value name="nillable">true</value>
+                                            <value name="field_xmlns">http://tempuri.org/</value>
+                                            <array name="rec_fields" type="record" depth="1">
+                                              <record javaclass="com.wm.util.Values">
+                                                <value name="node_type">record</value>
+                                                <value name="node_comment"></value>
+                                                <record name="node_hints" javaclass="com.wm.util.Values">
+                                                  <null name="field_usereditable"/>
+                                                  <value name="field_largerEditor">false</value>
+                                                  <value name="field_password">false</value>
+                                                </record>
+                                                <value name="field_name">tns1:addressCategoryId</value>
+                                                <value name="field_type">string</value>
+                                                <value name="field_dim">0</value>
+                                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                                  <value name="contentType">1</value>
+                                                  <value name="internalType">reference</value>
+                                                  <value name="dataTypeVersion">dtVersion2</value>
+                                                  <array name="targetNames" type="record" depth="1">
+                                                    <record javaclass="com.wm.util.Values">
+                                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                                      <value name="ncName">short</value>
+                                                    </record>
+                                                  </array>
+                                                </record>
+                                                <value name="nillable">false</value>
+                                                <value name="field_xmlns">http://tempuri.org/</value>
+                                              </record>
+                                              <record javaclass="com.wm.util.Values">
+                                                <value name="node_type">record</value>
+                                                <value name="field_name">tns1:category</value>
+                                                <value name="field_type">string</value>
+                                                <value name="field_dim">0</value>
+                                                <value name="field_opt">true</value>
+                                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                                  <value name="contentType">1</value>
+                                                  <value name="internalType">reference</value>
+                                                  <value name="dataTypeVersion">dtVersion2</value>
+                                                  <array name="targetNames" type="record" depth="1">
+                                                    <record javaclass="com.wm.util.Values">
+                                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                                      <value name="ncName">string</value>
+                                                    </record>
+                                                  </array>
+                                                </record>
+                                                <value name="nillable">false</value>
+                                                <value name="field_xmlns">http://tempuri.org/</value>
+                                              </record>
+                                            </array>
+                                            <value name="rec_closed">true</value>
+                                            <record name="schemaType" javaclass="com.wm.util.Values">
+                                              <value name="xmlns">http://tempuri.org/</value>
+                                              <value name="ncName">KEFCustomerSearchAddressCategoryResponse</value>
+                                            </record>
+                                          </record>
+                                        </array>
+                                        <value name="rec_closed">true</value>
+                                        <record name="schemaType" javaclass="com.wm.util.Values">
+                                          <value name="xmlns">http://tempuri.org/</value>
+                                          <value name="ncName">ArrayOfKEFCustomerSearchAddressCategoryResponse</value>
+                                        </record>
+                                      </record>
+                                    </array>
+                                    <value name="rec_closed">true</value>
+                                    <record name="schemaType" javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://tempuri.org/</value>
+                                      <value name="ncName">KEFCustomerSearchAddressResponse</value>
+                                    </record>
+                                  </record>
+                                </array>
+                                <value name="rec_closed">true</value>
+                                <record name="schemaType" javaclass="com.wm.util.Values">
+                                  <value name="xmlns">http://tempuri.org/</value>
+                                  <value name="ncName">ArrayOfKEFCustomerSearchAddressResponse1</value>
+                                </record>
+                              </record>
+                            </array>
+                            <value name="rec_closed">true</value>
+                            <record name="schemaType" javaclass="com.wm.util.Values">
+                              <value name="xmlns">http://tempuri.org/</value>
+                              <value name="ncName">KEFCustomerSearchContactResponse</value>
+                            </record>
+                          </record>
+                        </array>
+                        <value name="rec_closed">true</value>
+                        <record name="schemaType" javaclass="com.wm.util.Values">
+                          <value name="xmlns">http://tempuri.org/</value>
+                          <value name="ncName">ArrayOfKEFCustomerSearchContactResponse</value>
+                        </record>
+                      </record>
+                    </array>
+                    <value name="rec_closed">true</value>
+                    <record name="schemaType" javaclass="com.wm.util.Values">
+                      <value name="xmlns">http://tempuri.org/</value>
+                      <value name="ncName">KEFCustomerCompanySearchResults</value>
+                    </record>
+                  </record>
+                </array>
+                <value name="rec_closed">true</value>
+                <record name="schemaType" javaclass="com.wm.util.Values">
+                  <value name="xmlns">http://tempuri.org/</value>
+                  <value name="ncName">ArrayOfKEFCustomerCompanySearchResults</value>
+                </record>
+              </record>
+              <record javaclass="com.wm.util.Values">
+                <value name="node_type">record</value>
+                <value name="node_comment"></value>
+                <record name="node_hints" javaclass="com.wm.util.Values">
+                  <value name="field_largerEditor">false</value>
+                  <value name="field_password">false</value>
+                </record>
+                <value name="field_name">tns1:customerSignorsSearchResults</value>
+                <value name="field_type">record</value>
+                <value name="field_dim">0</value>
+                <value name="field_opt">true</value>
+                <value name="nillable">false</value>
+                <value name="field_xmlns">http://tempuri.org/</value>
+                <array name="rec_fields" type="record" depth="1">
+                  <record javaclass="com.wm.util.Values">
+                    <value name="node_type">record</value>
+                    <value name="field_name">tns1:customerSignorSearchResults</value>
+                    <value name="field_type">record</value>
+                    <value name="field_dim">1</value>
+                    <value name="field_opt">true</value>
+                    <value name="nillable">true</value>
+                    <value name="field_xmlns">http://tempuri.org/</value>
+                    <array name="rec_fields" type="record" depth="1">
+                      <record javaclass="com.wm.util.Values">
+                        <value name="node_type">record</value>
+                        <value name="node_comment"></value>
+                        <record name="node_hints" javaclass="com.wm.util.Values">
+                          <null name="field_usereditable"/>
+                          <value name="field_largerEditor">false</value>
+                          <value name="field_password">false</value>
+                        </record>
+                        <value name="field_name">tns1:companyId</value>
+                        <value name="field_type">string</value>
+                        <value name="field_dim">0</value>
+                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                          <value name="contentType">1</value>
+                          <value name="internalType">reference</value>
+                          <value name="dataTypeVersion">dtVersion2</value>
+                          <array name="targetNames" type="record" depth="1">
+                            <record javaclass="com.wm.util.Values">
+                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                              <value name="ncName">int</value>
+                            </record>
+                          </array>
+                        </record>
+                        <value name="nillable">false</value>
+                        <value name="field_xmlns">http://tempuri.org/</value>
+                      </record>
+                      <record javaclass="com.wm.util.Values">
+                        <value name="node_type">record</value>
+                        <value name="node_comment"></value>
+                        <record name="node_hints" javaclass="com.wm.util.Values">
+                          <null name="field_usereditable"/>
+                          <value name="field_largerEditor">false</value>
+                          <value name="field_password">false</value>
+                        </record>
+                        <value name="field_name">tns1:companyName</value>
+                        <value name="field_type">string</value>
+                        <value name="field_dim">0</value>
+                        <value name="field_opt">true</value>
+                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                          <value name="contentType">1</value>
+                          <value name="internalType">reference</value>
+                          <value name="dataTypeVersion">dtVersion2</value>
+                          <array name="targetNames" type="record" depth="1">
+                            <record javaclass="com.wm.util.Values">
+                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                              <value name="ncName">string</value>
+                            </record>
+                          </array>
+                        </record>
+                        <value name="nillable">false</value>
+                        <value name="field_xmlns">http://tempuri.org/</value>
+                      </record>
+                      <record javaclass="com.wm.util.Values">
+                        <value name="node_type">record</value>
+                        <value name="node_comment"></value>
+                        <record name="node_hints" javaclass="com.wm.util.Values">
+                          <null name="field_usereditable"/>
+                          <value name="field_largerEditor">false</value>
+                          <value name="field_password">false</value>
+                        </record>
+                        <value name="field_name">tns1:consumerId</value>
+                        <value name="field_type">string</value>
+                        <value name="field_dim">0</value>
+                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                          <value name="contentType">1</value>
+                          <value name="internalType">reference</value>
+                          <value name="dataTypeVersion">dtVersion2</value>
+                          <array name="targetNames" type="record" depth="1">
+                            <record javaclass="com.wm.util.Values">
+                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                              <value name="ncName">int</value>
+                            </record>
+                          </array>
+                        </record>
+                        <value name="nillable">false</value>
+                        <value name="field_xmlns">http://tempuri.org/</value>
+                      </record>
+                      <record javaclass="com.wm.util.Values">
+                        <value name="node_type">record</value>
+                        <value name="node_comment"></value>
+                        <record name="node_hints" javaclass="com.wm.util.Values">
+                          <null name="field_usereditable"/>
+                          <value name="field_largerEditor">false</value>
+                          <value name="field_password">false</value>
+                        </record>
+                        <value name="field_name">tns1:firstName</value>
+                        <value name="field_type">string</value>
+                        <value name="field_dim">0</value>
+                        <value name="field_opt">true</value>
+                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                          <value name="contentType">1</value>
+                          <value name="internalType">reference</value>
+                          <value name="dataTypeVersion">dtVersion2</value>
+                          <array name="targetNames" type="record" depth="1">
+                            <record javaclass="com.wm.util.Values">
+                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                              <value name="ncName">string</value>
+                            </record>
+                          </array>
+                        </record>
+                        <value name="nillable">false</value>
+                        <value name="field_xmlns">http://tempuri.org/</value>
+                      </record>
+                      <record javaclass="com.wm.util.Values">
+                        <value name="node_type">record</value>
+                        <value name="node_comment"></value>
+                        <record name="node_hints" javaclass="com.wm.util.Values">
+                          <null name="field_usereditable"/>
+                          <value name="field_largerEditor">false</value>
+                          <value name="field_password">false</value>
+                        </record>
+                        <value name="field_name">tns1:lastName</value>
+                        <value name="field_type">string</value>
+                        <value name="field_dim">0</value>
+                        <value name="field_opt">true</value>
+                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                          <value name="contentType">1</value>
+                          <value name="internalType">reference</value>
+                          <value name="dataTypeVersion">dtVersion2</value>
+                          <array name="targetNames" type="record" depth="1">
+                            <record javaclass="com.wm.util.Values">
+                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                              <value name="ncName">string</value>
+                            </record>
+                          </array>
+                        </record>
+                        <value name="nillable">false</value>
+                        <value name="field_xmlns">http://tempuri.org/</value>
+                      </record>
+                      <record javaclass="com.wm.util.Values">
+                        <value name="node_type">record</value>
+                        <value name="node_comment"></value>
+                        <record name="node_hints" javaclass="com.wm.util.Values">
+                          <null name="field_usereditable"/>
+                          <value name="field_largerEditor">false</value>
+                          <value name="field_password">false</value>
+                        </record>
+                        <value name="field_name">tns1:SIN</value>
+                        <value name="field_type">string</value>
+                        <value name="field_dim">0</value>
+                        <value name="field_opt">true</value>
+                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                          <value name="contentType">1</value>
+                          <value name="internalType">reference</value>
+                          <value name="dataTypeVersion">dtVersion2</value>
+                          <array name="targetNames" type="record" depth="1">
+                            <record javaclass="com.wm.util.Values">
+                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                              <value name="ncName">string</value>
+                            </record>
+                          </array>
+                        </record>
+                        <value name="nillable">false</value>
+                        <value name="field_xmlns">http://tempuri.org/</value>
+                      </record>
+                      <record javaclass="com.wm.util.Values">
+                        <value name="node_type">record</value>
+                        <value name="node_comment"></value>
+                        <record name="node_hints" javaclass="com.wm.util.Values">
+                          <value name="field_largerEditor">false</value>
+                          <value name="field_password">false</value>
+                        </record>
+                        <value name="field_name">tns1:customerSignorAddressesResponse</value>
+                        <value name="field_type">record</value>
+                        <value name="field_dim">0</value>
+                        <value name="field_opt">true</value>
+                        <value name="nillable">false</value>
+                        <value name="field_xmlns">http://tempuri.org/</value>
+                        <array name="rec_fields" type="record" depth="1">
+                          <record javaclass="com.wm.util.Values">
+                            <value name="node_type">record</value>
+                            <value name="field_name">tns1:customerSignorAddressResponse</value>
+                            <value name="field_type">record</value>
+                            <value name="field_dim">1</value>
+                            <value name="field_opt">true</value>
+                            <value name="nillable">true</value>
+                            <value name="field_xmlns">http://tempuri.org/</value>
+                            <array name="rec_fields" type="record" depth="1">
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="node_comment"></value>
+                                <record name="node_hints" javaclass="com.wm.util.Values">
+                                  <null name="field_usereditable"/>
+                                  <value name="field_largerEditor">false</value>
+                                  <value name="field_password">false</value>
+                                </record>
+                                <value name="field_name">tns1:addressId</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">int</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="field_name">tns1:addressTypeCode</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <value name="field_opt">true</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">string</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="field_name">tns1:addressLine1</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <value name="field_opt">true</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">string</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="field_name">tns1:addressLine2</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <value name="field_opt">true</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">string</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="field_name">tns1:addressLine3</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <value name="field_opt">true</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">string</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="field_name">tns1:city</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <value name="field_opt">true</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">string</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="field_name">tns1:county</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <value name="field_opt">true</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">string</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="field_name">tns1:postalCode</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <value name="field_opt">true</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">string</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="field_name">tns1:provinceId</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">int</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="field_name">tns1:province</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <value name="field_opt">true</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">string</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="field_name">tns1:countryId</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">int</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="field_name">tns1:country</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <value name="field_opt">true</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">string</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="field_name">tns1:isSuspectAddress</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">boolean</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="field_name">tns1:integrationCode</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <value name="field_opt">true</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">string</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="field_name">tns1:moveInDate</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">dateTime</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="node_comment"></value>
+                                <record name="node_hints" javaclass="com.wm.util.Values">
+                                  <null name="field_usereditable"/>
+                                  <value name="field_largerEditor">false</value>
+                                  <value name="field_password">false</value>
+                                </record>
+                                <value name="field_name">tns1:moveOutDate</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">dateTime</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="node_comment"></value>
+                                <record name="node_hints" javaclass="com.wm.util.Values">
+                                  <null name="field_usereditable"/>
+                                  <value name="field_largerEditor">false</value>
+                                  <value name="field_password">false</value>
+                                </record>
+                                <value name="field_name">tns1:status</value>
+                                <value name="field_type">string</value>
+                                <value name="field_dim">0</value>
+                                <value name="field_opt">true</value>
+                                <record name="field_content_type" javaclass="com.wm.util.Values">
+                                  <value name="contentType">1</value>
+                                  <value name="internalType">reference</value>
+                                  <value name="dataTypeVersion">dtVersion2</value>
+                                  <array name="targetNames" type="record" depth="1">
+                                    <record javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                      <value name="ncName">string</value>
+                                    </record>
+                                  </array>
+                                </record>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                              </record>
+                              <record javaclass="com.wm.util.Values">
+                                <value name="node_type">record</value>
+                                <value name="field_name">tns1:customerSearchAddressCategories</value>
+                                <value name="field_type">record</value>
+                                <value name="field_dim">0</value>
+                                <value name="field_opt">true</value>
+                                <value name="nillable">false</value>
+                                <value name="field_xmlns">http://tempuri.org/</value>
+                                <array name="rec_fields" type="record" depth="1">
+                                  <record javaclass="com.wm.util.Values">
+                                    <value name="node_type">record</value>
+                                    <value name="field_name">tns1:customerSearchAddressCategory</value>
+                                    <value name="field_type">record</value>
+                                    <value name="field_dim">1</value>
+                                    <value name="field_opt">true</value>
+                                    <value name="nillable">true</value>
+                                    <value name="field_xmlns">http://tempuri.org/</value>
+                                    <array name="rec_fields" type="record" depth="1">
+                                      <record javaclass="com.wm.util.Values">
+                                        <value name="node_type">record</value>
+                                        <value name="node_comment"></value>
+                                        <record name="node_hints" javaclass="com.wm.util.Values">
+                                          <null name="field_usereditable"/>
+                                          <value name="field_largerEditor">false</value>
+                                          <value name="field_password">false</value>
+                                        </record>
+                                        <value name="field_name">tns1:addressCategoryId</value>
+                                        <value name="field_type">string</value>
+                                        <value name="field_dim">0</value>
+                                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                                          <value name="contentType">1</value>
+                                          <value name="internalType">reference</value>
+                                          <value name="dataTypeVersion">dtVersion2</value>
+                                          <array name="targetNames" type="record" depth="1">
+                                            <record javaclass="com.wm.util.Values">
+                                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                              <value name="ncName">short</value>
+                                            </record>
+                                          </array>
+                                        </record>
+                                        <value name="nillable">false</value>
+                                        <value name="field_xmlns">http://tempuri.org/</value>
+                                      </record>
+                                      <record javaclass="com.wm.util.Values">
+                                        <value name="node_type">record</value>
+                                        <value name="field_name">tns1:category</value>
+                                        <value name="field_type">string</value>
+                                        <value name="field_dim">0</value>
+                                        <value name="field_opt">true</value>
+                                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                                          <value name="contentType">1</value>
+                                          <value name="internalType">reference</value>
+                                          <value name="dataTypeVersion">dtVersion2</value>
+                                          <array name="targetNames" type="record" depth="1">
+                                            <record javaclass="com.wm.util.Values">
+                                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                                              <value name="ncName">string</value>
+                                            </record>
+                                          </array>
+                                        </record>
+                                        <value name="nillable">false</value>
+                                        <value name="field_xmlns">http://tempuri.org/</value>
+                                      </record>
+                                    </array>
+                                    <value name="rec_closed">true</value>
+                                    <record name="schemaType" javaclass="com.wm.util.Values">
+                                      <value name="xmlns">http://tempuri.org/</value>
+                                      <value name="ncName">KEFCustomerSearchAddressCategoryResponse</value>
+                                    </record>
+                                  </record>
+                                </array>
+                                <value name="rec_closed">true</value>
+                                <record name="schemaType" javaclass="com.wm.util.Values">
+                                  <value name="xmlns">http://tempuri.org/</value>
+                                  <value name="ncName">ArrayOfKEFCustomerSearchAddressCategoryResponse</value>
+                                </record>
+                              </record>
+                            </array>
+                            <value name="rec_closed">true</value>
+                            <record name="schemaType" javaclass="com.wm.util.Values">
+                              <value name="xmlns">http://tempuri.org/</value>
+                              <value name="ncName">KEFCustomerSearchAddressResponse</value>
+                            </record>
+                          </record>
+                        </array>
+                        <value name="rec_closed">true</value>
+                        <record name="schemaType" javaclass="com.wm.util.Values">
+                          <value name="xmlns">http://tempuri.org/</value>
+                          <value name="ncName">ArrayOfKEFCustomerSearchAddressResponse2</value>
+                        </record>
+                      </record>
+                      <record javaclass="com.wm.util.Values">
+                        <value name="node_type">record</value>
+                        <value name="node_comment"></value>
+                        <record name="node_hints" javaclass="com.wm.util.Values">
+                          <null name="field_usereditable"/>
+                          <value name="field_largerEditor">false</value>
+                          <value name="field_password">false</value>
+                        </record>
+                        <value name="field_name">tns1:phoneNumber</value>
+                        <value name="field_type">string</value>
+                        <value name="field_dim">0</value>
+                        <value name="field_opt">true</value>
+                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                          <value name="contentType">1</value>
+                          <value name="internalType">reference</value>
+                          <value name="dataTypeVersion">dtVersion2</value>
+                          <array name="targetNames" type="record" depth="1">
+                            <record javaclass="com.wm.util.Values">
+                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                              <value name="ncName">string</value>
+                            </record>
+                          </array>
+                        </record>
+                        <value name="nillable">false</value>
+                        <value name="field_xmlns">http://tempuri.org/</value>
+                      </record>
+                      <record javaclass="com.wm.util.Values">
+                        <value name="node_type">record</value>
+                        <value name="node_comment"></value>
+                        <record name="node_hints" javaclass="com.wm.util.Values">
+                          <null name="field_usereditable"/>
+                          <value name="field_largerEditor">false</value>
+                          <value name="field_password">false</value>
+                        </record>
+                        <value name="field_name">tns1:statusDescription</value>
+                        <value name="field_type">string</value>
+                        <value name="field_dim">0</value>
+                        <value name="field_opt">true</value>
+                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                          <value name="contentType">1</value>
+                          <value name="internalType">reference</value>
+                          <value name="dataTypeVersion">dtVersion2</value>
+                          <array name="targetNames" type="record" depth="1">
+                            <record javaclass="com.wm.util.Values">
+                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                              <value name="ncName">string</value>
+                            </record>
+                          </array>
+                        </record>
+                        <value name="nillable">false</value>
+                        <value name="field_xmlns">http://tempuri.org/</value>
+                      </record>
+                    </array>
+                    <value name="rec_closed">true</value>
+                    <record name="schemaType" javaclass="com.wm.util.Values">
+                      <value name="xmlns">http://tempuri.org/</value>
+                      <value name="ncName">KEFCustomerSignorSearchResults</value>
+                    </record>
+                  </record>
+                </array>
+                <value name="rec_closed">true</value>
+                <record name="schemaType" javaclass="com.wm.util.Values">
+                  <value name="xmlns">http://tempuri.org/</value>
+                  <value name="ncName">ArrayOfKEFCustomerSignorSearchResults</value>
+                </record>
+              </record>
+              <record javaclass="com.wm.util.Values">
+                <value name="node_type">record</value>
+                <value name="node_comment"></value>
+                <record name="node_hints" javaclass="com.wm.util.Values">
+                  <value name="field_largerEditor">false</value>
+                  <value name="field_password">false</value>
+                </record>
+                <value name="field_name">tns1:errors</value>
+                <value name="field_type">record</value>
+                <value name="field_dim">0</value>
+                <value name="field_opt">true</value>
+                <value name="nillable">false</value>
+                <value name="field_xmlns">http://tempuri.org/</value>
+                <array name="rec_fields" type="record" depth="1">
+                  <record javaclass="com.wm.util.Values">
+                    <value name="node_type">record</value>
+                    <value name="field_name">tns1:error</value>
+                    <value name="field_type">record</value>
+                    <value name="field_dim">1</value>
+                    <value name="field_opt">true</value>
+                    <value name="nillable">true</value>
+                    <value name="field_xmlns">http://tempuri.org/</value>
+                    <array name="rec_fields" type="record" depth="1">
+                      <record javaclass="com.wm.util.Values">
+                        <value name="node_type">record</value>
+                        <value name="node_comment"></value>
+                        <record name="node_hints" javaclass="com.wm.util.Values">
+                          <null name="field_usereditable"/>
+                          <value name="field_largerEditor">false</value>
+                          <value name="field_password">false</value>
+                        </record>
+                        <value name="field_name">tns1:Element</value>
+                        <value name="field_type">string</value>
+                        <value name="field_dim">0</value>
+                        <value name="field_opt">true</value>
+                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                          <value name="contentType">1</value>
+                          <value name="internalType">reference</value>
+                          <value name="dataTypeVersion">dtVersion2</value>
+                          <array name="targetNames" type="record" depth="1">
+                            <record javaclass="com.wm.util.Values">
+                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                              <value name="ncName">string</value>
+                            </record>
+                          </array>
+                        </record>
+                        <value name="nillable">false</value>
+                        <value name="field_xmlns">http://tempuri.org/</value>
+                      </record>
+                      <record javaclass="com.wm.util.Values">
+                        <value name="node_type">record</value>
+                        <value name="field_name">tns1:EntityId</value>
+                        <value name="field_type">string</value>
+                        <value name="field_dim">0</value>
+                        <value name="field_opt">true</value>
+                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                          <value name="contentType">1</value>
+                          <value name="internalType">reference</value>
+                          <value name="dataTypeVersion">dtVersion2</value>
+                          <array name="targetNames" type="record" depth="1">
+                            <record javaclass="com.wm.util.Values">
+                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                              <value name="ncName">string</value>
+                            </record>
+                          </array>
+                        </record>
+                        <value name="nillable">false</value>
+                        <value name="field_xmlns">http://tempuri.org/</value>
+                      </record>
+                      <record javaclass="com.wm.util.Values">
+                        <value name="node_type">record</value>
+                        <value name="field_name">tns1:EntityCode</value>
+                        <value name="field_type">string</value>
+                        <value name="field_dim">0</value>
+                        <value name="field_opt">true</value>
+                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                          <value name="contentType">1</value>
+                          <value name="internalType">reference</value>
+                          <value name="dataTypeVersion">dtVersion2</value>
+                          <array name="targetNames" type="record" depth="1">
+                            <record javaclass="com.wm.util.Values">
+                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                              <value name="ncName">string</value>
+                            </record>
+                          </array>
+                        </record>
+                        <value name="nillable">false</value>
+                        <value name="field_xmlns">http://tempuri.org/</value>
+                      </record>
+                      <record javaclass="com.wm.util.Values">
+                        <value name="node_type">record</value>
+                        <value name="field_name">tns1:ErrorDescription</value>
+                        <value name="field_type">string</value>
+                        <value name="field_dim">0</value>
+                        <value name="field_opt">true</value>
+                        <record name="field_content_type" javaclass="com.wm.util.Values">
+                          <value name="contentType">1</value>
+                          <value name="internalType">reference</value>
+                          <value name="dataTypeVersion">dtVersion2</value>
+                          <array name="targetNames" type="record" depth="1">
+                            <record javaclass="com.wm.util.Values">
+                              <value name="xmlns">http://www.w3.org/2001/XMLSchema</value>
+                              <value name="ncName">string</value>
+                            </record>
+                          </array>
+                        </record>
+                        <value name="nillable">false</value>
+                        <value name="field_xmlns">http://tempuri.org/</value>
+                      </record>
+                    </array>
+                    <value name="rec_closed">true</value>
+                    <record name="schemaType" javaclass="com.wm.util.Values">
+                      <value name="xmlns">http://tempuri.org/</value>
+                      <value name="ncName">IntegrationError</value>
+                    </record>
+                  </record>
+                </array>
+                <value name="rec_closed">true</value>
+                <record name="schemaType" javaclass="com.wm.util.Values">
+                  <value name="xmlns">http://tempuri.org/</value>
+                  <value name="ncName">ArrayOfIntegrationError</value>
+                </record>
+              </record>
+            </array>
+            <value name="rec_closed">true</value>
+            <record name="schemaType" javaclass="com.wm.util.Values">
+              <value name="xmlns">http://tempuri.org/</value>
+              <value name="ncName">KEFCustomerSearchResults</value>
+            </record>
+          </record>
+        </array>
+        <value name="rec_closed">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">SOAP-FAULT</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="field_opt">true</value>
+        <value name="nillable">true</value>
+        <array name="rec_fields" type="record" depth="1">
+          <record javaclass="com.wm.util.Values">
+            <value name="node_type">unknown</value>
+            <value name="field_name">faultcode</value>
+            <value name="field_type">string</value>
+            <value name="field_dim">0</value>
+            <value name="field_opt">true</value>
+            <value name="nillable">true</value>
+          </record>
+          <record javaclass="com.wm.util.Values">
+            <value name="node_type">unknown</value>
+            <value name="field_name">faultstring</value>
+            <value name="field_type">string</value>
+            <value name="field_dim">0</value>
+            <value name="field_opt">true</value>
+            <value name="nillable">true</value>
+          </record>
+          <record javaclass="com.wm.util.Values">
+            <value name="node_type">unknown</value>
+            <value name="field_name">faultactor</value>
+            <value name="field_type">string</value>
+            <value name="field_dim">0</value>
+            <value name="field_opt">true</value>
+            <value name="nillable">true</value>
+          </record>
+          <record javaclass="com.wm.util.Values">
+            <value name="node_type">record</value>
+            <value name="field_name">detail</value>
+            <value name="field_type">record</value>
+            <value name="field_dim">0</value>
+            <value name="field_opt">true</value>
+            <value name="nillable">true</value>
+            <array name="rec_fields" type="record" depth="1">
+            </array>
+          </record>
+        </array>
+      </record>
+    </array>
+  </record>
+</Values>
