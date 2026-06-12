@@ -309,6 +309,76 @@ End-to-end test with 3 sample composites. Score: 80% (C). All 6 components pushe
 
 ---
 
+### Workato → Boomi: Jira issue sync to Salesforce (COMPLETE — 2026-06-09, org account)
+Folder: `MIG_workato_migration` (folderId `Rjo4NjE3OTg3`, account `tpptechstone-O6Y5DV`)
+
+| Component | ID | Notes |
+|---|---|---|
+| MIG_Sync new/updated issue from Jira to Salesforce (process) | 6f2c697a-98ef-498b-8217-4f7b4abd0b3b | Pushed |
+
+**Remaining manual GUI steps:**
+1. shape1 (Start): Configure as WSS listener OR Jira polling schedule — currently passthrough
+2. shape2 (Message placeholder): Replace with HTTP connector polling Jira API for updated issues
+3. shape3 (Search Cases): Import Salesforce QUERY Case operation → add operationId
+4. shape4 (Search Accounts): Import Salesforce QUERY Account operation → add operationId
+5. shape5/7/9 (Decisions): Reconfigure to compare actual SF query result count vs blank/present
+6. shape6 (Create Account): Import Salesforce CREATE Account operation → add operationId
+7. shape8 (Create Case): Import Salesforce CREATE Case operation → add operationId
+8. shape10 (Update Case): Import Salesforce UPDATE Case operation → add operationId
+**Reuse Salesforce connection:** `647ff483-9f3e-4b49-a32f-a906f65c347c` (Salesforce Connection, Manish A folder)
+
+---
+
+### webMethods IS → Boomi: GLD Compliance Migration (COMPLETE — 2026-06-09, org account)
+Source: `GLDComplianceAdapterEnv` (webMethods IS 6.5, Oracle JDBC adapter, keybank.com package).
+Folder: `MIG_gld_compliance` (folderId `Rjo4NjIxNDk3`, account `tpptechstone-O6Y5DV`)
+
+| Component | ID | Notes |
+|---|---|---|
+| MIG_WM_GLD_DB_Connection (connector-settings) | 370bf544-60a9-4048-8197-0c442243571d | Oracle DatabaseV2, jdbc:oracle:thin:@CSC06DSHORA1S:1522:ILMSUM, user GLD_SCHEMA |
+| MIG_WM_GLD_QueryCompliance_Operation (connector-action) | 62cc118c-14b6-4c10-bf56-08d37c208458 | SELECT from GLD_SCHEMA.COMPLIANCE_RECORDS WHERE STATUS='PENDING' ROWNUM<=1000 |
+| MIG_WM_GLDCompliance_Process (process) | 8c2d51b4-d929-4fc5-baa9-814e4a3769d0 | 15-shape process covering all 21 webMethods constructs |
+
+**Note:** GLDComplianceAdapterEnv contains only a JDBC adapter connection node — no flow services. The Boomi process is a representative skeleton demonstrating all 21 Excel-mapped constructs. Populate shape5 (Map) and shape7 (Groovy loop) when actual flow service logic is provided.
+
+**Output files:**
+- `WebMethods/missing_components.xlsx` — 9 gap constructs not in the Excel mapping (JDBC Connection, Adapter Service, FLOW Service, IS Document Type, ISMemDataImpl, ELSEIF chaining, CONTINUE, pub.flow:sequence, JMS send)
+- `WebMethods/map_field_mappings.xlsx` — Map shape field mapping template (5 representative COMPLIANCE_RECORDS fields + Instructions sheet); no actual MAP steps found in source
+
+**Remaining manual steps:**
+1. shape5 (Map): Create Boomi Map component in GUI, set mapId referencing source/target JSON profiles
+2. shape7 (Groovy): Replace TODO comment with actual compliance record processing logic
+3. DB Connection: Set `GLD_SCHEMA` password via Boomi Environment Extensions (password field is blank in XML)
+
+#### webMethods → Boomi Component Mapping Reference
+Source: `WebMethods/Agent Bridge Web Methods to Boomi Component Mapping.xlsx`
+
+| # | webMethods Construct | Boomi Equivalent | Shape / Component | Notes |
+|---|---|---|---|---|
+| 1 | Workflow | Process | Start shape | Top-level container |
+| 2 | TRY | Try/Catch (try path) | catcherrors shape, Try dragpoint | catchAll="true" |
+| 3 | CATCH | Try/Catch (catch path) | catcherrors shape, Catch dragpoint | retryCount configurable |
+| 4 | FINALLY | Route default branch | Route shape, Default dragpoint | Always executes |
+| 5 | IF | Decision (true path) | decision shape | comparison="notequals" etc. |
+| 6 | CASE | Route path (N≥3) | Route shape, keyed dragpoint | qualifier="equals" |
+| 7 | ELSE | Decision (false path) | decision shape, false dragpoint | |
+| 8 | ELSEIF | Chained Decision (false path) | Second decision shape on false path | Not in original mapping — see missing_components.xlsx |
+| 9 | BRANCH | Branch shape | branch shape | numBranches=N |
+| 10 | SWITCH | Route shape | route shape | routevalues keyed by value |
+| 11 | SEQUENCE | Branch shape (2 tracks) | branch shape, identifier="1"/"2" | |
+| 12 | LOOP | Data Process Groovy | dataprocess shape | Iterates over doc count |
+| 13 | DO | Data Process Groovy | dataprocess shape | do-while variant in Groovy |
+| 14 | WHILE | Data Process Groovy | dataprocess shape | while loop in Groovy |
+| 15 | REPEAT | Data Process Groovy | dataprocess shape | repeat-until variant |
+| 16 | UNTIL | Data Process Groovy | dataprocess shape | condition check in Groovy |
+| 17 | CONTINUE | dataContext.discard() | Inside Groovy script | Skip current iteration |
+| 18 | BREAK | Stop shape (continue=true) | stop shape | Exits current path, continues process |
+| 19 | EXIT | Stop shape (continue=false) | stop shape | Terminates process execution |
+| 20 | INVOKE | Connector step | connectoraction shape | DB/REST/etc. connector |
+| 21 | MAP | Map shape | map shape | Requires Map component (mapId) |
+
+---
+
 ### Oracle SOA Suite → Boomi: EBS Integrations (IN PROGRESS — SETUP PHASE)
 25+ BPEL composites. Pipeline built and validated with samples; awaiting Oracle SOA credentials.
 
