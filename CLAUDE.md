@@ -272,6 +272,21 @@ Folder: `ClaudeCode/MIG_<project>` (folderId `Rjo4NTY2MjA1`)
 6. shape11: Configure Box Upload operation — folder = `DPP_BOX_FOLDER_ID`, filename = `DPP_ATTACHMENT_NAME`
 7. Box connector shapes (4, 7, 11): Wire to the Box connection created in step 1
 
+### Workato → Boomi: AIMigrationTest5 (COMPLETE — 2026-06-08)
+Folder: `MIG_AIMigrationTest5` (folderId `Rjo4NjE4MDg5`). Preservation score: 90% (Grade B).
+Source: Workato `/AI` folder (folder_id 31266135), recipe_id 73034327. Trigger: daily scheduler.
+
+| Component | ID |
+|---|---|
+| MIG_AIMigrationTest5 (process) | 8dd63d96-621e-48b1-b13a-ec8306ebbfed |
+
+**Remaining manual GUI steps:**
+1. Shape 1 (connector_action): Unknown provider — open process in Boomi canvas and configure the connector/operation
+2. Shape 2 (connector_action, label `04557745`): Unknown provider — configure connector/operation in canvas
+> Both steps were flagged `requires_review` in the Workato source (connector metadata not exposed via API).
+
+---
+
 ### Oracle SOA Suite → Boomi: Sample Pipeline Test (COMPLETE — 2026-05-25, personal account)
 End-to-end test with 3 sample composites. Score: 80% (C). All 6 components pushed to Boomi folder **`MIG_oracle_soa_test`** (folderId `Rjo4NTY4NTU1` on personal account — does not exist on org account).
 
@@ -322,4 +337,6 @@ python migrate.py --from oracle_soa --source-dir /path/to/sars/ --to boomi --pro
 - `<flow>` parallel → Boomi Branch (sequential — medium severity gap)
 - Oracle Mediator composites → flagged for manual analysis (not auto-migrated)
 - Human Task composites → requires separate Boomi Flow implementation
+
+
 
