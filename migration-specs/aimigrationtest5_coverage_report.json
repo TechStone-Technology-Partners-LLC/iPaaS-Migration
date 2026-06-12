@@ -1,0 +1,103 @@
+{
+  "project": "aimigrationtest5",
+  "source_system": "workato",
+  "generated_at": "2026-06-09T01:13:40.762048+00:00",
+  "strict_mode": false,
+  "preservation_score": 90.0,
+  "grade": "B",
+  "summary": {
+    "total_source_steps": 2,
+    "fully_preserved": 0,
+    "partially_preserved": 2,
+    "needs_human_review": 0,
+    "blocked": 0,
+    "total_gaps": 2,
+    "connections_needing_setup": 0
+  },
+  "score_breakdown": {
+    "base_score": 100.0,
+    "total_deducted": 10.0,
+    "deductions": [
+      {
+        "flow": "AIMigrationTest5",
+        "step": "",
+        "severity": "medium",
+        "points_deducted": 5.0,
+        "reason": "Workato connector action — verify Boomi has equivalent native connector before using REST."
+      },
+      {
+        "flow": "AIMigrationTest5",
+        "step": "04557745",
+        "severity": "medium",
+        "points_deducted": 5.0,
+        "reason": "Workato connector action — verify Boomi has equivalent native connector before using REST."
+      }
+    ]
+  },
+  "flows": [
+    {
+      "name": "AIMigrationTest5",
+      "steps": 2,
+      "fully_preserved": 0,
+      "partially_preserved": 2,
+      "needs_human": 0,
+      "blocked": 0,
+      "flow_preservation_score": 0.0
+    }
+  ],
+  "connection_issues": [],
+  "human_review_checklist": [
+    {
+      "priority": "MEDIUM",
+      "flow": "AIMigrationTest5",
+      "step": "",
+      "source_ref": "AIMigrationTest5:step-1",
+      "action_required": "Verify Boomi equivalent implements identical behavior; test with real integration data",
+      "boomi_shape": "TBD",
+      "decision_question": "",
+      "suggested_implementation": ""
+    },
+    {
+      "priority": "MEDIUM",
+      "flow": "AIMigrationTest5",
+      "step": "04557745",
+      "source_ref": "AIMigrationTest5:step-2",
+      "action_required": "Verify Boomi equivalent implements identical behavior; test with real integration data",
+      "boomi_shape": "TBD",
+      "decision_question": "",
+      "suggested_implementation": ""
+    }
+  ],
+  "step_reports": [
+    {
+      "flow": "AIMigrationTest5",
+      "source_ref": "AIMigrationTest5:step-1",
+      "label": "",
+      "type": "connector_action",
+      "depth": 0,
+      "status": "partially_preserved",
+      "severity": "medium",
+      "enriched": false,
+      "has_field_mappings": false,
+      "has_groovy_equivalent": false,
+      "has_behavioral_notes": false,
+      "decision_required": false,
+      "auto_resolved": false
+    },
+    {
+      "flow": "AIMigrationTest5",
+      "source_ref": "AIMigrationTest5:step-2",
+      "label": "04557745",
+      "type": "connector_action",
+      "depth": 0,
+      "status": "partially_preserved",
+      "severity": "medium",
+      "enriched": false,
+      "has_field_mappings": false,
+      "has_groovy_equivalent": false,
+      "has_behavioral_notes": false,
+      "decision_required": false,
+      "auto_resolved": false
+    }
+  ]
+}
