@@ -329,26 +329,47 @@ Folder: `MIG_workato_migration` (folderId `Rjo4NjE3OTg3`, account `tpptechstone-
 
 ---
 
-### webMethods IS → Boomi: GLD Compliance Migration (COMPLETE — 2026-06-09, org account)
-Source: `GLDComplianceAdapterEnv` (webMethods IS 6.5, Oracle JDBC adapter, keybank.com package).
+### webMethods IS → Boomi: GLD Compliance Migration (COMPLETE — 2026-06-14, org account)
+Source: `GLDComplianceAdapterEnv` + `GLDComplianceAdapterServices` (webMethods IS 6.5, Oracle JDBC adapter, keybank.com package).
 Folder: `MIG_gld_compliance` (folderId `Rjo4NjIxNDk3`, account `tpptechstone-O6Y5DV`)
 
+#### Sub-project A: GLDComplianceAdapterEnv (skeleton — 21 webMethods construct coverage)
 | Component | ID | Notes |
 |---|---|---|
 | MIG_WM_GLD_DB_Connection (connector-settings) | 370bf544-60a9-4048-8197-0c442243571d | Oracle DatabaseV2, jdbc:oracle:thin:@CSC06DSHORA1S:1522:ILMSUM, user GLD_SCHEMA |
 | MIG_WM_GLD_QueryCompliance_Operation (connector-action) | 62cc118c-14b6-4c10-bf56-08d37c208458 | SELECT from GLD_SCHEMA.COMPLIANCE_RECORDS WHERE STATUS='PENDING' ROWNUM<=1000 |
 | MIG_WM_GLDCompliance_Process (process) | 8c2d51b4-d929-4fc5-baa9-814e4a3769d0 | 15-shape process covering all 21 webMethods constructs |
 
-**Note:** GLDComplianceAdapterEnv contains only a JDBC adapter connection node — no flow services. The Boomi process is a representative skeleton demonstrating all 21 Excel-mapped constructs. Populate shape5 (Map) and shape7 (Groovy loop) when actual flow service logic is provided.
+#### Sub-project B: GLDComplianceAdapterServices (functional migration — 7 Oracle SP/SELECT ops)
+All 12 components pushed. Generator: `scripts/gen_gld_process.py`
+
+| Component | ID | Notes |
+|---|---|---|
+| MIG_WM_GLD_DB_Connection (connector-settings) | 370bf544-60a9-4048-8197-0c442243571d | Reused from sub-project A |
+| MIG_WM_GLD_MapTest_Source_Profile (profile.json) | bb7ed930-f04a-44e6-b09c-eb8a01965b98 | A1-A5 test fields |
+| MIG_WM_GLD_MapTest_Target_Profile (profile.json) | 53c00ca7-9209-429a-ae57-ab87004d5343 | B1-B5 test fields |
+| MIG_WM_GLD_MapTestSkill_Map (transform.map) | 9f06d114-4131-4e80-adf8-891da4563641 | Direct/Groovy/Default/Integer transformations |
+| MIG_WM_GLD_LogCheckRequest_Operation (connector-action) | c398179a-9679-4727-b666-9efe7c0ed969 | SP: ACCLOGCHECKREQUEST, 25 IN params |
+| MIG_WM_GLD_LogCheckRequestXML_Operation (connector-action) | f9571d99-a2bd-4945-893a-5ac49ace2770 | SP: LOGXMLREQUEST, 5 IN params |
+| MIG_WM_GLD_LogCheckReply_Operation (connector-action) | 50970f87-b37a-4d82-8244-92afff5fbb17 | SP: ACCLOGCHECKREPLY, 3 IN params |
+| MIG_WM_GLD_LogCheckReplyError_Operation (connector-action) | 1d853cdf-75fb-4603-9cbc-7aa3d055b5ad | SP: ACCLOGCHECKREPLYERROR, 4 IN params |
+| MIG_WM_GLD_SelectCustomerRequest_Operation (connector-action) | 72e81746-77ca-4351-b866-1bad57a1fecf | SELECT DISTINCT JOIN, 1 IN (CIUREFNBR), 28 OUT fields |
+| MIG_WM_GLD_UpdateCIURefNbr_Operation (connector-action) | ae2ca2df-cd5c-47c9-bcdf-bb76c2857244 | SP: ACCUPDATECIUREFNBR, 2 IN params |
+| MIG_WM_GLD_PurgeData_Operation (connector-action) | b2488392-5fc5-4c1f-9a09-91210a3188bd | SP: ACCPURGEDATA, no params |
+| MIG_WM_GLDComplianceAdapterServices_Process (process) | 9f634c7f-e394-49c0-a0c7-5a745a5788e2 | 23-shape process: Try/Catch, 7 DB ops, Map, Decision (true/false paths) |
 
 **Output files:**
-- `WebMethods/missing_components.xlsx` — 9 gap constructs not in the Excel mapping (JDBC Connection, Adapter Service, FLOW Service, IS Document Type, ISMemDataImpl, ELSEIF chaining, CONTINUE, pub.flow:sequence, JMS send)
-- `WebMethods/map_field_mappings.xlsx` — Map shape field mapping template (5 representative COMPLIANCE_RECORDS fields + Instructions sheet); no actual MAP steps found in source
+- `WebMethods/missing_components.xlsx` — 9 gap constructs not in the Excel mapping
+- `WebMethods/map_field_mappings.xlsx` — Map shape field mapping template
+- `WebMethods/MD/Boomi.md` — authoritative build reference synthesizing all source docs
+- `scripts/gen_gld_process.py` — process XML generator (all shape types with correct schema)
 
 **Remaining manual steps:**
-1. shape5 (Map): Create Boomi Map component in GUI, set mapId referencing source/target JSON profiles
-2. shape7 (Groovy): Replace TODO comment with actual compliance record processing logic
-3. DB Connection: Set `GLD_SCHEMA` password via Boomi Environment Extensions (password field is blank in XML)
+1. shape2 (Set Properties): Wire 21 DDPs to actual input source fields — currently set to empty static placeholders
+2. shape9 (Set Properties CIU): Replace with actual CIU HTTP/REST connector call, wire DPP_CIU_REF_NBR from response
+3. shape6 (Set Properties): Wire DPP_ACC_CHECK_REQUEST_ID from logCheckRequest response (OUT param not auto-captured via Standard Insert)
+4. shape15 (Decision): Wire DPP_CHECK_RESULT from CIU response — currently no DPP is being set to "TRUE"
+5. DB Connection: Set `GLD_SCHEMA` password via Boomi Environment Extensions (password field is blank in XML)
 
 #### webMethods → Boomi Component Mapping Reference
 Source: `WebMethods/Agent Bridge Web Methods to Boomi Component Mapping.xlsx`
