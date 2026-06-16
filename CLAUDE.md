@@ -10,6 +10,38 @@ This workspace is a **platform-agnostic integration migration agent**. It migrat
 | Target (generate + push) | Workato, Boomi |
 | Future | SAP, Azure Logic Apps |
 
+## WebmethodsToBoomi_Migration Agent
+
+Dedicated agent for webMethods IS → Boomi migrations. Follows the 4-phase pipeline from `WebMethods/Instruction.md`.
+
+```bash
+# Interactive (will prompt for package name)
+python scripts/wm_migration_agent.py
+
+# Non-interactive
+python scripts/wm_migration_agent.py --package GLDComplianceAdapterServices
+python scripts/wm_migration_agent.py --package MyPackage --source-dir /path/to/exports/MyPackage
+```
+
+**Phase 1 (analysis — runs automatically):**
+1. Scans `iPaas Migration/WebMethods/GLDProject/<PackageName>/` for `.ndf`, `.idf`, `manifest.v3`, `flow.xml` files
+2. Calls Claude API to produce `WebMethods/Analysis/<PackageName>_Analysis.md`
+3. Synthesizes `WebMethods/MD/PackageAnalysis.md` (the Boomi build reference)
+4. **Stops** — awaits user instruction
+
+**Subsequent phases (manual, following Instruction.md):**
+- Step 8: Create Map component from Boomi Map Test Skill Excel
+- Step 9: Apply Agent Bridge Excel to process structure
+- Step 10: Generate `Boomi.md` from PackageAnalysis.md + Excel files
+- Step 13: Generate and push all Boomi components
+
+**Reference files:**
+- `WebMethods/Instruction.md` — full step-by-step migration instructions
+- `WebMethods/Agent Bridge Web Methods to Boomi Component Mapping.xlsx` — construct mapping
+- `WebMethods/MD/PackageAnalysis.md` — output: Boomi migration reference
+
+---
+
 ## Migration Agent Workflow
 
 Every migration follows this pipeline. Never skip phases.
