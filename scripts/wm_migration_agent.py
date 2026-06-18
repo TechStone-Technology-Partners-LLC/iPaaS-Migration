@@ -331,11 +331,12 @@ def main():
     print("  Stopping — waiting for next instructions.")
     print("=" * 60)
 
-    # Brief preview of what was found
+    # Brief preview of what was found (safe for Windows cp1252 console)
     if package_analysis_content:
         preview_lines = package_analysis_content.split("\n")[:15]
         print("\n--- PackageAnalysis.md preview (first 15 lines) ---")
-        print("\n".join(preview_lines))
+        for line in preview_lines:
+            print(line.encode(sys.stdout.encoding or "utf-8", errors="replace").decode(sys.stdout.encoding or "utf-8", errors="replace"))
         print("...\n")
 
 

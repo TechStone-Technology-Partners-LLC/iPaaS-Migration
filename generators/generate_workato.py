@@ -37,7 +37,7 @@ from datetime import datetime
 class WorkatoClient:
     BASE_URL = "https://www.workato.com/api"
 
-    def __init__(self, api_token, email=None):
+    def __init__(self, api_token, email=None, base_url=None):
         try:
             import requests
             self._requests = requests
@@ -48,6 +48,9 @@ class WorkatoClient:
         # Strip all whitespace — tokens copy-pasted from the UI may have embedded newlines
         api_token = "".join(api_token.split())
         self.api_token = api_token
+        # Allow base_url override for non-US regions (AU: app.au.workato.com, EU: app.eu.workato.com)
+        if base_url:
+            self.BASE_URL = base_url.rstrip("/") + "/api" if not base_url.rstrip("/").endswith("/api") else base_url.rstrip("/")
         self.session = self._requests.Session()
         self.session.headers.update({
             "Authorization": f"Bearer {api_token}",
@@ -655,7 +658,8 @@ def main():
 
     # Live run
     api_token = os.environ.get("WORKATO_API_TOKEN") or _load_env_var("WORKATO_API_TOKEN")
-    email = os.environ.get("WORKATO_EMAIL") or _load_env_var("WORKATO_EMAIL")
+    email     = os.environ.get("WORKATO_EMAIL")     or _load_env_var("WORKATO_EMAIL")
+    base_url  = os.environ.get("WORKATO_BASE_URL")  or _load_env_var("WORKATO_BASE_URL") or ""
 
     if not api_token:
         print("ERROR: WORKATO_API_TOKEN not set.", file=sys.stderr)
@@ -665,8 +669,10 @@ def main():
     # Show token prefix so the user can verify which token is being used
     token_preview = api_token[:12] + "..." if len(api_token) > 12 else api_token
     print(f"  Token loaded : {token_preview}  (email: {email or 'not set'})")
+    if base_url:
+        print(f"  Base URL     : {base_url}")
 
-    client = WorkatoClient(api_token, email)
+    client = WorkatoClient(api_token, email, base_url=base_url or None)
 
     print(f"\nConnecting to Workato API...")
 

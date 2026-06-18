@@ -1,166 +1,212 @@
-# PackageAnalysis — GLDComplianceAdapterServices → Boomi Migration Reference
+# PackageAnalysis — GLDComplianceAdapterServices → Workato Migration Reference
 
-> **Purpose:** This document is the authoritative reference for creating every Boomi component that corresponds to the `GLDComplianceAdapterServices` webMethods package. Every connection, operation, process shape, field mapping, and data type required to reproduce this package's behaviour in Boomi is captured here.
+> **Document Status:** COMPLETE — All 7 DB services documented with full parameter tables.
+> **Prepared by:** WebmethodsToBoomi_Migration Agent (re-oriented for Workato target)
+> **Source Build Date:** 2008-06-26 | **Source Platform:** webMethods IS 6.5
+> **Target Platform:** Workato (callable recipe + Oracle DB connector)
+> **Connection Package:** GLDComplianceAdapterEnv (documents JDBC alias)
+> **Services Package:** GLDComplianceAdapterServices (documents all 7 Oracle operations)
 
 ---
 
 ## 1. Source Package Summary
 
-| Property | Value |
+| Attribute | Value |
 |---|---|
-| Package Name | GLDComplianceAdapterServices |
-| Platform | webMethods Integration Server 6.5 |
-| Publisher | cwb02dwmis02.keybank.com |
-| Build Date | 2008-06-26 |
-| Component Type | JDBC Adapter Service package (7 adapter services) |
-| DB Adapter | JDBCAdapter → Oracle 10g |
-| DB Host | CSC06DSHORA1S:1522/ILMSUM |
-| DB Schema | GLD_SCHEMA |
-| Connection Alias | GLDComplianceAdapterEnv:ExpressOS |
+| **Primary Package** | `GLDComplianceAdapterServices` |
+| **Connection Package** | `GLDComplianceAdapterEnv` |
+| **Release** | `GLDComplianceAdapterServices 1.0 / 2008-06-26` |
+| **Source IS Version** | webMethods Integration Server 6.5 |
+| **Publisher Host** | `cwb02dwmis02.keybank.com` |
+| **Adapter Type** | JDBC Adapter (`JDBCAdapter`) |
+| **Connection Alias** | `GLDComplianceAdapterEnv:ExpressOS` |
+| **DB Host** | `CSC06DSHORA1S` |
+| **DB Port** | `1522` |
+| **DB SID** | `ILMSUM` |
+| **DB Schema** | `GLD_SCHEMA` |
+| **DB Platform** | Oracle 10g |
+| **Total DB Services** | 7 (5 stored procedures + 1 SELECT JOIN + 1 parameterless SP) |
+| **Flow Services in Package** | 0 — orchestration is in `GLDComplianceCheck` (separate package) |
+| **External System** | CIU (Customer Identification Unit) — external compliance check via HTTP |
 
----
+### Integration Flow Summary
 
-## 2. Boomi Component Plan
+The GLD Compliance workflow performs identity/compliance checks for new customers:
 
-### 2.1 Components to Create
-
-| # | Boomi Component | Type | Notes |
-|---|---|---|---|
-| 1 | MIG_WM_GLD_DB_Connection | connector-settings (DatabaseV2) | One shared connection for all 7 services |
-| 2 | MIG_WM_GLD_LogCheckRequest_Operation | connector-action (DatabaseV2) | Maps logCheckRequest SP |
-| 3 | MIG_WM_GLD_LogCheckRequestXML_Operation | connector-action (DatabaseV2) | Maps logCheckRequestXML SP |
-| 4 | MIG_WM_GLD_LogCheckReply_Operation | connector-action (DatabaseV2) | Maps logCheckReply SP |
-| 5 | MIG_WM_GLD_LogCheckReplyError_Operation | connector-action (DatabaseV2) | Maps logCheckReplyError SP |
-| 6 | MIG_WM_GLD_SelectCustomerAndRequest_Operation | connector-action (DatabaseV2) | Maps selectCustomerAndRequest SELECT JOIN |
-| 7 | MIG_WM_GLD_UpdateCIURefNbr_Operation | connector-action (DatabaseV2) | Maps updateCIURefNbr SP |
-| 8 | MIG_WM_GLD_PurgeData_Operation | connector-action (DatabaseV2) | Maps purgeData SP |
-| 9 | MIG_WM_GLDComplianceAdapterServices_Process | process | Orchestrates the full compliance check flow |
-
----
-
-## 3. Boomi Connection Component
-
-**Component Name:** `MIG_WM_GLD_DB_Connection`  
-**Connector Type:** `officialboomi-X3979C-dbv2da-prod` (DatabaseV2)
-
-```xml
-<GenericConnectionConfig>
-  <field id="url"        type="string"  value="jdbc:oracle:thin:@CSC06DSHORA1S:1522:ILMSUM"/>
-  <field id="className"  type="string"  value="oracle.jdbc.OracleDriver"/>
-  <field id="username"   type="string"  value="GLD_SCHEMA"/>
-  <field id="password"   type="password" value=""/>
-  <field id="schemaName" type="string"  value="GLD_SCHEMA"/>
-  <field id="enablePooling"       type="boolean" value="true"/>
-  <field id="maximumConnections"  type="integer" value="10"/>
-  <field id="minimumConnections"  type="integer" value="1"/>
-  <field id="validationQuery"     type="string"  value="SELECT 1 FROM DUAL"/>
-</GenericConnectionConfig>
+```
+CLIENT → [HTTP POST] → Workato Recipe
+    │
+    ├─ 1. ACCLOGCHECKREQUEST (Oracle SP)   ← Log new check request; get request ID
+    ├─ 2. LOGXMLREQUEST (Oracle SP)         ← Archive raw XML request
+    ├─ 3. [CIU HTTP call] (external)        ← Send to external compliance system
+    ├─ 4. ACCUPDATECIUREFNBR (Oracle SP)    ← Store CIU reference number back
+    │
+    ├─ IF CIU passed:
+    │   └─ 5a. ACCLOGCHECKREPLY (Oracle SP) ← Log successful reply
+    │
+    └─ IF CIU failed:
+        └─ 5b. ACCLOGCHECKREPLYERROR (Oracle SP) ← Log error reply
+    │
+    ├─ 6. selectCustomerAndRequest (SELECT JOIN) ← Retrieve full record
+    └─ RETURN: customer data to caller
+    │
+    └─ ON ERROR: ACCLOGCHECKREPLYERROR ← Log system error
 ```
 
-> **Security:** Set `GLD_SCHEMA` password via Boomi Environment Extensions — never hardcode in XML.
+---
+
+## 2. Workato Component Plan
+
+| # | Component Name | Workato Type | Source Artifact | Notes |
+|---|---|---|---|---|
+| 1 | `MIG_WM_GLD_Oracle_Connection` | Connection (Oracle DB) | `ExpressOS` JDBC alias | Create in Workato GUI — see §3 |
+| 2 | `MIG_WM_GLDComplianceAdapterServices_Recipe` | Recipe (callable) | `GLDComplianceCheck` flow service | HTTP POST trigger, 10 steps |
+| 3 | `MIG_WM_GLD_PurgeData_Recipe` | Recipe (scheduled) — optional | `purgeData` service | Daily/weekly maintenance recipe |
 
 ---
 
-## 4. Boomi Operation Components
+## 3. Workato Connection Component
 
-### Operation 1: MIG_WM_GLD_LogCheckRequest_Operation
-**Source Service:** `logCheckRequest`  
-**DB Action:** Stored Procedure — `GLD_SCHEMA.ACCLOGCHECKREQUEST`  
-**Boomi Operation Type:** `EXECUTE` (Stored Procedure)
+### 3.1 Oracle DB Connection
 
-**Input Parameters (IN):**
-| Parameter | DB Type | Java Mapping | wM Field |
-|---|---|---|---|
-| CUSTOMERNBR | VARCHAR2(18) | String | CustomerNbr |
-| CUSTOMERTYPE | VARCHAR2(3) | String | CustomerType |
-| PARTYTYPE | VARCHAR2(20) | String | PartyType |
-| BUSINESSNAME | VARCHAR2(40) | String | Businessname |
-| APPLICATIONNBR | VARCHAR2(18) | String | ApplicationNbr |
-| CHANNEL | VARCHAR2(10) | String | Channel |
-| LOB | VARCHAR2(10) | String | LOB |
-| PRODUCTCODE | VARCHAR2(10) | String | ProductCode |
-| SUBPRODUCTCODE | VARCHAR2(10) | String | SubProductCode |
-| POSTBACK | VARCHAR2(200) | String | PostBack |
-| COMPLIANCEREPLYEMAIL | VARCHAR2(75) | String | ComplianceReplyEmail |
-| FIRSTNAME | VARCHAR2(20) | String | FirstName |
-| MIDDLENAME | VARCHAR2(20) | String | MiddleName |
-| LASTNAME | VARCHAR2(20) | String | LastName |
-| ADDRESSLINE1 | VARCHAR2(40) | String | AddressLine1 |
-| ADDRESSLINE2 | VARCHAR2(40) | String | AddressLine2 |
-| ADDRESSLINE3 | VARCHAR2(40) | String | AddressLine3 |
-| ADDRESSLINE4 | VARCHAR2(40) | String | AddressLine4 |
-| CITY | VARCHAR2(20) | String | City |
-| STATE | VARCHAR2(2) | String | State |
-| ZIP | VARCHAR2(10) | String | Zip |
-| COUNTRYCODE | VARCHAR2(3) | String | CountryCode |
-| SSNTIN | VARCHAR2(9) | String | SSNTIN |
-| DOB | DATE | String | DOB |
-| REQUESTORSYSTEMREQUESTID | BIGINT | Long | RequestorSystemRequestID |
+| Parameter | Value |
+|---|---|
+| **Connection Name** | `MIG_WM_GLD_Oracle_Connection` |
+| **Provider** | Oracle |
+| **Host** | `CSC06DSHORA1S` |
+| **Port** | `1522` |
+| **SID / Service Name** | `ILMSUM` |
+| **Schema / Username** | `GLD_SCHEMA` |
+| **Password** | Retrieve from IS Admin UI: Adapters → JDBC → ExpressOS (proprietary encryption — cannot reuse directly) |
+| **Pool Min / Max** | 1 / 10 (configure at Workato plan level) |
 
-**Output Parameters (OUT):**
-| Parameter | DB Type | Java Mapping | wM Field |
-|---|---|---|---|
-| ACCCHECKREQUESTID | BIGINT | Long | accCheckRequestID |
+> **Security note:** The webMethods `node.ndf` stores the password in proprietary symmetric encryption. Obtain the plaintext from the IS Admin console or CyberArk/HashiCorp vault before decommissioning IS.
 
 ---
 
-### Operation 2: MIG_WM_GLD_LogCheckRequestXML_Operation
-**Source Service:** `logCheckRequestXML`  
-**DB Action:** Stored Procedure — `GLD_SCHEMA.LOGXMLREQUEST`  
-**Boomi Operation Type:** `EXECUTE`
+## 4. Operation Components (Workato Actions)
 
-**Input Parameters (IN):**
-| Parameter | DB Type | Java Mapping | wM Field |
-|---|---|---|---|
-| APPLICATIONID | BIGINT | Long | ApplicationID |
-| REQUEST | LONGVARCHAR (CLOB) | Object | Request (raw XML string) |
-| REQUESTIDENTIFIER1 | VARCHAR2 | String | RequestIdentifier1 |
-| REQUESTIDENTIFIER2 | VARCHAR2 | String | RequestIdentifier2 |
-| REQUESTIDENTIFIER3 | VARCHAR2 | String | RequestIdentifier3 |
+### 4.1 logCheckRequest → ACCLOGCHECKREQUEST (Stored Procedure)
 
-**Output:** None (void stored procedure).
+**Workato Action:** Oracle → Stored procedure → `GLD_SCHEMA.ACCLOGCHECKREQUEST`
+
+**Input Parameters (25):**
+
+| # | SP Parameter | DB Type | webMethods Field | Workato Input Source | Notes |
+|---|---|---|---|---|---|
+| 1 | CUSTOMERNBR | VARCHAR2(18) | CustomerNbr | trigger.CustomerNbr | Customer number |
+| 2 | CUSTOMERTYPE | VARCHAR2(3) | CustomerType | trigger.CustomerType | Type code |
+| 3 | PARTYTYPE | VARCHAR2(20) | PartyType | trigger.PartyType | Party type |
+| 4 | BUSINESSNAME | VARCHAR2(40) | Businessname | trigger.Businessname | Business name |
+| 5 | APPLICATIONNBR | VARCHAR2(18) | ApplicationNbr | trigger.ApplicationNbr | App number |
+| 6 | CHANNEL | VARCHAR2(10) | Channel | trigger.Channel | Channel |
+| 7 | LOB | VARCHAR2(10) | LOB | trigger.LOB | Line of business |
+| 8 | PRODUCTCODE | VARCHAR2(10) | ProductCode | trigger.ProductCode | Product code |
+| 9 | SUBPRODUCTCODE | VARCHAR2(10) | SubProductCode | trigger.SubProductCode | Sub-product code |
+| 10 | POSTBACK | VARCHAR2(200) | PostBack | trigger.PostBack | Post-back URL |
+| 11 | COMPLIANCEREPLYEMAIL | VARCHAR2(75) | ComplianceReplyEmail | trigger.ComplianceReplyEmail | Reply email |
+| 12 | FIRSTNAME | VARCHAR2(20) | FirstName | trigger.FirstName | First name |
+| 13 | MIDDLENAME | VARCHAR2(20) | MiddleName | trigger.MiddleName | Middle name |
+| 14 | LASTNAME | VARCHAR2(20) | LastName | trigger.LastName | Last name |
+| 15 | ADDRESSLINE1 | VARCHAR2(40) | AddressLine1 | trigger.AddressLine1 | Address 1 |
+| 16 | ADDRESSLINE2 | VARCHAR2(40) | AddressLine2 | trigger.AddressLine2 | Address 2 |
+| 17 | ADDRESSLINE3 | VARCHAR2(40) | AddressLine3 | trigger.AddressLine3 | Address 3 |
+| 18 | ADDRESSLINE4 | VARCHAR2(40) | AddressLine4 | trigger.AddressLine4 | Address 4 |
+| 19 | CITY | VARCHAR2(20) | City | trigger.City | City |
+| 20 | STATE | VARCHAR2(2) | State | trigger.State | State code |
+| 21 | ZIP | VARCHAR2(10) | Zip | trigger.Zip | ZIP code |
+| 22 | COUNTRYCODE | VARCHAR2(3) | CountryCode | trigger.CountryCode | Country code |
+| 23 | SSNTIN | VARCHAR2(9) | SSNTIN | trigger.SSNTIN | SSN or TIN |
+| 24 | DOB | DATE | DOB | trigger.DOB (convert to DATE) | Date of birth |
+| 25 | REQUESTORSYSTEMREQUESTID | BIGINT | RequestorSystemRequestID | trigger.RequestorSystemRequestID | Requestor system request ID |
+
+**Output:**
+- `accCheckRequestID` (BIGINT) — auto-generated by Oracle; use `SELECT ACCCHECKREQUESTID FROM GLD_SCHEMA.ACCCHECKREQUEST WHERE REQUESTORSYSTEMREQUESTID = ?` to retrieve
 
 ---
 
-### Operation 3: MIG_WM_GLD_LogCheckReply_Operation
-**Source Service:** `logCheckReply`  
-**DB Action:** Stored Procedure — `GLD_SCHEMA.ACCLOGCHECKREPLY`  
-**Boomi Operation Type:** `EXECUTE`
+### 4.2 logCheckRequestXML → LOGXMLREQUEST (Stored Procedure)
 
-**Input Parameters (IN):**
-| Parameter | DB Type | Java Mapping | wM Field |
+**Workato Action:** Oracle → Stored procedure → `GLD_SCHEMA.LOGXMLREQUEST`
+
+| # | SP Parameter | DB Type | webMethods Field | Workato Input Source |
+|---|---|---|---|---|
+| 1 | APPLICATIONID | BIGINT | ApplicationID | step1.accCheckRequestID |
+| 2 | REQUEST | LONGVARCHAR | Request | JSON encode of trigger payload |
+| 3 | REQUESTIDENTIFIER1 | VARCHAR2 | RequestIdentifier1 | trigger.CustomerNbr |
+| 4 | REQUESTIDENTIFIER2 | VARCHAR2 | RequestIdentifier2 | trigger.ApplicationNbr |
+| 5 | REQUESTIDENTIFIER3 | VARCHAR2 | RequestIdentifier3 | trigger.Channel |
+
+**Output:** None (void procedure).
+
+---
+
+### 4.3 CIU External Call (HTTP Placeholder)
+
+**Workato Action:** HTTP → POST → `[CIU_ENDPOINT_URL]`
+
+> ⚠️ Endpoint URL is unknown — obtain from SME. Wire this action after receiving the URL.
+
+| Field | Value |
+|---|---|
+| Method | POST |
+| URL | `[CIU_ENDPOINT_URL]` — wire from SME |
+| Request body | JSON of all customer + request fields |
+| Expected response | `{ "CIURefNbr": "...", "CheckResult": "TRUE" or "FALSE", "ErrorType": "...", "ErrorCode": "...", "ErrorDesc": "..." }` |
+
+**Output data pills used downstream:**
+- `ciu_response.CIURefNbr` → steps 4, 5a, 5b, 6
+- `ciu_response.CheckResult` → IF condition (step 5)
+- `ciu_response.ErrorType / ErrorCode / ErrorDesc` → step 5b
+
+---
+
+### 4.4 updateCIURefNbr → ACCUPDATECIUREFNBR (Stored Procedure)
+
+**Workato Action:** Oracle → Stored procedure → `GLD_SCHEMA.ACCUPDATECIUREFNBR`
+
+| # | SP Parameter | DB Type | Workato Input Source |
 |---|---|---|---|
-| CIUREFNBR | VARCHAR2 | String | CIURefNbr |
-| CHECKTYPE | VARCHAR2 | String | CheckType |
-| RESULT | VARCHAR2 | Boolean (mapped to 'TRUE'/'FALSE') | Result |
+| 1 | ACCCHECKREQUESTID | BIGINT | step1.accCheckRequestID |
+| 2 | CIUREFNBR | VARCHAR2 | step3.CIURefNbr |
+
+**Output:** None (void update).
+
+---
+
+### 4.5a logCheckReply → ACCLOGCHECKREPLY (TRUE path)
+
+**Workato Action:** Oracle → Stored procedure → `GLD_SCHEMA.ACCLOGCHECKREPLY`
+
+| # | SP Parameter | DB Type | Workato Input Source |
+|---|---|---|---|
+| 1 | CIUREFNBR | VARCHAR2 | step3.CIURefNbr |
+| 2 | CHECKTYPE | VARCHAR2 | step3.CheckType (or static "COMPLIANCE") |
+| 3 | RESULT | VARCHAR2 | "true" (literal — this is the success path) |
 
 **Output:** None.
 
 ---
 
-### Operation 4: MIG_WM_GLD_LogCheckReplyError_Operation
-**Source Service:** `logCheckReplyError`  
-**DB Action:** Stored Procedure — `GLD_SCHEMA.ACCLOGCHECKREPLYERROR`  
-**Boomi Operation Type:** `EXECUTE`
+### 4.5b logCheckReplyError → ACCLOGCHECKREPLYERROR (ELSE / error paths)
 
-**Input Parameters (IN):**
-| Parameter | DB Type | Java Mapping | wM Field |
-|---|---|---|---|
-| ERRORTYPE | VARCHAR2 | String | ErrorType |
-| ERRORCODE | VARCHAR2 | String | ErrorCode |
-| ERRORDESC | VARCHAR2 | String | ErrorDesc |
-| CIUREFNBR | VARCHAR2 | String | CIURefNbr |
+**Workato Action:** Oracle → Stored procedure → `GLD_SCHEMA.ACCLOGCHECKREPLYERROR`
+
+| # | SP Parameter | DB Type | Workato Input Source | Notes |
+|---|---|---|---|---|
+| 1 | ERRORTYPE | VARCHAR2 | step3.ErrorType OR error_monitor.error_type | CIU failure or system error |
+| 2 | ERRORCODE | VARCHAR2 | step3.ErrorCode OR error_monitor.error_code | |
+| 3 | ERRORDESC | VARCHAR2 | step3.ErrorDesc OR error_monitor.message | |
+| 4 | CIUREFNBR | VARCHAR2 | step3.CIURefNbr (if available) | May be blank on system errors |
 
 **Output:** None.
 
 ---
 
-### Operation 5: MIG_WM_GLD_SelectCustomerAndRequest_Operation
-**Source Service:** `selectCustomerAndRequest`  
-**DB Action:** SELECT JOIN  
-**Boomi Operation Type:** `GET` (SELECT)
+### 4.6 selectCustomerAndRequest → SELECT JOIN
 
-**SQL:**
+**Workato Action:** Oracle → Custom SQL (SELECT)
+
 ```sql
 SELECT DISTINCT
   t1.ACCCUSTOMERID, t1.CUSTOMERNBR, t1.CUSTOMERTYPE, t1.BUSINESSNAME,
@@ -177,260 +223,131 @@ JOIN GLD_SCHEMA.ACCCHECKREQUEST t2
 WHERE t2.CIUREFNBR = ?
 ```
 
-**Input Parameter:**
-| Param | Type | Source |
+**Input:** `CIURefNbr` → step3.CIURefNbr
+
+**Output (28 columns):**
+
+| Column | DB Type | Workato Data Pill |
 |---|---|---|
-| ? (CIUREFNBR) | VARCHAR2 | Dynamic Document Property: DPP_CIU_REF_NBR |
-
-**Output Profile (JSON):**
-```json
-{
-  "results": [
-    {
-      "ACCCUSTOMERID": "BigDecimal",
-      "CUSTOMERNBR": "String",
-      "CUSTOMERTYPE": "String",
-      "BUSINESSNAME": "String",
-      "FIRSTNAME": "String",
-      "MIDDLENAME": "String",
-      "LASTNAME": "String",
-      "ADDRESSLINE1": "String",
-      "ADDRESSLINE2": "String",
-      "ADDRESSLINE3": "String",
-      "ADDRESSLINE4": "String",
-      "CITY": "String",
-      "STATE": "String",
-      "ZIP": "String",
-      "COUNTRYCODE": "String",
-      "SSNTIN": "String",
-      "PARTYTYPE": "String",
-      "DOB": "Timestamp",
-      "ACCCHECKREQUESTID": "BigDecimal",
-      "APPLICATIONNBR": "String",
-      "CHANNEL": "String",
-      "LOB": "String",
-      "PRODUCTCODE": "String",
-      "SUBPRODUCTCODE": "String",
-      "POSTBACK": "String",
-      "COMPLIANCEREPLYEMAIL": "String",
-      "CIUREFNBR": "String",
-      "REQUESTTIMESTAMP": "Timestamp"
-    }
-  ]
-}
-```
+| ACCCUSTOMERID | NUMBER | step6.rows[0].ACCCUSTOMERID |
+| CUSTOMERNBR | VARCHAR2 | step6.rows[0].CUSTOMERNBR |
+| CUSTOMERTYPE | VARCHAR2 | step6.rows[0].CUSTOMERTYPE |
+| BUSINESSNAME | VARCHAR2 | step6.rows[0].BUSINESSNAME |
+| FIRSTNAME | VARCHAR2 | step6.rows[0].FIRSTNAME |
+| MIDDLENAME | VARCHAR2 | step6.rows[0].MIDDLENAME |
+| LASTNAME | VARCHAR2 | step6.rows[0].LASTNAME |
+| ADDRESSLINE1 | VARCHAR2 | step6.rows[0].ADDRESSLINE1 |
+| ADDRESSLINE2 | VARCHAR2 | step6.rows[0].ADDRESSLINE2 |
+| ADDRESSLINE3 | VARCHAR2 | step6.rows[0].ADDRESSLINE3 |
+| ADDRESSLINE4 | VARCHAR2 | step6.rows[0].ADDRESSLINE4 |
+| CITY | VARCHAR2 | step6.rows[0].CITY |
+| STATE | VARCHAR2 | step6.rows[0].STATE |
+| ZIP | VARCHAR2 | step6.rows[0].ZIP |
+| COUNTRYCODE | VARCHAR2 | step6.rows[0].COUNTRYCODE |
+| SSNTIN | VARCHAR2 | step6.rows[0].SSNTIN |
+| PARTYTYPE | VARCHAR2 | step6.rows[0].PARTYTYPE |
+| DOB | DATE | step6.rows[0].DOB |
+| ACCCHECKREQUESTID | NUMBER | step6.rows[0].ACCCHECKREQUESTID |
+| APPLICATIONNBR | VARCHAR2 | step6.rows[0].APPLICATIONNBR |
+| CHANNEL | VARCHAR2 | step6.rows[0].CHANNEL |
+| LOB | VARCHAR2 | step6.rows[0].LOB |
+| PRODUCTCODE | VARCHAR2 | step6.rows[0].PRODUCTCODE |
+| SUBPRODUCTCODE | VARCHAR2 | step6.rows[0].SUBPRODUCTCODE |
+| POSTBACK | VARCHAR2 | step6.rows[0].POSTBACK |
+| COMPLIANCEREPLYEMAIL | VARCHAR2 | step6.rows[0].COMPLIANCEREPLYEMAIL |
+| CIUREFNBR | VARCHAR2 | step6.rows[0].CIUREFNBR |
+| REQUESTTIMESTAMP | TIMESTAMP | step6.rows[0].REQUESTTIMESTAMP |
 
 ---
 
-### Operation 6: MIG_WM_GLD_UpdateCIURefNbr_Operation
-**Source Service:** `updateCIURefNbr`  
-**DB Action:** Stored Procedure — `GLD_SCHEMA.ACCUPDATECIUREFNBR`  
-**Boomi Operation Type:** `EXECUTE`
+### 4.7 purgeData → ACCPURGEDATA (Scheduled recipe)
 
-**Input Parameters (IN):**
-| Parameter | DB Type | Java Mapping | wM Field |
-|---|---|---|---|
-| ACCCHECKREQUESTID | BIGINT | Long | accCheckRequestID |
-| CIUREFNBR | VARCHAR2 | String | CIURefNbr |
+**Workato Recipe:** Separate recipe with scheduled trigger (daily/weekly).
 
+**Action:** Oracle → Stored procedure → `GLD_SCHEMA.ACCPURGEDATA`
+**Input:** None.
 **Output:** None.
 
 ---
 
-### Operation 7: MIG_WM_GLD_PurgeData_Operation
-**Source Service:** `purgeData`  
-**DB Action:** Stored Procedure — `GLD_SCHEMA.ACCPURGEDATA`  
-**Boomi Operation Type:** `EXECUTE`
+## 5. Recipe Design
 
-**Input Parameters:** None.  
-**Output:** None.
+### 5.1 webMethods → Workato Construct Mapping
 
----
-
-## 5. Process Design — MIG_WM_GLDComplianceAdapterServices_Process
-
-### Flow Logic
-
-The compliance adapter services follow this sequence when a compliance check is initiated:
-
-```
-START (WSS listener or scheduled trigger)
-  │
-  ├─ shape: Set Properties → extract incoming request fields into DDPs
-  │         DPP_CUSTOMER_NBR, DPP_CUSTOMER_TYPE, DPP_FIRST_NAME, ...
-  │
-  ├─ shape: DB EXECUTE → logCheckRequest
-  │         IN:  all customer fields from DDPs
-  │         OUT: DPP_ACC_CHECK_REQUEST_ID
-  │
-  ├─ shape: DB EXECUTE → logCheckRequestXML
-  │         IN:  DPP_APPLICATION_ID, raw XML document, identifiers
-  │         OUT: (void)
-  │
-  ├─ shape: [HTTP/REST Connector] → External CIU Compliance System
-  │         Sends compliance check request; receives CIU reference number
-  │         OUT: DPP_CIU_REF_NBR
-  │
-  ├─ shape: DB EXECUTE → updateCIURefNbr
-  │         IN:  DPP_ACC_CHECK_REQUEST_ID, DPP_CIU_REF_NBR
-  │
-  ├─ [Wait / callback — CIU sends reply asynchronously]
-  │
-  ├─ shape: DB GET → selectCustomerAndRequest
-  │         IN:  DPP_CIU_REF_NBR
-  │         OUT: results[] array with full customer + request context
-  │
-  ├─ shape: Decision → "Did check pass?"
-  │   ├─ TRUE path:
-  │   │    shape: DB EXECUTE → logCheckReply
-  │   │           IN:  DPP_CIU_REF_NBR, CheckType, Result=TRUE
-  │   │    shape: Stop (success)
-  │   │
-  │   └─ FALSE / ERROR path:
-  │        shape: DB EXECUTE → logCheckReplyError
-  │               IN:  ErrorType, ErrorCode, ErrorDesc, DPP_CIU_REF_NBR
-  │        shape: Stop (continue=false)
-  │
-  └─ [Maintenance / scheduled path]
-       shape: DB EXECUTE → purgeData  (no inputs)
-       shape: Stop
-```
-
-### Dynamic Document Properties (DDPs)
-
-| DDP Name | Type | Source Service | Purpose |
+| # | webMethods | Workato Equivalent | Used In Recipe |
 |---|---|---|---|
-| DPP_CUSTOMER_NBR | String | Input | Customer number |
-| DPP_CUSTOMER_TYPE | String | Input | Customer type |
-| DPP_FIRST_NAME | String | Input | First name |
-| DPP_LAST_NAME | String | Input | Last name |
-| DPP_MIDDLE_NAME | String | Input | Middle name |
-| DPP_BUSINESS_NAME | String | Input | Business name |
-| DPP_APPLICATION_NBR | String | Input | Application number |
-| DPP_CHANNEL | String | Input | Channel |
-| DPP_LOB | String | Input | Line of business |
-| DPP_PRODUCT_CODE | String | Input | Product code |
-| DPP_SUB_PRODUCT_CODE | String | Input | Sub-product code |
-| DPP_POSTBACK | String | Input | Post-back |
-| DPP_COMPLIANCE_REPLY_EMAIL | String | Input | Reply email |
-| DPP_ADDRESS_LINE1 | String | Input | Address line 1 |
-| DPP_CITY | String | Input | City |
-| DPP_STATE | String | Input | State |
-| DPP_ZIP | String | Input | ZIP |
-| DPP_COUNTRY_CODE | String | Input | Country code |
-| DPP_SSNTIN | String | Input | SSN/TIN |
-| DPP_DOB | String | Input | Date of birth |
-| DPP_REQUESTOR_SYSTEM_REQUEST_ID | Long | Input | Requestor's request ID |
-| DPP_ACC_CHECK_REQUEST_ID | Long | logCheckRequest OUT | Internal request ID |
-| DPP_CIU_REF_NBR | String | CIU system response | CIU reference number |
-| DPP_CHECK_RESULT | Boolean | CIU response | Pass/fail result |
-| DPP_ERROR_TYPE | String | Error path | Error type |
-| DPP_ERROR_CODE | String | Error path | Error code |
-| DPP_ERROR_DESC | String | Error path | Error description |
+| 1 | Workflow | Recipe | Main recipe container |
+| 2 | TRY | Error monitor (try block) | Wraps all 7 DB + HTTP steps |
+| 3 | CATCH | on_error block | Calls ACCLOGCHECKREPLYERROR |
+| 5 | IF | if/else conditional | CIU result check |
+| 7 | ELSE | else clause | Error reply path |
+| 20 | INVOKE (DB) | Oracle action | Steps 1, 2, 4, 5a, 5b, 6, 7 |
+| 20 | INVOKE (HTTP) | HTTP action | Step 3 (CIU call) |
+| 21 | MAP | Formula fields | Input field binding in each action |
+
+Full 22-row mapping: see `WebMethods/Agent Bridge Web Methods to Workato Component Mapping.xlsx`
+
+### 5.2 Recipe Action Inventory (10 steps)
+
+| Step | Workato Type | Label | Notes |
+|---|---|---|---|
+| Trigger | callable_recipe | HTTP POST — Compliance Check | Receives 25-field JSON |
+| 1 | Oracle SP | Log Check Request | SP ACCLOGCHECKREQUEST, 25 IN params |
+| 2 | Oracle SP | Log Check Request XML | SP LOGXMLREQUEST, 5 IN params |
+| 3 | HTTP action | Call CIU System | Placeholder — wire endpoint URL |
+| 4 | Oracle SP | Update CIU Reference | SP ACCUPDATECIUREFNBR, 2 IN params |
+| 5 | IF/ELSE | Check CIU Result | Condition: CIUResult == "TRUE" |
+| 5a | Oracle SP | Log Check Reply (TRUE) | SP ACCLOGCHECKREPLY, 3 IN params |
+| 5b | Oracle SP | Log Check Reply Error (ELSE) | SP ACCLOGCHECKREPLYERROR, 4 IN params |
+| 6 | Oracle SELECT | Select Customer and Request | SELECT JOIN, 1 IN, 28 OUT columns |
+| catch | Oracle SP | Log Error (catch block) | SP ACCLOGCHECKREPLYERROR on system error |
 
 ---
 
 ## 6. Map Shape Field Mappings
 
-The Map shape connecting the input document to `logCheckRequest` parameters:
+Full field-level mapping: see `Workato/Workato_Map_Field_Mappings.xlsx`
 
-| Source (Pipeline In) | Transformation | Target (Pipeline Out) | Data Type | Notes |
-|---|---|---|---|---|
-| request/CustomerNbr | Direct copy | DPP_CUSTOMER_NBR | String | |
-| request/CustomerType | Direct copy | DPP_CUSTOMER_TYPE | String | |
-| request/PartyType | Direct copy | DPP_PARTY_TYPE | String | |
-| request/Businessname | Direct copy | DPP_BUSINESS_NAME | String | |
-| request/ApplicationNbr | Direct copy | DPP_APPLICATION_NBR | String | |
-| request/Channel | Direct copy | DPP_CHANNEL | String | |
-| request/LOB | Direct copy | DPP_LOB | String | |
-| request/ProductCode | Direct copy | DPP_PRODUCT_CODE | String | |
-| request/SubProductCode | Direct copy | DPP_SUB_PRODUCT_CODE | String | |
-| request/PostBack | Direct copy | DPP_POSTBACK | String | |
-| request/ComplianceReplyEmail | Direct copy | DPP_COMPLIANCE_REPLY_EMAIL | String | |
-| request/FirstName | Direct copy | DPP_FIRST_NAME | String | |
-| request/MiddleName | Direct copy | DPP_MIDDLE_NAME | String | |
-| request/LastName | Direct copy | DPP_LAST_NAME | String | |
-| request/AddressLine1 | Direct copy | DPP_ADDRESS_LINE1 | String | |
-| request/AddressLine2 | Direct copy | DPP_ADDRESS_LINE2 | String | |
-| request/AddressLine3 | Direct copy | DPP_ADDRESS_LINE3 | String | |
-| request/AddressLine4 | Direct copy | DPP_ADDRESS_LINE4 | String | |
-| request/City | Direct copy | DPP_CITY | String | |
-| request/State | Direct copy | DPP_STATE | String | 2-char |
-| request/Zip | Direct copy | DPP_ZIP | String | |
-| request/CountryCode | Direct copy | DPP_COUNTRY_CODE | String | 3-char |
-| request/SSNTIN | Direct copy | DPP_SSNTIN | String | Sensitive PII |
-| request/DOB | Date format: yyyy-MM-dd → Oracle DATE | DPP_DOB | String/DATE | |
-| request/RequestorSystemRequestID | Convert String→Long | DPP_REQUESTOR_SYSTEM_REQUEST_ID | Long | |
-| selectCustomerAndRequest/results[0]/ACCCHECKREQUESTID | Direct copy | DPP_ACC_CHECK_REQUEST_ID | Long | Output of logCheckRequest; also returned by SELECT |
-| CIU response/CIURefNbr | Direct copy | DPP_CIU_REF_NBR | String | Set after external CIU call |
+**Sheet 1 — LogCheckRequest_Mapping:** 25 rows mapping trigger input JSON → ACCLOGCHECKREQUEST SP parameters
+**Sheet 2 — SelectCustomer_Output:** 28 rows mapping SELECT output columns → Workato data pills
+**Sheet 3 — Missing_Components:** 5 gap items with resolutions
 
 ---
 
-## 7. Database Table Definitions (Inferred from Adapter Metadata)
+## 7. Database Table Definitions
 
-### GLD_SCHEMA.ACCCUSTOMER (t1)
-| Column | Type | Constraints | Notes |
-|---|---|---|---|
-| ACCCUSTOMERID | NUMBER(12) | NOT NULL, PK | Internal customer ID |
-| CUSTOMERNBR | VARCHAR2(18) | NOT NULL | Customer number |
-| CUSTOMERTYPE | VARCHAR2(3) | NOT NULL | Customer type |
-| BUSINESSNAME | VARCHAR2(40) | | Business name |
-| FIRSTNAME | VARCHAR2(20) | | First name |
-| MIDDLENAME | VARCHAR2(20) | | Middle name |
-| LASTNAME | VARCHAR2(20) | | Last name |
-| ADDRESSLINE1 | VARCHAR2(40) | | Address line 1 |
-| ADDRESSLINE2 | VARCHAR2(40) | | Address line 2 |
-| ADDRESSLINE3 | VARCHAR2(40) | | Address line 3 |
-| ADDRESSLINE4 | VARCHAR2(40) | | Address line 4 |
-| CITY | VARCHAR2(20) | | City |
-| STATE | VARCHAR2(2) | | State |
-| ZIP | VARCHAR2(10) | | ZIP |
-| COUNTRYCODE | VARCHAR2(3) | | Country code |
-| SSNTIN | VARCHAR2(9) | | SSN / TIN |
-| PARTYTYPE | VARCHAR2(20) | NOT NULL | Party type |
-| DOB | DATE | | Date of birth |
+| Table | Schema | Role |
+|---|---|---|
+| `GLD_SCHEMA.ACCCHECKREQUEST` | GLD_SCHEMA | Stores compliance check requests; keyed on ACCCHECKREQUESTID |
+| `GLD_SCHEMA.ACCCUSTOMER` | GLD_SCHEMA | Stores customer data; keyed on ACCCUSTOMERID |
 
-### GLD_SCHEMA.ACCCHECKREQUEST (t2)
-| Column | Type | Constraints | Notes |
-|---|---|---|---|
-| ACCCHECKREQUESTID | NUMBER(12) | NOT NULL, PK | Request ID (auto-generated) |
-| ACCCUSTOMERID | NUMBER(12) | NOT NULL, FK | FK → ACCCUSTOMER |
-| APPLICATIONNBR | VARCHAR2(18) | NOT NULL | Application number |
-| CHANNEL | VARCHAR2(10) | NOT NULL | Channel |
-| LOB | VARCHAR2(10) | NOT NULL | Line of business |
-| PRODUCTCODE | VARCHAR2(10) | NOT NULL | Product code |
-| SUBPRODUCTCODE | VARCHAR2(10) | NOT NULL | Sub-product code |
-| POSTBACK | VARCHAR2(200) | NOT NULL | Post-back value |
-| COMPLIANCEREPLYEMAIL | VARCHAR2(75) | NOT NULL | Reply email |
-| CIUREFNBR | VARCHAR2(20) | | CIU reference (set after external call) |
-| REQUESTTIMESTAMP | TIMESTAMP(6) | NOT NULL | When request was created |
+Stored procedures write into these tables. The SELECT JOIN on step 6 reads from both via `t1.ACCCUSTOMERID = t2.ACCCUSTOMERID`.
 
 ---
 
 ## 8. Stored Procedures Summary
 
-| Procedure Name | Schema | Action | Key Parameters |
-|---|---|---|---|
-| ACCLOGCHECKREQUEST | GLD_SCHEMA | INSERT into ACCCHECKREQUEST + ACCCUSTOMER | All 25 customer/request fields IN; ACCCHECKREQUESTID OUT |
-| LOGXMLREQUEST | GLD_SCHEMA | INSERT raw XML log | ApplicationID, Request (CLOB), 3 identifiers |
-| ACCLOGCHECKREPLY | GLD_SCHEMA | INSERT/UPDATE reply log | CIURefNbr, CheckType, Result |
-| ACCLOGCHECKREPLYERROR | GLD_SCHEMA | INSERT error log | ErrorType, ErrorCode, ErrorDesc, CIURefNbr |
-| ACCUPDATECIUREFNBR | GLD_SCHEMA | UPDATE ACCCHECKREQUEST.CIUREFNBR | ACCCHECKREQUESTID, CIURefNbr |
-| ACCPURGEDATA | GLD_SCHEMA | DELETE old records | No params (uses internal date threshold) |
+| # | Procedure | Schema | IN Params | OUT Params | Workato Step |
+|---|---|---|---|---|---|
+| 1 | ACCLOGCHECKREQUEST | GLD_SCHEMA | 25 | accCheckRequestID (BIGINT) | Step 1 |
+| 2 | LOGXMLREQUEST | GLD_SCHEMA | 5 | None | Step 2 |
+| 3 | ACCUPDATECIUREFNBR | GLD_SCHEMA | 2 | None | Step 4 |
+| 4 | ACCLOGCHECKREPLY | GLD_SCHEMA | 3 | None | Step 5a |
+| 5 | ACCLOGCHECKREPLYERROR | GLD_SCHEMA | 4 | None | Step 5b / catch |
+| 6 | ACCPURGEDATA | GLD_SCHEMA | 0 | None | Separate scheduled recipe |
 
 ---
 
 ## 9. Migration Gaps
 
-| Gap | Impact | Resolution |
-|---|---|---|
-| Stored procedure bodies not available | Cannot fully replicate SP logic in Boomi | Use DatabaseV2 `EXECUTE` with procedure name — SP runs server-side on Oracle |
-| External CIU system endpoint unknown | Cannot build HTTP/REST connector without endpoint URL | Ask for CIU service WSDL or REST URL |
-| ACCCUSTOMER/ACCCHECKREQUEST schema not available as DDL | Table definitions inferred from adapter metadata | Use inferred definitions; verify with DBA before going live |
-| purgeData has no input params | Date threshold is internal to SP | No change needed — just call with no inputs |
-| Boolean `Result` field in logCheckReply | Oracle procedure expects VARCHAR2; Java sends Boolean | Map true→'TRUE' / false→'FALSE' in Boomi Set Properties before calling DB operation |
-| DOB date format | Oracle expects DATE; source has String | Add date format function in Boomi Map: input mask `yyyy-MM-dd`, output mask Oracle DATE |
-| SSNTIN is PII | Must be masked in logs | Set `enableUserLog="false"` on process; never log raw SSNTIN in Notify shapes |
+| # | Gap | Severity | Impact | Resolution |
+|---|---|---|---|---|
+| 1 | CIU endpoint URL unknown | Critical | Step 3 (HTTP action) cannot be wired | Obtain from SME |
+| 2 | Oracle DB credentials | Critical | Connection cannot be authorized | Retrieve GLD_SCHEMA password from IS Admin / CyberArk |
+| 3 | accCheckRequestID OUT param not returned by Standard Insert | High | Cannot get request ID from step 1 directly | Run SELECT after INSERT: `SELECT MAX(ACCCHECKREQUESTID) FROM ACCCHECKREQUEST WHERE REQUESTORSYSTEMREQUESTID=?` |
+| 4 | CIU result field mapping | High | Unknown how CIU sets CHECK_RESULT | Add formula in recipe: HTTP 200 → "TRUE", otherwise "FALSE" |
+| 5 | No trigger source in flow.xml | Medium | Unknown what fires the workflow | Use callable recipe (HTTP POST); clients must call the Workato recipe URL |
+| 6 | Oracle SID: ORASHRT4 vs ILMSUM conflict | Medium | Two different SID values appear across files | Analysis file shows ILMSUM; confirm with DBA which is correct |
 
 ---
 
@@ -438,7 +355,11 @@ The Map shape connecting the input document to `logCheckRequest` parameters:
 
 | File | Location | Purpose |
 |---|---|---|
-| Component analysis | WebMethods/Analysis/GLDComplianceAdapterServices_Analysis.md | Detailed field-level breakdown |
-| Map field mappings | WebMethods/Analysis/map_field_mappings.xlsx | Excel map template with pipeline in/out/transform |
-| Boomi mapping reference | WebMethods/Agent Bridge Web Methods to Boomi Component Mapping.xlsx | webMethods → Boomi construct mapping |
-| Connection node | iPaas Migration/WebMethods/GLDProject/GLDComplianceAdapterEnv/ | Oracle JDBC connection definition |
+| `GLDComplianceAdapterEnv_Analysis.md` | `WebMethods/Analysis/` | Connection alias details (ExpressOS) |
+| `GLDComplianceAdapterServices_Analysis.md` | `WebMethods/Analysis/` | All 7 service definitions |
+| `Agent Bridge Web Methods to Workato Component Mapping.xlsx` | `WebMethods/` | 22-row webMethods → Workato construct map |
+| `Workato_Map_Field_Mappings.xlsx` | `Workato/` | Field-level input/output mapping + gap log |
+| `Workato.md` | `WebMethods/MD/` | Full build reference (Step 10 output) |
+| `manifest.v3` | `GLDComplianceAdapterEnv/` | Package metadata |
+| `ExpressOS/node.ndf` | `GLDComplianceAdapterEnv/ns/` | JDBC connection alias definition |
+| `*.node.ndf` | `GLDComplianceAdapterServices/ns/` | 7 adapter service definitions |

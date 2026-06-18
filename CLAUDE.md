@@ -10,9 +10,29 @@ This workspace is a **platform-agnostic integration migration agent**. It migrat
 | Target (generate + push) | Workato, Boomi |
 | Future | SAP, Azure Logic Apps |
 
+## WebmethodsToWorkato_Migration Agent
+
+Dedicated agent for webMethods IS → Workato migrations. Follows the steps in `WebMethods/Instruction_Workato.md`.
+
+**Steps:**
+1. Analyze webMethods package → `WebMethods/Analysis/<PackageName>_Analysis.md`
+2. Synthesize `WebMethods/MD/PackageAnalysis.md` (Workato-oriented)
+3. Create `WebMethods/Agent Bridge Web Methods to Workato Component Mapping.xlsx` (22 construct mappings)
+4. Create `Workato/Workato_Map_Field_Mappings.xlsx` (field-level + output + gap sheets)
+5. Create `WebMethods/MD/Workato.md` (full recipe build reference)
+6. Push Workato recipe via API (`scripts/push_gld_workato_recipe.py` as reference)
+
+**Reference files:**
+- `WebMethods/Instruction_Workato.md` — full step-by-step migration instructions
+- `WebMethods/Agent Bridge Web Methods to Workato Component Mapping.xlsx` — construct mapping
+- `Workato/Workato_Map_Field_Mappings.xlsx` — field-level data mapping
+- `WebMethods/MD/Workato.md` — authoritative Workato recipe build reference
+
+---
+
 ## WebmethodsToBoomi_Migration Agent
 
-Dedicated agent for webMethods IS → Boomi migrations. Follows the 4-phase pipeline from `WebMethods/Instruction.md`.
+Dedicated agent for webMethods IS → Boomi migrations. Follows the 4-phase pipeline from `WebMethods/Instruction_Boomi copy.md`.
 
 ```bash
 # Interactive (will prompt for package name)
@@ -358,6 +378,31 @@ Folder: `MIG_workato_migration` (folderId `Rjo4NjE3OTg3`, account `tpptechstone-
 7. shape8 (Create Case): Import Salesforce CREATE Case operation → add operationId
 8. shape10 (Update Case): Import Salesforce UPDATE Case operation → add operationId
 **Reuse Salesforce connection:** `647ff483-9f3e-4b49-a32f-a906f65c347c` (Salesforce Connection, Manish A folder)
+
+---
+
+### webMethods IS → Workato: GLD Compliance Migration (COMPLETE — 2026-06-18)
+Source: `GLDComplianceAdapterServices` (webMethods IS 6.5, Oracle JDBC adapter, keybank.com).
+Folder: `Workato-Migration` (folderId `31286666`, account `manish@techstonellc.com`)
+
+| Component | ID / Details | Status |
+|---|---|---|
+| MIG_WM_GLD_Oracle_Connection | `19657520` — oracle, host CSC06DSHORA1S:1522 SID ILMSUM | Created (not authorized — needs GLD_SCHEMA password) |
+| MIG_WM_GLDComplianceAdapterServices_Recipe | `73543851` — callable recipe (HTTP POST) | Pushed |
+
+**Reference files:**
+- `WebMethods/MD/Workato.md` — authoritative recipe build reference
+- `WebMethods/MD/PackageAnalysis.md` — Workato-oriented package analysis
+- `WebMethods/Agent Bridge Web Methods to Workato Component Mapping.xlsx` — 22 construct mappings
+- `Workato/Workato_Map_Field_Mappings.xlsx` — field mappings (3 sheets)
+- `scripts/push_gld_workato_recipe.py` — recipe push script
+
+**Remaining manual steps:**
+1. Authorize Oracle connection `19657520` in Workato GUI (provide GLD_SCHEMA password, host, port, SID)
+2. Step 3 (CIU placeholder): replace callable_recipe stub with HTTP action pointing to CIU endpoint URL
+3. Retrieve `accCheckRequestID` after SP1: add SELECT query `SELECT MAX(ACCCHECKREQUESTID) FROM GLD_SCHEMA.ACCCHECKREQUEST WHERE REQUESTORSYSTEMREQUESTID=?`
+4. Wire all oracle/run_sql steps with proper SP parameter bindings in Workato GUI
+5. Test end-to-end with sample compliance check request
 
 ---
 
