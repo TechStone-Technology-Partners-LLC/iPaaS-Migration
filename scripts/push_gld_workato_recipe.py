@@ -15,7 +15,7 @@ import urllib.request
 tok = _load_env_var('WORKATO_API_TOKEN').strip()
 
 ORACLE_CONN_ID = 19657520   # MIG_WM_GLD_Oracle_Connection
-FOLDER_ID      = 31286666   # Workato-Migration
+FOLDER_ID      = 31661117   # WebMethodsMigration
 
 def uid(): return str(uuid.uuid4())
 

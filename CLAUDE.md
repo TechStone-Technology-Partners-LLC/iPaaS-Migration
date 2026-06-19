@@ -381,14 +381,14 @@ Folder: `MIG_workato_migration` (folderId `Rjo4NjE3OTg3`, account `tpptechstone-
 
 ---
 
-### webMethods IS → Workato: GLD Compliance Migration (COMPLETE — 2026-06-18)
+### webMethods IS → Workato: GLD Compliance Migration (COMPLETE — 2026-06-19)
 Source: `GLDComplianceAdapterServices` (webMethods IS 6.5, Oracle JDBC adapter, keybank.com).
-Folder: `Workato-Migration` (folderId `31286666`, account `manish@techstonellc.com`)
+Folder: `WebMethodsMigration` (folderId `31661117`, account `manish@techstonellc.com`)
 
 | Component | ID / Details | Status |
 |---|---|---|
 | MIG_WM_GLD_Oracle_Connection | `19657520` — oracle, host CSC06DSHORA1S:1522 SID ILMSUM | Created (not authorized — needs GLD_SCHEMA password) |
-| MIG_WM_GLDComplianceAdapterServices_Recipe | `73560256` — callable recipe (HTTP POST) | Pushed (v3 — flat steps + rescue sibling, execute_stored_procedure, select_rows) |
+| MIG_WM_GLDComplianceAdapterServices_Recipe | `73560262` — callable recipe (HTTP POST) | Pushed (v3 — flat steps + rescue sibling, execute_stored_procedure, select_rows) |
 
 **Reference files:**
 - `WebMethods/MD/Workato.md` — authoritative recipe build reference
