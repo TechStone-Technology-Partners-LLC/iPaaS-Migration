@@ -388,6 +388,7 @@ Folder: `WebMethodsMigration` (folderId `31661117`, account `manish@techstonellc
 | Component | ID / Details | Status |
 |---|---|---|
 | MIG_WM_GLD_Oracle_Connection | `19657520` — oracle, host CSC06DSHORA1S:1522 SID ILMSUM | Created (not authorized — needs GLD_SCHEMA password) |
+| OracleConnection | `19661065` — oracle, credentials not yet set | Created (new — wire to step 2 new ACCLOGCHECKREQUEST action in GUI) |
 | MIG_WM_GLDComplianceAdapterServices_Recipe | `73560615` — callable recipe (HTTP POST /compliance-check) | Pushed (v4 — IF/ELSE "Check CIU Result", http/post CIU, execute_stored_procedure, select_rows, rescue) |
 
 **Reference files:**
