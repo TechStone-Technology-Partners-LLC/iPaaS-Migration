@@ -388,7 +388,7 @@ Folder: `Workato-Migration` (folderId `31286666`, account `manish@techstonellc.c
 | Component | ID / Details | Status |
 |---|---|---|
 | MIG_WM_GLD_Oracle_Connection | `19657520` — oracle, host CSC06DSHORA1S:1522 SID ILMSUM | Created (not authorized — needs GLD_SCHEMA password) |
-| MIG_WM_GLDComplianceAdapterServices_Recipe | `73543851` — callable recipe (HTTP POST) | Pushed |
+| MIG_WM_GLDComplianceAdapterServices_Recipe | `73560198` — callable recipe (HTTP POST) | Pushed (v2 — error monitor, execute_stored_procedure, select_rows) |
 
 **Reference files:**
 - `WebMethods/MD/Workato.md` — authoritative recipe build reference
