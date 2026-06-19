@@ -1,11 +1,18 @@
 #!/usr/bin/env python3
 """
 Push MIG_WM_GLDComplianceAdapterServices Workato recipe.
-v2 — updated per PackageAnalysis.md §5.2:
-  - Workato Handle Error block wrapping all DB/HTTP steps
-  - Oracle execute_stored_procedure action for all 5 SPs
-  - Oracle select_rows action for the SELECT JOIN
-  - Full SP parameter binding for each step
+v4 — per Instruction_Workato Recipe.md:
+  - Callable recipe trigger named "Compliance Check", 25 input fields
+  - Handle error block: rescue keyword as last sibling in trigger.block
+  - Action 1: execute_stored_procedure ACCLOGCHECKREQUEST (25 IN params)
+  - Action 2: execute_stored_procedure LOGXMLREQUEST (5 IN params)
+  - Action 3: HTTP POST to CIU endpoint (http/post — URL to be wired by SME)
+  - Action 4: execute_stored_procedure ACCUPDATECIUREFNBR (2 IN params)
+  - IF/ELSE block titled "Check CIU Result" (if keyword + else sibling)
+    - IF TRUE: execute_stored_procedure ACCLOGCHECKREPLY (3 IN params)
+    - ELSE:    execute_stored_procedure ACCLOGCHECKREPLYERROR (4 IN params)
+  - Action 6: select_rows — 28-column JOIN on ACCCUSTOMER + ACCCHECKREQUEST
+  - rescue (catch): execute_stored_procedure ACCLOGCHECKREPLYERROR on system error
 """
 import sys, json, uuid, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
@@ -30,17 +37,13 @@ def dp(provider, line, *path_parts):
 TR = 'workato'
 TL = 'callable_recipe'
 
-def t(field):   return dp(TR, TL, field)
-def ciu(field): return dp('workato', 'ciu_call', field)
-def sp1(field): return dp('oracle',  'log_check_request', field)
+def t(field):   return dp(TR, TL, field)           # trigger pill
+def ciu(field): return dp('http', 'ciu_call', field)  # CIU HTTP response pill
+def sp1(field): return dp('oracle', 'log_check_request', field)  # step 1 output pill
 
 
-# ── Oracle Execute Stored Procedure action ────────────────────────────────────
+# ── Oracle Execute Stored Procedure ───────────────────────────────────────────
 def oracle_sp(num, label, alias, proc_name, params_dict):
-    """
-    Uses oracle/execute_stored_procedure.
-    params_dict: {SP_PARAM_NAME: workato_data_pill_or_value}
-    """
     inp = {'procedure_name': proc_name}
     inp.update(params_dict)
     return {
@@ -53,18 +56,15 @@ def oracle_sp(num, label, alias, proc_name, params_dict):
     }
 
 
-# ── Oracle Select Records action ──────────────────────────────────────────────
-def oracle_select(num, label, alias, sql, where_input):
+# ── Oracle Select Records (SELECT JOIN) ───────────────────────────────────────
+def oracle_select(num, label, alias, sql):
     return {
         'number': num, 'keyword': 'action',
         'provider': 'oracle', 'name': 'select_rows',
         'as': alias, 'title': label, 'uuid': uid(),
         'dynamicPickListSelection': {},
         'toggleCfg': {},
-        'input': {
-            'sql': sql,
-            'parameters': where_input,
-        },
+        'input': {'sql': sql},
     }
 
 
@@ -84,27 +84,32 @@ SP_COL_NAMES = [
     'CITY', 'STATE', 'ZIP', 'COUNTRYCODE', 'SSNTIN', 'DOB', 'REQUESTORSYSTEMREQUESTID',
 ]
 
+# Action 1: ACCLOGCHECKREQUEST — 25 IN params wired from trigger
 SP1_PARAMS = {col: t(field) for col, field in zip(SP_COL_NAMES, TRIGGER_FIELDS)}
 
+# Action 2: LOGXMLREQUEST — 5 IN params
 SP2_PARAMS = {
-    'APPLICATIONID':        sp1('accCheckRequestID'),
-    'REQUEST':              t('CustomerNbr'),   # placeholder — full JSON body to be wired in GUI
+    'APPLICATIONID':        sp1('accCheckRequestID'),  # OUT from step 1
+    'REQUEST':              t('CustomerNbr'),            # placeholder — full JSON body in GUI
     'REQUESTIDENTIFIER1':   t('CustomerNbr'),
     'REQUESTIDENTIFIER2':   t('ApplicationNbr'),
     'REQUESTIDENTIFIER3':   t('Channel'),
 }
 
+# Action 4: ACCUPDATECIUREFNBR — 2 IN params
 SP4_PARAMS = {
     'ACCCHECKREQUESTID': sp1('accCheckRequestID'),
     'CIUREFNBR':         ciu('CIURefNbr'),
 }
 
+# Action 5a (IF TRUE): ACCLOGCHECKREPLY — 3 IN params
 SP5A_PARAMS = {
     'CIUREFNBR':  ciu('CIURefNbr'),
     'CHECKTYPE':  'COMPLIANCE',
     'RESULT':     ciu('CheckResult'),
 }
 
+# Action 5b (ELSE): ACCLOGCHECKREPLYERROR — 4 IN params
 SP5B_PARAMS = {
     'ERRORTYPE':  ciu('ErrorType'),
     'ERRORCODE':  ciu('ErrorCode'),
@@ -112,6 +117,7 @@ SP5B_PARAMS = {
     'CIUREFNBR':  ciu('CIURefNbr'),
 }
 
+# rescue / catch: ACCLOGCHECKREPLYERROR — pulls error details from Workato error object
 SP5B_CATCH_PARAMS = {
     'ERRORTYPE':  dp('workato', 'error_monitor', 'error', 'type'),
     'ERRORCODE':  'SYSTEM_ERROR',
@@ -119,6 +125,7 @@ SP5B_CATCH_PARAMS = {
     'CIUREFNBR':  'N/A',
 }
 
+# Action 6 SQL — 28-column DISTINCT JOIN
 SQL6 = (
     'SELECT DISTINCT '
     't1.ACCCUSTOMERID, t1.CUSTOMERNBR, t1.CUSTOMERTYPE, t1.BUSINESSNAME, '
@@ -134,88 +141,83 @@ SQL6 = (
 )
 
 
-# ── IF blocks ─────────────────────────────────────────────────────────────────
-if_true = {
-    'number': 5, 'keyword': 'if', 'uuid': uid(),
+# ── Action 3: HTTP CIU call ───────────────────────────────────────────────────
+# webMethods source: GLDComplianceAdapterEnv:ExpressOS (Oracle JDBC, CSC06DSHORA1S:1522)
+# is the DB connection — the CIU endpoint is a SEPARATE external HTTP service.
+# URL must be obtained from SME; wire the HTTP connection in Workato GUI.
+# Response expected: {"CIURefNbr":"...","CheckResult":"TRUE/FALSE","ErrorType":"...","ErrorCode":"...","ErrorDesc":"..."}
+ciu_step = {
+    'number': 3, 'keyword': 'action',
+    'provider': 'http', 'name': 'post',
+    'as': 'ciu_call',
+    'title': 'Action 3 — Call CIU System (HTTP POST) [wire endpoint URL in GUI]',
+    'uuid': uid(), 'dynamicPickListSelection': {}, 'toggleCfg': {},
+    'input': {
+        'url':          '[CIU_ENDPOINT_URL — obtain from SME]',
+        'content_type': 'application/json',
+        'payload': json.dumps({
+            'CustomerNbr':    t('CustomerNbr'),
+            'ApplicationNbr': t('ApplicationNbr'),
+            'Channel':        t('Channel'),
+            'SSNTIN':         t('SSNTIN'),
+            'DOB':            t('DOB'),
+        }),
+    },
+}
+
+
+# ── IF/ELSE "Check CIU Result" ────────────────────────────────────────────────
+if_block = {
+    'number': 5, 'keyword': 'if',
+    'title': 'Check CIU Result',
+    'uuid': uid(),
     'input': {
         'type': 'compound', 'operand': 'and',
         'conditions': [{'operand': 'equals', 'lhs': ciu('CheckResult'), 'rhs': 'TRUE'}],
     },
     'block': [
-        oracle_sp(6,  'Log Check Reply — ACCLOGCHECKREPLY (TRUE path)',
+        oracle_sp(6, 'Action 5.1 — Log Check Reply — ACCLOGCHECKREPLY (TRUE path)',
                   'log_check_reply', 'GLD_SCHEMA.ACCLOGCHECKREPLY', SP5A_PARAMS),
     ],
 }
 
-if_false = {
-    'number': 7, 'keyword': 'if', 'uuid': uid(),
-    'input': {
-        'type': 'compound', 'operand': 'and',
-        'conditions': [{'operand': 'not_equals', 'lhs': ciu('CheckResult'), 'rhs': 'TRUE'}],
-    },
+else_block = {
+    'number': 7, 'keyword': 'else', 'uuid': uid(),
     'block': [
-        oracle_sp(8,  'Log Check Reply Error — ACCLOGCHECKREPLYERROR (ELSE path)',
+        oracle_sp(8, 'Action 5.2 — Log Check Reply Error — ACCLOGCHECKREPLYERROR (ELSE path)',
                   'log_check_reply_error', 'GLD_SCHEMA.ACCLOGCHECKREPLYERROR', SP5B_PARAMS),
     ],
 }
 
 
-# ── CIU HTTP placeholder step ─────────────────────────────────────────────────
-# webMethods connection used: GLDComplianceAdapterEnv:ExpressOS (Oracle JDBC)
-# CIU is an EXTERNAL HTTP service — Oracle connection details do not apply here.
-# Replace URL and auth when SME provides CIU endpoint details.
-ciu_step = {
-    'number': 3, 'keyword': 'action',
-    'provider': 'workato', 'name': 'callable_recipe',
-    'as': 'ciu_call',
-    'title': (
-        'Call CIU External System (PLACEHOLDER) — '
-        'Replace with HTTP POST to CIU endpoint. '
-        'webMethods connection: GLDComplianceAdapterEnv:ExpressOS '
-        '(Oracle JDBC CSC06DSHORA1S:1522 GLD_SCHEMA) is the DB connection, not CIU. '
-        'Wire CIU endpoint URL from SME.'
-    ),
-    'uuid': uid(), 'dynamicPickListSelection': {}, 'toggleCfg': {},
-    'input': {
-        'http_method': 'post',
-        'request_url_suffix': '/placeholder-ciu-endpoint',
-    },
-}
-
-
-# ── Recipe steps — flat in trigger block, rescue as last sibling ─────────────
-# workato/error_monitor as an action wrapper is not a valid Workato provider/name
-# (renders as "Select an app and action" in the GUI).
-# The correct structure: all steps sit directly in trigger.block; a step with
-# keyword="rescue" placed last in that same block acts as the catch handler for
-# any error raised by any preceding step in the trigger scope.
-catch_step = oracle_sp(
-    11, 'CATCH — Log System Error (ACCLOGCHECKREPLYERROR)',
-    'log_system_error', 'GLD_SCHEMA.ACCLOGCHECKREPLYERROR', SP5B_CATCH_PARAMS,
-)
-
+# ── rescue (catch) block ──────────────────────────────────────────────────────
 rescue_block = {
-    'number': 10, 'keyword': 'rescue', 'uuid': uid(),
-    'block': [catch_step],
+    'number': 11, 'keyword': 'rescue', 'uuid': uid(),
+    'block': [
+        oracle_sp(12, 'CATCH — Log System Error (ACCLOGCHECKREPLYERROR)',
+                  'log_system_error', 'GLD_SCHEMA.ACCLOGCHECKREPLYERROR', SP5B_CATCH_PARAMS),
+    ],
 }
 
+
+# ── All trigger steps (flat) ──────────────────────────────────────────────────
 trigger_steps = [
-    oracle_sp(1, 'Step 1 — Log Check Request (ACCLOGCHECKREQUEST, 25 params)',
+    oracle_sp(1, 'Action 1 — Log Check Request (ACCLOGCHECKREQUEST, 25 params)',
               'log_check_request', 'GLD_SCHEMA.ACCLOGCHECKREQUEST', SP1_PARAMS),
-    oracle_sp(2, 'Step 2 — Log Check Request XML (LOGXMLREQUEST, 5 params)',
+    oracle_sp(2, 'Action 2 — Log Check Request XML (LOGXMLREQUEST, 5 params)',
               'log_check_request_xml', 'GLD_SCHEMA.LOGXMLREQUEST', SP2_PARAMS),
     ciu_step,
-    oracle_sp(4, 'Step 4 — Update CIU Reference (ACCUPDATECIUREFNBR, 2 params)',
+    oracle_sp(4, 'Action 4 — Update CIU Reference (ACCUPDATECIUREFNBR, 2 params)',
               'update_ciu_ref', 'GLD_SCHEMA.ACCUPDATECIUREFNBR', SP4_PARAMS),
-    if_true,
-    if_false,
-    oracle_select(9, 'Step 6 — Select Customer and Request (28 columns)', 'select_customer',
-                  SQL6, {'CIUREFNBR': ciu('CIURefNbr')}),
+    if_block,
+    else_block,
+    oracle_select(9, 'Action 6 — Select Customer and Request (28 columns, JOIN)',
+                  'select_customer', SQL6),
     rescue_block,
 ]
 
 
-# ── Trigger input fields (25) ─────────────────────────────────────────────────
+# ── Trigger input fields (25) — named "Compliance Check" ─────────────────────
 input_fields = [
     {'name': 'CustomerNbr',              'type': 'string',  'optional': False, 'label': 'Customer Number'},
     {'name': 'CustomerType',             'type': 'string',  'optional': False, 'label': 'Customer Type'},
@@ -245,16 +247,16 @@ input_fields = [
 ]
 
 
-# ── Trigger ───────────────────────────────────────────────────────────────────
+# ── Trigger — callable recipe "Compliance Check" ──────────────────────────────
 trigger = {
     'number': 0, 'keyword': 'trigger',
     'provider': 'workato', 'name': 'callable_recipe',
     'as': 'callable_recipe', 'uuid': uid(),
     'dynamicPickListSelection': {}, 'toggleCfg': {},
     'input': {
-        'http_method': 'post',
-        'request_url_suffix': '/gld-compliance-check',
-        'response_type': 'dynamic',
+        'http_method':             'post',
+        'request_url_suffix':      '/compliance-check',
+        'response_type':           'dynamic',
         'input_fields_raw_schema': json.dumps(input_fields),
     },
     'block': trigger_steps,
@@ -271,13 +273,17 @@ config = [
 # ── Push ──────────────────────────────────────────────────────────────────────
 body = json.dumps({
     'recipe': {
-        'name': 'MIG_WM_GLDComplianceAdapterServices',
+        'name': 'Compliance Check — MIG_WM_GLDComplianceAdapterServices',
         'folder_id': str(FOLDER_ID),
         'description': (
             'GLD Compliance check — webMethods IS 6.5 GLDComplianceAdapterServices → Workato. '
-            'v2: error monitor block, execute_stored_procedure actions, select_rows for JOIN query. '
-            'Trigger: HTTP POST (callable recipe). Steps: SP×5 + HTTP CIU placeholder + SELECT JOIN. '
-            'Error handler: ACCLOGCHECKREPLYERROR on any exception.'
+            'v4: callable_recipe trigger (HTTP POST /compliance-check, 25 fields), '
+            'Actions 1-2 execute_stored_procedure, '
+            'Action 3 HTTP POST CIU (wire URL from SME), '
+            'Action 4 execute_stored_procedure, '
+            'IF/ELSE "Check CIU Result" (5a ACCLOGCHECKREPLY / 5b ACCLOGCHECKREPLYERROR), '
+            'Action 6 select_rows 28-col JOIN, '
+            'rescue block: ACCLOGCHECKREPLYERROR on system error.'
         ),
         'code':   json.dumps(trigger),
         'config': json.dumps(config),
@@ -297,10 +303,10 @@ try:
             print(f'SUCCESS — Recipe ID: {recipe_id}')
         else:
             print('PUSH RETURNED 200 BUT NO ID:')
-            print(raw[:600].decode(errors='replace'))
+            print(raw[:800].decode(errors='replace'))
 except urllib.error.HTTPError as e:
-    body = e.read()
+    body_err = e.read()
     print(f'HTTP ERROR {e.code}')
-    print(body[:1200].decode(errors='replace'))
+    print(body_err[:1200].decode(errors='replace'))
 except Exception as ex:
     print(f'EXCEPTION: {ex}')

@@ -388,7 +388,7 @@ Folder: `WebMethodsMigration` (folderId `31661117`, account `manish@techstonellc
 | Component | ID / Details | Status |
 |---|---|---|
 | MIG_WM_GLD_Oracle_Connection | `19657520` — oracle, host CSC06DSHORA1S:1522 SID ILMSUM | Created (not authorized — needs GLD_SCHEMA password) |
-| MIG_WM_GLDComplianceAdapterServices_Recipe | `73560262` — callable recipe (HTTP POST) | Pushed (v3 — flat steps + rescue sibling, execute_stored_procedure, select_rows) |
+| MIG_WM_GLDComplianceAdapterServices_Recipe | `73560615` — callable recipe (HTTP POST /compliance-check) | Pushed (v4 — IF/ELSE "Check CIU Result", http/post CIU, execute_stored_procedure, select_rows, rescue) |
 
 **Reference files:**
 - `WebMethods/MD/Workato.md` — authoritative recipe build reference
