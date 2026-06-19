@@ -183,8 +183,23 @@ ciu_step = {
 }
 
 
-# ── Protected steps (inside error monitor) ───────────────────────────────────
-protected_steps = [
+# ── Recipe steps — flat in trigger block, rescue as last sibling ─────────────
+# workato/error_monitor as an action wrapper is not a valid Workato provider/name
+# (renders as "Select an app and action" in the GUI).
+# The correct structure: all steps sit directly in trigger.block; a step with
+# keyword="rescue" placed last in that same block acts as the catch handler for
+# any error raised by any preceding step in the trigger scope.
+catch_step = oracle_sp(
+    11, 'CATCH — Log System Error (ACCLOGCHECKREPLYERROR)',
+    'log_system_error', 'GLD_SCHEMA.ACCLOGCHECKREPLYERROR', SP5B_CATCH_PARAMS,
+)
+
+rescue_block = {
+    'number': 10, 'keyword': 'rescue', 'uuid': uid(),
+    'block': [catch_step],
+}
+
+trigger_steps = [
     oracle_sp(1, 'Step 1 — Log Check Request (ACCLOGCHECKREQUEST, 25 params)',
               'log_check_request', 'GLD_SCHEMA.ACCLOGCHECKREQUEST', SP1_PARAMS),
     oracle_sp(2, 'Step 2 — Log Check Request XML (LOGXMLREQUEST, 5 params)',
@@ -196,32 +211,8 @@ protected_steps = [
     if_false,
     oracle_select(9, 'Step 6 — Select Customer and Request (28 columns)', 'select_customer',
                   SQL6, {'CIUREFNBR': ciu('CIURefNbr')}),
+    rescue_block,
 ]
-
-# Error handler step (CATCH path)
-catch_step = oracle_sp(
-    10, 'CATCH — Log System Error (ACCLOGCHECKREPLYERROR)',
-    'log_system_error', 'GLD_SCHEMA.ACCLOGCHECKREPLYERROR', SP5B_CATCH_PARAMS,
-)
-
-# ── Error monitor block (wraps all 7 protected steps) ────────────────────────
-# rescue is a SIBLING step in the trigger block — NOT an attribute of error_monitor.
-# Workato rejects both on_error and rescue as attributes on the action; the correct
-# structure is: trigger.block = [error_monitor, {keyword: "rescue", block: [...]}]
-error_monitor = {
-    'number': 1, 'keyword': 'action',
-    'provider': 'workato', 'name': 'error_monitor',
-    'as': 'error_monitor',
-    'title': 'Handle errors — GLD Compliance steps 1–6',
-    'uuid': uid(), 'dynamicPickListSelection': {}, 'toggleCfg': {},
-    'input': {},
-    'block': protected_steps,
-}
-
-rescue_block = {
-    'number': 10, 'keyword': 'rescue', 'uuid': uid(),
-    'block': [catch_step],
-}
 
 
 # ── Trigger input fields (25) ─────────────────────────────────────────────────
@@ -266,7 +257,7 @@ trigger = {
         'response_type': 'dynamic',
         'input_fields_raw_schema': json.dumps(input_fields),
     },
-    'block': [error_monitor, rescue_block],
+    'block': trigger_steps,
 }
 
 config = [
