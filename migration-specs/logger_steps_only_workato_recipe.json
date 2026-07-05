@@ -1,0 +1,84 @@
+{
+  "name": "Copy of Migrate Google Sheet contacts to Salesforce by industry - Logger Steps Only",
+  "description": "Log message steps only - all other steps stripped",
+  "version": 1,
+  "private": true,
+  "concurrency": 1,
+  "code": {
+    "number": 0,
+    "provider": "clock",
+    "name": "scheduled_event",
+    "as": "7626d6c0",
+    "keyword": "trigger",
+    "input": {
+      "time_unit": "minutes",
+      "trigger_every": "5"
+    },
+    "block": [
+      {
+        "number": 1,
+        "keyword": "if",
+        "dynamicPickListSelection": {},
+        "toggleCfg": {},
+        "input": {
+          "type": "compound",
+          "operand": "and",
+          "conditions": [
+            {
+              "operand": "present",
+              "lhs": "true",
+              "rhs": "",
+              "uuid": "a1b2c3d4-0000-0000-0000-000000000001"
+            }
+          ]
+        },
+        "block": [
+          {
+            "number": 2,
+            "provider": "logger",
+            "name": "log_message",
+            "as": "8d6f6310",
+            "keyword": "action",
+            "dynamicPickListSelection": {},
+            "toggleCfg": {},
+            "input": {
+              "message": ""
+            },
+            "uuid": "3021fe0d-1b24-4d11-98f1-7ed70f1789b2"
+          },
+          {
+            "number": 3,
+            "provider": "logger",
+            "name": "log_message",
+            "as": "fb318601",
+            "keyword": "action",
+            "dynamicPickListSelection": {},
+            "toggleCfg": {},
+            "input": {
+              "message": "ERROR: "
+            },
+            "uuid": "995b9f13-5ed8-44aa-a5eb-582683110ee1"
+          }
+        ],
+        "uuid": "ecb36d54-5e2c-49ec-b695-0b2c3f01cda2"
+      }
+    ],
+    "uuid": "ecb36d54-5e2c-49ec-b695-0b2c3f01cbd0",
+    "unfinished": false,
+    "format_version": 2
+  },
+  "config": [
+    {
+      "keyword": "application",
+      "provider": "clock",
+      "skip_validation": false,
+      "account_id": null
+    },
+    {
+      "keyword": "application",
+      "provider": "logger",
+      "skip_validation": false,
+      "account_id": null
+    }
+  ]
+}

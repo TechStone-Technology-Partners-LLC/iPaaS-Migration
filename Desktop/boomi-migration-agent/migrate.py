@@ -8,9 +8,10 @@ Real-world usage:
     python migrate.py --from mulesoft --source-dir samples/mulesoft/customer-api/ --to workato
 
 Pipeline:
-    1. PULL   -- fetch source components (Boomi folder -> local XML, or point at existing files)
-    2. ANALYZE -- run the right analyzer -> migration-specs/<project>.json
-    3. GENERATE -- run the right generator -> target platform artifacts
+    1. PULL     -- fetch source components (Boomi folder -> local XML, or existing files)
+    2. ANALYZE  -- run the right analyzer -> migration-specs/<project>.json
+    3. DOCUMENT -- generate migration design document -> migration-specs/<project>_design_document.docx
+    4. GENERATE -- run the right generator -> target platform artifacts
 
 No spec file needed as input -- the spec is produced automatically.
 """
@@ -200,6 +201,30 @@ def run_analyze(source_system, source_dir, project_name, cwd):
     return spec_path
 
 
+# ─── Document phase ───────────────────────────────────────────────────────────
+
+def run_document(target_system, spec_path, project_name, cwd, md_dir=None):
+    """Generate a Word design document from the migration spec."""
+    generator_path = os.path.join(cwd, "generators", "generate_word_doc.py")
+    if not os.path.isfile(generator_path):
+        print(f"WARNING: generate_word_doc.py not found at {generator_path} -- skipping DOCUMENT phase",
+              file=sys.stderr)
+        return
+
+    out_path = os.path.join(cwd, "migration-specs", f"{project_name}_design_document.docx")
+    doc_args = [spec_path, "--output", out_path, "--target", target_system]
+    if md_dir and os.path.isdir(md_dir):
+        doc_args += ["--md-dir", md_dir]
+
+    print(f"\n[DOCUMENT] Generating design document...")
+    rc = run_python(generator_path, doc_args, cwd=cwd)
+    if rc != 0:
+        print(f"WARNING: Document generation failed (exit {rc}) -- continuing", file=sys.stderr)
+    else:
+        print(f"  Output: migration-specs/{project_name}_design_document.docx")
+    return out_path
+
+
 # ─── Generate phase ───────────────────────────────────────────────────────────
 
 # Each generator entry: script path + the target-specific flag name for the
@@ -274,6 +299,12 @@ Examples:
 
   # Skip pull and analyze (use existing spec)
   python migrate.py --from boomi --to workato --project my-proj --skip-pull --skip-analyze
+
+  # Skip document generation (useful for automated CI pipelines)
+  python migrate.py --from mulesoft --source-dir exports/ --to workato --skip-document
+
+  # Include Markdown analysis files as appendix in design document
+  python migrate.py --from webmethods --source-dir exports/ --to boomi --md-dir WebMethods/MD/
 """,
     )
     PLATFORMS = ["boomi", "mulesoft", "workato", "celigo", "webmethods"]
@@ -302,6 +333,10 @@ Examples:
                         help="Skip the pull step (use already-downloaded active-development/ files)")
     parser.add_argument("--skip-analyze", action="store_true",
                         help="Skip the analyze step (use an existing spec in migration-specs/)")
+    parser.add_argument("--skip-document", action="store_true",
+                        help="Skip the document generation step")
+    parser.add_argument("--md-dir", default=None,
+                        help="Directory of .md analysis files to append as appendix in the design document")
     args = parser.parse_args()
 
     cwd = os.getcwd()
@@ -367,7 +402,13 @@ Examples:
             sys.exit(1)
         print(f"\n[ANALYZE] Skipped -- using existing spec: {spec_path}")
 
-    # ── PHASE 3: GENERATE ──────────────────────────────────────────────────
+    # ── PHASE 3: DOCUMENT ─────────────────────────────────────────────────
+    if not args.skip_document:
+        run_document(args.target, spec_path, project_name, cwd, md_dir=args.md_dir)
+    else:
+        print("\n[DOCUMENT] Skipped (--skip-document)")
+
+    # ── PHASE 4: GENERATE ─────────────────────────────────────────────────
     run_generate(args.target, spec_path, dest_name, args.dry_run, cwd)
 
     # ── Summary ────────────────────────────────────────────────────────────
@@ -375,6 +416,9 @@ Examples:
     print(f"Migration complete: {args.source} -> {args.target}")
     print(f"  Project  : {project_name}")
     print(f"  Spec     : migration-specs/{project_name}.json")
+    doc_file = os.path.join(cwd, "migration-specs", f"{project_name}_design_document.docx")
+    if os.path.isfile(doc_file):
+        print(f"  Document : migration-specs/{project_name}_design_document.docx")
     output_spec = spec_path.replace(".json", f"_{args.target}_output.json")
     if os.path.isfile(output_spec):
         print(f"  Output   : {os.path.relpath(output_spec)}")

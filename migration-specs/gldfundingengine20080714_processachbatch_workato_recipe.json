@@ -1,0 +1,139 @@
+{
+  "name": "MIG_WM_GLDFUNDINGENGINE20080714_PROCESSACHBATCH",
+  "description": "Migrated from webMethods IS package 'gldfundingengine20080714', flow 'GLDFundingEngine/MainFlows/processACHBatch'. This recipe retrieves the current system date/time from a GLD ACH adapter database service, selects pending ACH batch records whose timestamp is on or before that system date/time, iterates over each batch record, and (for each batch) invokes further ACH adapter services to build and submit ACH payment batches. The recipe uses a scheduled trigger to run periodically (batch processing pattern). GAPS: (1) NACHA flat-file generation steps were present in the original flow but are omitted here because they require external platform binaries (webMethods NACHA flat-file formatter) — these steps must be re-implemented using a custom Workato connector or a cloud-based NACHA generation library; (2) the full downstream call chain beyond selectACHBatch is truncated in the provided XML — additional steps for file transmission (SFTP/FTP delivery of NACHA file) must be confirmed with the SME and added to this recipe; (3) database connection details (connection name, JDBC URL, credentials) for 'GLD_ACHAdaptersServices' must be supplied by the SME and configured in the HTTP connection placeholders; (4) error notification/alerting logic (email or logging service) that may have existed in the CATCH block of the original flow is not reconstructable from the truncated XML and must be confirmed. NOTE (migration): Workato's API drops inputs for action steps that are direct children of a scheduled trigger's block. To preserve all step inputs, get_system_datetime and select_ach_batch have been moved inside the each loop (they run per-batch-item rather than once). In production, move these two steps to the top level and configure them in the Workato GUI, using the each loop's source pill to reference select_ach_batch output.",
+  "code": {
+    "number": 0,
+    "keyword": "trigger",
+    "provider": "clock",
+    "name": "scheduled_event",
+    "as": "scheduled_event",
+    "uuid": "a1b2c3d4-0001-0001-0001-000000000001",
+    "title": "Scheduled ACH Batch Trigger",
+    "input": {
+      "interval": 1,
+      "interval_unit": "hours"
+    },
+    "block": [
+      {
+        "number": 1,
+        "keyword": "each",
+        "uuid": "a1b2c3d4-0005-0005-0005-000000000005",
+        "title": "Loop over each ACH batch record returned by selectACHBatch",
+        "as": "ach_batch_item",
+        "block": [
+          {
+            "number": 2,
+            "keyword": "action",
+            "provider": "http",
+            "name": "post",
+            "as": "get_system_datetime",
+            "uuid": "a1b2c3d4-0003-0003-0003-000000000003",
+            "title": "Invoke GLD_ACHAdaptersServices:getSystemDateTime — retrieve current DB system date/time",
+            "input": {
+              "url": "PLACEHOLDER — obtain from SME: GLD_ACHAdaptersServices:getSystemDateTime",
+              "content_type": "application/json",
+              "payload": "{}"
+            },
+            "dynamicPickListSelection": {},
+            "toggleCfg": {}
+          },
+          {
+            "number": 3,
+            "keyword": "action",
+            "provider": "http",
+            "name": "post",
+            "as": "select_ach_batch",
+            "uuid": "a1b2c3d4-0004-0004-0004-000000000004",
+            "title": "Invoke GLD_ACHAdaptersServices:selectACHBatch — query pending ACH batches up to maxDateTime",
+            "input": {
+              "url": "PLACEHOLDER — obtain from SME: GLD_ACHAdaptersServices:selectACHBatch",
+              "content_type": "application/json",
+              "payload": "{\"selectACHBatchInput\": {\"maxDateTime\": \"#{_dp('{\\\"pill_type\\\":\\\"output\\\",\\\"provider\\\":\\\"http\\\",\\\"line\\\":\\\"get_system_datetime\\\",\\\"path\\\":[\\\"body\\\",\\\"maxDateTime\\\"]}') }\"}}"
+            },
+            "dynamicPickListSelection": {},
+            "toggleCfg": {}
+          },
+          {
+            "number": 4,
+            "keyword": "action",
+            "provider": "http",
+            "name": "post",
+            "as": "process_single_ach_batch",
+            "uuid": "a1b2c3d4-0006-0006-0006-000000000006",
+            "title": "Invoke GLD_ACHAdaptersServices — process individual ACH batch record (build ACH entries, update batch status). NOTE: NACHA flat-file generation step is a GAP — requires external NACHA formatter not available in Workato natively.",
+            "input": {
+              "url": "PLACEHOLDER — obtain from SME: GLD_ACHAdaptersServices:processACHBatchRecord",
+              "content_type": "application/json",
+              "payload": "{\"batchRecord\": \"#{_dp('{\\\"pill_type\\\":\\\"output\\\",\\\"provider\\\":\\\"foreach\\\",\\\"line\\\":\\\"ach_batch_item\\\",\\\"path\\\":[\\\"current_item\\\"]}') }\"}"
+            },
+            "dynamicPickListSelection": {},
+            "toggleCfg": {}
+          },
+          {
+            "number": 5,
+            "keyword": "action",
+            "provider": "http",
+            "name": "post",
+            "as": "update_ach_batch_status",
+            "uuid": "a1b2c3d4-0007-0007-0007-000000000007",
+            "title": "Invoke GLD_ACHAdaptersServices — update ACH batch status to processed/submitted",
+            "input": {
+              "url": "PLACEHOLDER — obtain from SME: GLD_ACHAdaptersServices:updateACHBatchStatus",
+              "content_type": "application/json",
+              "payload": "{\"batchId\": \"#{_dp('{\\\"pill_type\\\":\\\"output\\\",\\\"provider\\\":\\\"foreach\\\",\\\"line\\\":\\\"ach_batch_item\\\",\\\"path\\\":[\\\"current_item\\\",\\\"BATCH_ID\\\"]}') }\", \"status\": \"PROCESSED\"}"
+            },
+            "dynamicPickListSelection": {},
+            "toggleCfg": {}
+          }
+        ],
+        "input": {
+          "source": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"http\",\"line\":\"select_ach_batch\",\"path\":[\"body\",\"selectACHBatchOutput\",\"results\"]}') }"
+        },
+        "dynamicPickListSelection": {},
+        "toggleCfg": {}
+      },
+      {
+        "number": 6,
+        "keyword": "rescue",
+        "uuid": "a1b2c3d4-0008-0008-0008-000000000008",
+        "title": "CATCH: Handle errors from ACH batch processing",
+        "block": [
+          {
+            "number": 7,
+            "keyword": "action",
+            "provider": "http",
+            "name": "post",
+            "as": "log_error",
+            "uuid": "a1b2c3d4-0009-0009-0009-000000000009",
+            "title": "Log or notify error — POST error details to logging/alerting endpoint. NOTE: Original error notification target (email/queue/log service) is a GAP — confirm target with SME.",
+            "input": {
+              "url": "PLACEHOLDER — obtain from SME: error logging or alerting endpoint",
+              "content_type": "application/json",
+              "payload": "{\"flow\": \"GLDFundingEngine/MainFlows/processACHBatch\", \"error_message\": \"#{_dp('{\\\"pill_type\\\":\\\"output\\\",\\\"provider\\\":\\\"workato\\\",\\\"line\\\":\\\"rescue\\\",\\\"path\\\":[\\\"message\\\"]}') }\", \"error_type\": \"#{_dp('{\\\"pill_type\\\":\\\"output\\\",\\\"provider\\\":\\\"workato\\\",\\\"line\\\":\\\"rescue\\\",\\\"path\\\":[\\\"type\\\"]}') }\"}"
+            },
+            "dynamicPickListSelection": {},
+            "toggleCfg": {}
+          }
+        ],
+        "dynamicPickListSelection": {},
+        "toggleCfg": {}
+      }
+    ],
+    "dynamicPickListSelection": {},
+    "toggleCfg": {}
+  },
+  "config": [
+    {
+      "keyword": "application",
+      "provider": "http",
+      "account_id": null,
+      "skip_validation": true
+    },
+    {
+      "keyword": "application",
+      "provider": "clock",
+      "account_id": null,
+      "skip_validation": true
+    }
+  ]
+}

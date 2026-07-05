@@ -1,0 +1,179 @@
+{
+  "name": "MIG_WM_GLDFUNDINGENGINE20080714_PROCESSFUNDINGREQUEST",
+  "description": "This recipe migrates the webMethods IS flow 'GLDFundingEngine/MainFlows/processFundingRequest' from package 'gldfundingengine20080714'. It exposes a callable (SOAP/HTTP) trigger that accepts a funding request payload (fundingEngineWrapperInput, REQUESTOR, fileName), optionally saves and restores a pipeline debug snapshot when a 'debug' flag is set, then executes the main funding-engine processing sequence inside a try/catch (monitor) block. GAPS: (1) pub.flow:savePipelineToFile and pub.flow:restorePipelineFromFile are webMethods IS platform-internal services with no direct Workato equivalent — the debug branch is represented as a no-op comment step; (2) the downstream 'fundingEngineWrapperInput' processing chain (truncated in the source XML) invokes additional sub-services not provided; those are represented as placeholder HTTP action steps pending SME review; (3) NACHA flat-file generation, if present in sub-services, cannot be migrated via Workato native steps and must be handled by a custom Lambda/function call or external microservice.",
+  "code": {
+    "number": 0,
+    "keyword": "trigger",
+    "provider": "workato",
+    "name": "callable_recipe",
+    "title": "Callable: processFundingRequest",
+    "as": "callable_recipe",
+    "uuid": "a1b2c3d4-0001-0001-0001-000000000001",
+    "input": {
+      "http_method": "post",
+      "request_url_suffix": "/process-funding-request",
+      "response_type": "dynamic",
+      "input_fields_raw_schema": "[{\"name\": \"debug\", \"type\": \"string\", \"optional\": true, \"label\": \"Debug flag \\u2014 set to 'true' to enable pipeline snapshot logging\"}, {\"name\": \"REQUESTOR\", \"type\": \"string\", \"optional\": false, \"label\": \"Requestor identifier\"}, {\"name\": \"fileName\", \"type\": \"string\", \"optional\": true, \"label\": \"Pipeline snapshot file name (used in debug mode)\"}, {\"name\": \"fundingEngineWrapperInput\", \"type\": \"string\", \"optional\": false, \"label\": \"Funding engine wrapper input record (JSON string \\u2014 caller serializes as JSON)\"}]"
+    },
+    "block": [
+      {
+        "number": 1,
+        "keyword": "if",
+        "title": "DEBUG branch: save and restore pipeline snapshot (webMethods-only; no-op in Workato)",
+        "uuid": "a1b2c3d4-0001-0002-0001-000000000002",
+        "block": [
+          {
+            "number": 2,
+            "keyword": "action",
+            "provider": "http",
+            "name": "post",
+            "title": "GAP — savePipelineToFile (debug): Log debug entry instead of IS pipeline snapshot",
+            "uuid": "a1b2c3d4-0001-0003-0001-000000000003",
+            "input": {
+              "url": "PLACEHOLDER — not migrated: workato/log_message",
+              "content_type": "application/json",
+              "payload": "{\"message\": \"DEBUG: savePipelineToFile called with fileName=FundingEngineRequest. This step is a no-op placeholder \\u2014 webMethods pub.flow:savePipelineToFile has no Workato equivalent.\"}"
+            },
+            "dynamicPickListSelection": {},
+            "toggleCfg": {}
+          },
+          {
+            "number": 3,
+            "keyword": "else",
+            "uuid": "a1b2c3d4-0001-0004-0001-000000000004",
+            "block": [
+              {
+                "number": 4,
+                "keyword": "action",
+                "provider": "http",
+                "name": "post",
+                "title": "GAP — restorePipelineFromFile (debug=false branch): Log debug entry instead of IS pipeline restore",
+                "uuid": "a1b2c3d4-0001-0005-0001-000000000005",
+                "input": {
+                  "url": "PLACEHOLDER — not migrated: workato/log_message",
+                  "content_type": "application/json",
+                  "payload": "{\"message\": \"DEBUG (false branch): restorePipelineFromFile called with fileName=FundingEngineRequest, merge=true. This step is a no-op placeholder \\u2014 webMethods pub.flow:restorePipelineFromFile has no Workato equivalent.\"}"
+                },
+                "dynamicPickListSelection": {},
+                "toggleCfg": {}
+              }
+            ]
+          }
+        ],
+        "input": {
+          "type": "compound",
+          "operand": "and",
+          "conditions": [
+            {
+              "operand": "equals",
+              "lhs": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"workato\",\"line\":\"trigger\",\"path\":[\"debug\"]}') }",
+              "rhs": "true"
+            }
+          ]
+        }
+      },
+      {
+        "number": 6,
+        "keyword": "action",
+        "provider": "http",
+        "name": "post",
+        "title": "Initialise pipeline variables: set fileName, REQUESTOR, fundingEngineWrapperInput",
+        "uuid": "a1b2c3d4-0001-0007-0001-000000000007",
+        "as": "init_vars",
+        "input": {
+          "url": "PLACEHOLDER — not migrated: workato/log_message",
+          "content_type": "application/json",
+          "payload": "{\"message\": \"Pipeline initialised\"}"
+        },
+        "dynamicPickListSelection": {},
+        "toggleCfg": {}
+      },
+      {
+        "number": 7,
+        "keyword": "action",
+        "provider": "http",
+        "name": "post",
+        "title": "PLACEHOLDER — Invoke fundingEngineWrapper sub-service (GLDFundingEngine/fundingEngineWrapper)",
+        "uuid": "a1b2c3d4-0001-0008-0001-000000000008",
+        "as": "funding_engine_wrapper",
+        "input": {
+          "url": "PLACEHOLDER — obtain from SME: GLDFundingEngine/fundingEngineWrapper",
+          "content_type": "application/json",
+          "payload": "{\"REQUESTOR\": \"#{_dp('{\\\"pill_type\\\":\\\"output\\\",\\\"provider\\\":\\\"workato\\\",\\\"line\\\":\\\"trigger\\\",\\\"path\\\":[\\\"REQUESTOR\\\"]}') }\", \"fundingEngineWrapperInput\": \"#{_dp('{\\\"pill_type\\\":\\\"output\\\",\\\"provider\\\":\\\"workato\\\",\\\"line\\\":\\\"trigger\\\",\\\"path\\\":[\\\"fundingEngineWrapperInput\\\"]}') }\"}"
+        },
+        "dynamicPickListSelection": {},
+        "toggleCfg": {}
+      },
+      {
+        "number": 8,
+        "keyword": "action",
+        "provider": "http",
+        "name": "post",
+        "title": "Log successful completion of funding request processing",
+        "uuid": "a1b2c3d4-0001-0009-0001-000000000009",
+        "input": {
+          "url": "PLACEHOLDER — not migrated: workato/log_message",
+          "content_type": "application/json",
+          "payload": "{\"message\": \"processFundingRequest completed successfully for REQUESTOR: #{_dp('{\\\"pill_type\\\":\\\"output\\\",\\\"provider\\\":\\\"workato\\\",\\\"line\\\":\\\"trigger\\\",\\\"path\\\":[\\\"REQUESTOR\\\"]}') }\"}"
+        },
+        "dynamicPickListSelection": {},
+        "toggleCfg": {}
+      },
+      {
+        "number": 9,
+        "keyword": "rescue",
+        "uuid": "a1b2c3d4-0001-0010-0001-000000000010",
+        "block": [
+          {
+            "number": 10,
+            "keyword": "action",
+            "provider": "http",
+            "name": "post",
+            "title": "CATCH: Log error caught during funding request processing",
+            "uuid": "a1b2c3d4-0001-0011-0001-000000000011",
+            "as": "catch_log",
+            "input": {
+              "url": "PLACEHOLDER — not migrated: workato/log_message",
+              "content_type": "application/json",
+              "payload": "{\"message\": \"ERROR in processFundingRequest: #{_dp('{\\\"pill_type\\\":\\\"error\\\",\\\"path\\\":[\\\"message\\\"]}') }\"}"
+            },
+            "dynamicPickListSelection": {},
+            "toggleCfg": {}
+          },
+          {
+            "number": 11,
+            "keyword": "action",
+            "provider": "http",
+            "name": "post",
+            "title": "PLACEHOLDER — Notify error handler / invoke pub.flow:throwExceptionForRetry or equivalent error reporting service",
+            "uuid": "a1b2c3d4-0001-0012-0001-000000000012",
+            "as": "error_notification",
+            "input": {
+              "url": "PLACEHOLDER — obtain from SME: error reporting / notification endpoint",
+              "content_type": "application/json",
+              "payload": "{\"errorMessage\": \"#{_dp('{\\\"pill_type\\\":\\\"error\\\",\\\"path\\\":[\\\"message\\\"]}') }\", \"REQUESTOR\": \"#{_dp('{\\\"pill_type\\\":\\\"output\\\",\\\"provider\\\":\\\"workato\\\",\\\"line\\\":\\\"trigger\\\",\\\"path\\\":[\\\"REQUESTOR\\\"]}') }\", \"service\": \"GLDFundingEngine/MainFlows/processFundingRequest\"}"
+            },
+            "dynamicPickListSelection": {},
+            "toggleCfg": {}
+          }
+        ]
+      }
+    ],
+    "dynamicPickListSelection": {},
+    "toggleCfg": {}
+  },
+  "config": [
+    {
+      "keyword": "application",
+      "provider": "http",
+      "account_id": null,
+      "skip_validation": true
+    },
+    {
+      "keyword": "application",
+      "provider": "workato",
+      "account_id": null,
+      "skip_validation": true
+    }
+  ]
+}

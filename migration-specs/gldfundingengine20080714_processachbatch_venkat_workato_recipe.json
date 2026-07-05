@@ -1,0 +1,117 @@
+{
+  "name": "MIG_WM_GLDFUNDINGENGINE20080714_PROCESSACHBATCH_VENKAT",
+  "description": "DEVELOPER/TEST PROTOTYPE — DO NOT MIGRATE TO PRODUCTION. This recipe was authored by 'venkat' as a non-production test flow. It exposes an HTTP endpoint that: (1) calls GLD_ACHAdaptersServices:selectACHBatch with no date filter, which would select the entire ACH batch table; (2) initializes a NACHA_Schema structure with hard-coded test data rows (all 1s and all 9s) confirming non-production intent; (3) initializes a BatchRecord pipeline variable to an empty string; and (4) invokes pub.flatFile:convertToString to serialize the NACHA flat-file document to a string. GAPS: The selectACHBatch database adapter call is represented as an HTTP POST placeholder — the actual JDBC/adapter connection must be configured by SME. The NACHA_SchemaDT schema (GLDFundingEngine.Schemas:NACHA_SchemaDT) must be ported separately as a flat-file schema definition; there is no native Workato equivalent — this step is a placeholder. pub.flatFile:convertToString has no direct Workato equivalent and is represented as a placeholder. The hard-coded test data rows are embedded in the payload of the NACHA initialization step for reference only. Per migration notes, this flow should be archived as a documentation artifact; any production flat-file conversion logic should be extracted and applied to the canonical processACHBatch recipe instead.",
+  "code": {
+    "number": 0,
+    "keyword": "trigger",
+    "provider": "workato",
+    "name": "callable_recipe",
+    "as": "callable_recipe",
+    "uuid": "550e8400-e29b-41d4-a716-446655440000",
+    "dynamicPickListSelection": {},
+    "toggleCfg": {},
+    "input": {
+      "http_method": "post",
+      "request_url_suffix": "/processACHBatch-venkat",
+      "response_type": "dynamic",
+      "input_fields_raw_schema": "[{\"name\":\"trigger_note\",\"type\":\"string\",\"optional\":true,\"label\":\"Trigger Note (developer test endpoint — no input required)\"}]"
+    },
+    "block": [
+      {
+        "number": 1,
+        "keyword": "action",
+        "provider": "http",
+        "name": "post",
+        "as": "select_ach_batch",
+        "title": "Call GLD_ACHAdaptersServices:selectACHBatch (no date filter — selects entire table)",
+        "uuid": "550e8400-e29b-41d4-a716-446655440001",
+        "dynamicPickListSelection": {},
+        "toggleCfg": {},
+        "input": {
+          "url": "PLACEHOLDER — obtain from SME: GLD_ACHAdaptersServices:selectACHBatch",
+          "content_type": "application/json",
+          "payload": "{}"
+        }
+      },
+      {
+        "number": 2,
+        "keyword": "action",
+        "provider": "http",
+        "name": "post",
+        "as": "init_nacha_schema",
+        "title": "Initialize NACHA_Schema with hard-coded test data (all-1s and all-9s rows) and expose selectACHBatchOutput",
+        "uuid": "550e8400-e29b-41d4-a716-446655440002",
+        "dynamicPickListSelection": {},
+        "toggleCfg": {},
+        "input": {
+          "url": "PLACEHOLDER — not migrated: GLDFundingEngine.Schemas:NACHA_SchemaDT initialization (hard-coded test data, non-production)",
+          "content_type": "application/json",
+          "payload": "{\"selectACHBatchOutput\": \"[PILL: select_ach_batch.body]\", \"NACHA_Schema\": {\"recordWithNoID\": [{\"Record Type Code\": \"1\", \"Transaction Code\": \"1\", \"Routing/Transit Number\": \"1\", \"R/T CheckDigit\": \"1\", \"Individual Account Number\": \"1\", \"Amount\": \"1\", \"Individual ID Number\": \"1\", \"Individual Name\": \"1\", \"Discretionary Data\": \"\", \"Addenda Indicator\": \"1\", \"Trace Number\": \"1\"}, {\"Record Type Code\": \"9\", \"Transaction Code\": \"9\", \"Routing/Transit Number\": \"9\", \"R/T CheckDigit\": \"9\", \"Individual Account Number\": \"9\", \"Amount\": \"9\", \"Individual ID Number\": \"9\", \"Individual Name\": \"9\", \"Discretionary Data\": \"9\", \"Addenda Indicator\": \"9\", \"Trace Number\": \"9\"}]}}"
+        }
+      },
+      {
+        "number": 3,
+        "keyword": "action",
+        "provider": "http",
+        "name": "post",
+        "as": "init_batch_record",
+        "title": "Initialize BatchRecord pipeline variable to empty string",
+        "uuid": "550e8400-e29b-41d4-a716-446655440003",
+        "dynamicPickListSelection": {},
+        "toggleCfg": {},
+        "input": {
+          "url": "PLACEHOLDER — not migrated: set pipeline variable BatchRecord to empty string (IS internal MAP/SET operation)",
+          "content_type": "application/json",
+          "payload": "{\"BatchRecord\": \"\"}"
+        }
+      },
+      {
+        "number": 4,
+        "keyword": "action",
+        "provider": "http",
+        "name": "post",
+        "as": "convert_nacha_to_string",
+        "title": "Convert NACHA flat-file document to string using pub.flatFile:convertToString",
+        "uuid": "550e8400-e29b-41d4-a716-446655440004",
+        "dynamicPickListSelection": {},
+        "toggleCfg": {},
+        "input": {
+          "url": "PLACEHOLDER — not migrated: pub.flatFile:convertToString (no direct Workato equivalent — NACHA schema GLDFundingEngine.Schemas:NACHA_SchemaDT must be ported separately)",
+          "content_type": "application/json",
+          "payload": "{\"ffData\": \"[PILL: init_nacha_schema.body]\", \"ffSchema\": \"GLDFundingEngine.Schemas:NACHA_SchemaDT\"}"
+        }
+      },
+      {
+        "number": 5,
+        "keyword": "rescue",
+        "uuid": "550e8400-e29b-41d4-a716-446655440005",
+        "block": [
+          {
+            "number": 6,
+            "keyword": "action",
+            "provider": "http",
+            "name": "post",
+            "as": "error_handler",
+            "title": "Handle error — log failure in processACHBatch_venkat (developer test flow)",
+            "uuid": "550e8400-e29b-41d4-a716-446655440006",
+            "dynamicPickListSelection": {},
+            "toggleCfg": {},
+            "input": {
+              "url": "PLACEHOLDER — obtain from SME: error logging endpoint for processACHBatch_venkat",
+              "content_type": "application/json",
+              "payload": "{\"error_message\": \"processACHBatch_venkat failed — this is a non-production developer test flow and should not be in production\", \"flow\": \"processACHBatch_venkat\", \"author\": \"venkat\", \"package\": \"gldfundingengine20080714\"}"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "config": [
+    {
+      "keyword": "application",
+      "provider": "http",
+      "account_id": null,
+      "skip_validation": true
+    }
+  ]
+}

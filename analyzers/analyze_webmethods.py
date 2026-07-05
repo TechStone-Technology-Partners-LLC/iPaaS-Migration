@@ -62,58 +62,205 @@ WMIO_STEP_MAP = {
 }
 
 
+def _comment_text(elem):
+    """Extract COMMENT child text from a flow element."""
+    c = elem.find("COMMENT")
+    return (c.text or "").strip() if c is not None else ""
+
+
+def _parse_wm_elements(children, seq_counter):
+    """
+    Recursive descent parser for webMethods IS flow XML children.
+    Returns a list of canonical step dicts.
+    seq_counter: a list[int] used as a mutable counter (pass [1]).
+
+    webMethods IS control-flow conventions:
+    - SEQUENCE EXIT-ON="FAILURE" with COMMENT "TRY Block" → try block
+    - SEQUENCE EXIT-ON="SUCCESS" wrapping a "FAILURE" SEQUENCE → TRY/CATCH wrapper
+    - BRANCH SWITCH="var" → choice_router (multi-branch)
+    - LOOP COUNT="var" → loop (foreach)
+    - INVOKE SERVICE="..." → subprocess_call or connector_action
+    - MAP → transform
+    - EXIT → exception / stop
+    """
+    steps = []
+    i = 0
+    while i < len(children):
+        elem = children[i]
+        tag = elem.tag
+        svc = elem.get("SERVICE") or ""
+        comment = _comment_text(elem) or elem.get("COMMENT") or ""
+        label = comment or svc or tag
+        seq = seq_counter[0]
+        seq_counter[0] += 1
+
+        # ── SEQUENCE ──────────────────────────────────────────────────────
+        if tag == "SEQUENCE":
+            exit_on = (elem.get("EXIT-ON") or "").upper()
+            seq_comment = comment.upper()
+            sub_children = list(elem)
+
+            # Pattern: SEQUENCE EXIT-ON="SUCCESS" containing a SEQUENCE EXIT-ON="FAILURE"
+            # This is the webMethods TRY/CATCH wrapper: the outer SEQUENCE gives
+            # control to the next step if the inner (try) SEQUENCE exits on failure.
+            inner_try = None
+            catch_elems = []
+            if exit_on == "SUCCESS":
+                for j, child in enumerate(sub_children):
+                    if child.tag == "SEQUENCE" and (child.get("EXIT-ON") or "").upper() == "FAILURE":
+                        inner_try = child
+                        catch_elems = sub_children[j+1:]
+                        break
+
+            if inner_try is not None:
+                try_steps  = _parse_wm_elements(list(inner_try), seq_counter)
+                catch_steps = _parse_wm_elements(catch_elems, seq_counter)
+                steps.append({
+                    "source_tag": "wm:SEQUENCE:try_catch",
+                    "type": "try_catch",
+                    "label": comment or "Try/Catch block",
+                    "try_steps": try_steps,
+                    "catch_steps": catch_steps,
+                    "requires_review": False,
+                    "sequence": seq,
+                })
+            elif exit_on == "FAILURE":
+                # Standalone TRY block without an explicit catch — wrap in try_catch.
+                # EXIT-ON="FAILURE" is the standard webMethods IS convention for a try
+                # body that aborts the sequence when any step fails.
+                try_steps = _parse_wm_elements(sub_children, seq_counter)
+                steps.append({
+                    "source_tag": "wm:SEQUENCE:try",
+                    "type": "try_catch",
+                    "label": comment or "Try block",
+                    "try_steps": try_steps,
+                    "catch_steps": [],
+                    "requires_review": True,
+                    "sequence": seq,
+                })
+            else:
+                # Plain SEQUENCE — flatten into parent (sequences are structural containers)
+                steps.extend(_parse_wm_elements(sub_children, seq_counter))
+
+        # ── BRANCH → multi-way conditional ────────────────────────────────
+        elif tag == "BRANCH":
+            switch_var = elem.get("SWITCH") or ""
+            branch_children = [c for c in elem if c.tag not in ("COMMENT",)]
+            if len(branch_children) == 2:
+                # Two-branch → IF/ELSE
+                true_elem, false_elem = branch_children[0], branch_children[1]
+                true_label  = _comment_text(true_elem) or true_elem.get("LABEL") or "true path"
+                false_label = _comment_text(false_elem) or false_elem.get("LABEL") or "false/default path"
+                true_steps  = _parse_wm_elements(list(true_elem), seq_counter)
+                false_steps = _parse_wm_elements(list(false_elem), seq_counter)
+                steps.append({
+                    "source_tag": f"wm:BRANCH:{switch_var}",
+                    "type": "choice_router",
+                    "label": comment or f"Branch on {switch_var}",
+                    "condition": f"{switch_var} EQUALS {true_label}",
+                    "true_steps": true_steps,
+                    "false_steps": false_steps,
+                    "requires_review": True,
+                    "sequence": seq,
+                })
+            else:
+                # N-way branch → route (multiple paths)
+                paths = []
+                for b in branch_children:
+                    b_label = _comment_text(b) or b.get("LABEL") or b.get("NAME") or "path"
+                    b_steps = _parse_wm_elements(list(b), seq_counter)
+                    paths.append({"label": b_label, "condition": b_label, "steps": b_steps})
+                steps.append({
+                    "source_tag": f"wm:BRANCH:{switch_var}",
+                    "type": "route",
+                    "label": comment or f"Switch on {switch_var}",
+                    "switch_variable": switch_var,
+                    "paths": paths,
+                    "requires_review": True,
+                    "sequence": seq,
+                })
+
+        # ── LOOP → foreach ────────────────────────────────────────────────
+        elif tag == "LOOP":
+            count_var = elem.get("COUNT") or elem.get("ARRAY") or ""
+            loop_children = [c for c in elem if c.tag not in ("COMMENT",)]
+            loop_steps = _parse_wm_elements(loop_children, seq_counter)
+            steps.append({
+                "source_tag": f"wm:LOOP:{count_var}",
+                "type": "foreach",
+                "label": comment or f"Loop over {count_var}",
+                "loop_over": count_var,
+                "loop_steps": loop_steps,
+                "requires_review": False,
+                "sequence": seq,
+            })
+
+        # ── INVOKE → service call ─────────────────────────────────────────
+        elif tag == "INVOKE":
+            canon_type = WM_SERVICE_MAP.get(svc) or "connector_action"
+            step = {
+                "source_tag": f"wm:INVOKE:{svc}",
+                "type": canon_type,
+                "label": label or svc,
+                "config_ref": svc,
+                "wm_service": svc,
+                "requires_review": True,
+                "complexity": "medium" if canon_type in ("transform", "choice_router") else "low",
+                "sequence": seq,
+            }
+            # Extract SQL for JDBC calls
+            if canon_type in ("db_select", "db_insert", "db_update", "db_delete"):
+                sql_elem = elem.find(".//VALUE[@name='sql']") or elem.find(".//sql")
+                if sql_elem is not None:
+                    step["sql"] = (sql_elem.text or "").strip()
+            steps.append(step)
+
+        # ── MAP → transform ───────────────────────────────────────────────
+        elif tag == "MAP":
+            mode = elem.get("MODE") or ""
+            if mode != "INPUT" and mode != "OUTPUT":  # skip connector param maps
+                steps.append({
+                    "source_tag": "wm:MAP",
+                    "type": "transform",
+                    "label": comment or f"Map ({mode})",
+                    "requires_review": True,
+                    "sequence": seq,
+                })
+
+        # ── EXIT → exception / stop ───────────────────────────────────────
+        elif tag == "EXIT":
+            steps.append({
+                "source_tag": "wm:EXIT",
+                "type": "exception",
+                "label": comment or "Exit flow",
+                "requires_review": False,
+                "sequence": seq,
+            })
+
+        i += 1
+    return steps
+
+
 def analyze_wm_flow_xml(fpath):
-    """Analyze a webMethods IS flow service XML file."""
+    """
+    Analyze a webMethods IS flow service XML file using recursive descent parsing.
+    Preserves nested control-flow structure (TRY/CATCH, BRANCH, LOOP) in the spec.
+    """
     try:
         tree = ET.parse(fpath)
         root = tree.getroot()
-    except ET.ParseError as e:
+    except ET.ParseError:
         return None
 
     name = Path(fpath).stem
-    steps = []
-    seq = 1
+    seq_counter = [1]
 
-    for elem in root.iter():
-        tag = elem.tag
-        svc = elem.get("SERVICE") or elem.get("service") or ""
-        sig_name = elem.get("SIGTYPE") or elem.get("name") or ""
+    # Root children are the top-level flow steps
+    root_children = [c for c in root if c.tag not in ("COMMENT",)]
+    steps = _parse_wm_elements(root_children, seq_counter)
 
-        # Map to canonical
-        canon_type = WM_SERVICE_MAP.get(svc, None)
-        if canon_type is None and tag in ("SEQUENCE", "BRANCH", "LOOP", "INVOKE", "EXIT", "MAP"):
-            canon_type = {
-                "SEQUENCE": "sequence",
-                "BRANCH": "choice_router",
-                "LOOP": "loop",
-                "INVOKE": "subprocess_call",
-                "EXIT": "exception",
-                "MAP": "transform",
-            }.get(tag, "connector_action")
-
-        if canon_type is None:
-            continue
-
-        step = {
-            "source_tag": f"wm:{tag}:{svc}",
-            "type": canon_type,
-            "label": elem.get("COMMENT") or svc or tag,
-            "config_ref": svc,
-            "requires_review": canon_type in ("connector_action", "subprocess_call"),
-            "wm_service": svc,
-            "wm_tag": tag,
-            "complexity": "medium" if canon_type in ("transform", "choice_router") else "low",
-            "sequence": seq,
-        }
-
-        # DB steps — extract SQL if present
-        if canon_type in ("db_select", "db_insert", "db_update", "db_delete"):
-            sql_elem = elem.find(".//VALUE[@name='sql']") or elem.find(".//sql")
-            if sql_elem is not None:
-                step["sql"] = (sql_elem.text or "").strip()
-
-        steps.append(step)
-        seq += 1
+    # Detect error handling presence
+    has_try_catch = any(s.get("type") == "try_catch" for s in steps)
 
     # Trigger — webMethods IS services are triggered by HTTP or JMS or scheduler
     trigger = {
@@ -131,7 +278,10 @@ def analyze_wm_flow_xml(fpath):
         "trigger": trigger,
         "steps": steps,
         "connections_used": [],
-        "error_handling": {"has_error_handler": False, "strategies": []},
+        "error_handling": {
+            "has_error_handler": has_try_catch,
+            "strategies": ["try_catch"] if has_try_catch else [],
+        },
     }
 
 

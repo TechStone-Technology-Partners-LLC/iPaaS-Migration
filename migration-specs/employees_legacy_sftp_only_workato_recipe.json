@@ -1,0 +1,108 @@
+{
+  "name": "Employees Legacy Schedule - SFTP Steps Only",
+  "version": 1,
+  "private": true,
+  "concurrency": 1,
+  "code": {
+    "number": 0,
+    "provider": "workato_recipe_function",
+    "name": "execute",
+    "as": "bc6e47ab",
+    "keyword": "trigger",
+    "input": {
+      "parameters_schema_json": "[{\"name\":\"employee_ftp_file_path\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\",\"label\":\"Employee FTP File path\",\"hint\":\"full file path to create employees file on SFTP for Legacy Schedule\"},{\"name\":\"last_page\",\"type\":\"boolean\",\"optional\":false,\"label\":\"Last page\",\"hint\":\"pass in boolean to indicate if sending last page of data\",\"control_type\":\"checkbox\",\"render_input\":\"boolean_conversion\",\"parse_output\":\"boolean_conversion\",\"toggle_hint\":\"Select from option list\",\"toggle_field\":{\"label\":\"Last page\",\"control_type\":\"text\",\"toggle_hint\":\"Use custom value\",\"name\":\"last_page\",\"type\":\"boolean\",\"optional\":false,\"hint\":\"pass in boolean to indicate if sending last page of data\"}},{\"name\":\"employees\",\"type\":\"array\",\"optional\":false,\"properties\":[{\"name\":\"employee_id\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\",\"label\":\"Employee ID\"},{\"name\":\"first_name\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\",\"label\":\"First name\"},{\"name\":\"last_name\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\",\"label\":\"Last name\"},{\"name\":\"title\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\",\"label\":\"Title\"},{\"name\":\"employee_pay_type\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\",\"label\":\"Employee pay type\"},{\"name\":\"primary_role_expiration\",\"type\":\"string\",\"optional\":true,\"control_type\":\"text\",\"label\":\"Primary role expiration\"},{\"name\":\"remaining_pto_hours\",\"type\":\"string\",\"optional\":true,\"control_type\":\"text\",\"label\":\"Remaining pto hours\"},{\"name\":\"employment_capacity\",\"type\":\"string\",\"optional\":true,\"control_type\":\"text\",\"label\":\"Employment capacity\"},{\"name\":\"employment_overtime_rule\",\"type\":\"string\",\"optional\":true,\"control_type\":\"text\",\"label\":\"Employment overtime rule\"},{\"name\":\"employment_status\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\",\"label\":\"Employment status\"},{\"name\":\"wage\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\",\"label\":\"Wage\"},{\"name\":\"preferred_send_method\",\"type\":\"string\",\"optional\":true,\"control_type\":\"text\",\"label\":\"Preferred send method\"},{\"name\":\"home_number\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\",\"label\":\"Home number\"},{\"name\":\"mobile_number\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\",\"label\":\"Mobile number\"},{\"name\":\"email\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\",\"label\":\"Email\"},{\"name\":\"job_code\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\",\"label\":\"Job code\"},{\"name\":\"facility_id\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\",\"label\":\"Facility ID\"},{\"name\":\"termination_date\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\",\"label\":\"Termination date\"},{\"name\":\"hire_date\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\",\"label\":\"Hire date\"}],\"of\":\"object\",\"label\":\"Employees\"}]"
+    },
+    "block": [
+      {
+        "number": 1,
+        "provider": "sftp",
+        "name": "stat",
+        "as": "4881e37d",
+        "keyword": "action",
+        "dynamicPickListSelection": {},
+        "toggleCfg": {},
+        "input": {
+          "filename": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"workato_recipe_function\",\"line\":\"bc6e47ab\",\"path\":[\"parameters\",\"employee_ftp_file_path\"]}')}"
+        },
+        "comment": "Get end file",
+        "uuid": "b303a992-1813-42ab-b63c-c589fa7339ad"
+      },
+      {
+        "number": 2,
+        "provider": "sftp",
+        "name": "stat",
+        "as": "7c23434d",
+        "keyword": "action",
+        "dynamicPickListSelection": {},
+        "toggleCfg": {},
+        "input": {
+          "filename": ""
+        },
+        "comment": "get temp file",
+        "uuid": "bb0449c2-066c-4cb6-94b9-ae1090127180"
+      },
+      {
+        "number": 3,
+        "provider": "sftp",
+        "name": "remove",
+        "as": "7200401e",
+        "keyword": "action",
+        "dynamicPickListSelection": {},
+        "toggleCfg": {},
+        "input": {
+          "filename": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"workato_recipe_function\",\"line\":\"bc6e47ab\",\"path\":[\"parameters\",\"employee_ftp_file_path\"]}')}"
+        },
+        "uuid": "e8f128eb-c2f0-4ece-894a-1b4e18370a4b"
+      },
+      {
+        "number": 4,
+        "provider": "sftp",
+        "name": "upload",
+        "as": "b06544b2",
+        "keyword": "action",
+        "dynamicPickListSelection": {},
+        "toggleCfg": {
+          "append": false
+        },
+        "input": {
+          "filename": "",
+          "content": "",
+          "expected_size": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"sftp\",\"line\":\"7c23434d\",\"path\":[\"size\"]}')}" ,
+          "append": "false"
+        },
+        "comment": "Upload temp file",
+        "uuid": "3833fbd3-aae8-47bb-8f62-26c063fdba39"
+      },
+      {
+        "number": 5,
+        "provider": "sftp",
+        "name": "rename",
+        "as": "d6313b97",
+        "keyword": "action",
+        "dynamicPickListSelection": {},
+        "toggleCfg": {},
+        "input": {
+          "from": "",
+          "to": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"workato_recipe_function\",\"line\":\"bc6e47ab\",\"path\":[\"parameters\",\"employee_ftp_file_path\"]}')}"
+        },
+        "uuid": "80e0561b-051a-49a3-b8d1-9fc10b3088b8"
+      }
+    ],
+    "uuid": "0cdb67a8-79f1-4d89-9ecc-cbe0ac58528d",
+    "unfinished": false
+  },
+  "config": [
+    {
+      "keyword": "application",
+      "provider": "workato_recipe_function",
+      "skip_validation": false,
+      "account_id": null
+    },
+    {
+      "keyword": "application",
+      "provider": "sftp",
+      "skip_validation": true,
+      "account_id": null
+    }
+  ]
+}

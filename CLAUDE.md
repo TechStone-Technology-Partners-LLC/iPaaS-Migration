@@ -62,40 +62,71 @@ python scripts/wm_migration_agent.py --package MyPackage --source-dir /path/to/e
 
 ---
 
+## MigrAlte UI
+
+Branded Streamlit app (`app.py`). Source locked to webMethods IS. Package input: local zip upload or Google Drive share URL.
+
+```bash
+python -m streamlit run app.py --server.port 8501
+```
+
+Features: project name auto-derived from zip filename, dry-run / skip-analyze / skip-enrich / skip-document checkboxes, tabbed results (Migration Spec JSON + Design Document download).
+
+---
+
 ## Migration Agent Workflow
 
-Every migration follows this pipeline. Never skip phases.
+Every migration follows this 5-phase pipeline. Never skip phases.
 
 ```
-PHASE 0 — PULL         (if source is a live platform)
+PHASE 1 — PULL         (if source is a live platform)
                        Boomi: boomi-component-search.sh + boomi-component-pull.sh
-                       MuleSoft: project files already on disk (no pull needed)
+                       MuleSoft / webMethods: project files already on disk (no pull needed)
 
-PHASE 1 — ANALYZE      Run the analyzer for the source system.
+PHASE 2 — ANALYZE      Run the analyzer for the source system.
                        Output: migration-specs/<project>.json
                        This spec is platform-agnostic — it has no target-specific concepts.
+                       webMethods: python analyzers/analyze_webmethods.py <source-dir> --project <name>
 
-PHASE 2 — GENERATE     Run the generator for the target system.
+PHASE 3 — ENRICH       AI enrichment pass — expands nested service logic Claude cannot infer statically.
+                       webMethods: python enrichers/enrich_webmethods.py migration-specs/<proj>.json --source-dir <dir>
+                       Other sources: python enrichers/enrich_spec.py migration-specs/<proj>.json
+                       Skip flag: --skip-enrich
+
+PHASE 4 — DOCUMENT     Generate Word design document (TechStone branded).
+                       Output: migration-specs/<project>_design_document.docx
+                       python generators/generate_word_doc.py migration-specs/<proj>.json --target <platform>
+                       Skip flag: --skip-document
+
+PHASE 5 — GENERATE     Run the generator for the target system.
                        One target artifact per source flow.
 ```
 
 ### Single-command entry point
 
-For real-world usage, use `migrate.py` — it orchestrates all phases:
+For real-world usage, use `migrate.py` (at workspace root) — it orchestrates all 5 phases:
 
 ```bash
 # Migrate a Boomi folder to Workato (pulls live from Boomi, generates in Workato)
 python migrate.py --from boomi --boomi-folder "My Folder Name" --to workato
 
+# Migrate a webMethods package to Workato (with AI enrichment + Word doc)
+python migrate.py --from webmethods --source-dir active-development/wm_upload/extracted --to workato --project mypackage
+
 # Migrate a MuleSoft project to Workato
 python migrate.py --from mulesoft --source-dir samples/mulesoft/customer-api/ --to workato
 
-# Dry run (print Workato recipe JSON without pushing)
-python migrate.py --from boomi --boomi-folder "My Folder" --to workato --dry-run
+# Dry run (print target recipe/process JSON without pushing)
+python migrate.py --from webmethods --source-dir ... --to workato --dry-run
+
+# Skip individual phases
+python migrate.py --from webmethods --source-dir ... --to workato --skip-enrich --skip-document
 
 # Skip pull (analyze already-downloaded active-development/ files)
 python migrate.py --from boomi --source-dir active-development/ --to workato
 ```
+
+New flags: `--skip-enrich`, `--skip-document`, `--md-dir <path>` (attach markdown files to Word doc appendix).
 
 Always read `references/MIGRATION_THINKING.md` before starting any migration task.
 
@@ -378,6 +409,36 @@ Folder: `MIG_workato_migration` (folderId `Rjo4NjE3OTg3`, account `tpptechstone-
 7. shape8 (Create Case): Import Salesforce CREATE Case operation → add operationId
 8. shape10 (Update Case): Import Salesforce UPDATE Case operation → add operationId
 **Reuse Salesforce connection:** `647ff483-9f3e-4b49-a32f-a906f65c347c` (Salesforce Connection, Manish A folder)
+
+---
+
+### webMethods IS → Workato: GLDFundingEngine20080714 Migration (COMPLETE — 2026-06-20)
+Source: `GLDFundingEngine20080714` (webMethods IS 6.5, keybank.com — payment routing engine).
+Folder: `WebMethodsMigration` (folderId `31661117`, account `manish@techstonellc.com`)
+
+| Component | ID / Details | Status |
+|---|---|---|
+| MIG_WM_GLDFundingEngine20080714_Recipe | `73596434` — callable recipe (HTTP POST /process-funding-request) | Pushed (2026-06-22, all steps non-empty) |
+
+**Recipe structure** (per [GLDFundingEngine20080714_Analysis.md](WebMethods/Analysis/GLDFundingEngine20080714_Analysis.md)):
+- Trigger: callable_recipe — input schema: `applicationInfo` (object, 6 fields) + `payments[]` (array, 14 fields + nested `payee` object, 14 fields)
+- `repeat_for_each` over payments[] (line alias: `payment_loop`)
+- 3-way payment type branch:
+  - `Check`: invokeGetUniquePayee → [IF payeeKey empty: invokeAddNewPayee] → invokeCreateCheckRequest
+  - `ACH`: insertPayment (GLD_ACHAdaptersServices, 11 params: APP_ID, CUSTOMER_NAME, PAYEE_NAME, PAYEE_ID, REFERENCE, AMOUNT, ROUTING_NUMBER, ACCOUNT_NUMBER, CUSTOMER_ID, REQUESTOR_ID="1", SOURCE)
+  - `Other`/`Wire`: Default — no external call, status="Default"
+- `rescue` block per iteration: HTTP POST GLDMessageLog:LogXMLRequest (AppID=3)
+- Push script: `scripts/push_gld_funding_engine_workato_recipe.py`
+
+**Remaining manual steps:**
+1. Create HTTP connection for GLDExpressGateway in Workato GUI → wire to steps 3, 5, 6 (Check path)
+   - Base URL: `https://webmethods-gateway.keybank.internal` (placeholder — obtain real URL from SME)
+2. Create HTTP connection for GLD_ACHAdaptersServices in Workato GUI → wire to step 9 (ACH path)
+   - Base URL: `https://webmethods-ach.keybank.internal` (placeholder — obtain real URL from SME)
+3. Create HTTP connection for GLDMessageLog → wire to step 12 (rescue block)
+4. Confirm CheckWriter response field name for `payeeKey` (step 3 response) — update pill path if different
+5. Add `fundingEngineWrapperResponse` return body to callable recipe trigger response settings in GUI
+6. `processACHBatch` flow: **not migrated** — NACHA flat-file generation requires custom implementation (see Analysis §10 gap #1/#7)
 
 ---
 

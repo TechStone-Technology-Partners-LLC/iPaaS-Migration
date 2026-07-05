@@ -1,0 +1,815 @@
+{
+  "schema_version": "1.0",
+  "source_system": "webmethods",
+  "source_version": "webmethods_is_or_io",
+  "analyzed_at": "2026-06-30T18:31:12.761585+00:00",
+  "project_name": "extracted",
+  "source_files_analyzed": [
+    "C:\\Users\\manis\\OneDrive\\Desktop\\iPaaS-Migration\\active-development\\wm_upload\\extracted"
+  ],
+  "summary": {
+    "total_flows": 6,
+    "primary_flows": 6,
+    "sub_flows": 0,
+    "total_connections": 0,
+    "gaps_found": 23,
+    "overall_complexity": "high"
+  },
+  "connections": {},
+  "integrations": [
+    {
+      "name": "flow",
+      "source_name": "flow",
+      "flow_type": "primary",
+      "trigger": {
+        "type": "http_listener",
+        "source_tag": "wm:http:trigger",
+        "label": "IS Service: flow",
+        "requires_review": true,
+        "note": "webMethods IS trigger type needs manual verification (HTTP, JMS, or scheduler)"
+      },
+      "steps": [
+        {
+          "source_tag": "wm:SEQUENCE:try_catch",
+          "type": "try_catch",
+          "label": "Try/Catch block",
+          "try_steps": [
+            {
+              "source_tag": "wm:INVOKE:GLD_ACHAdaptersServices:getSystemDateTime",
+              "type": "connector_action",
+              "label": "GLD_ACHAdaptersServices:getSystemDateTime",
+              "config_ref": "GLD_ACHAdaptersServices:getSystemDateTime",
+              "wm_service": "GLD_ACHAdaptersServices:getSystemDateTime",
+              "requires_review": true,
+              "complexity": "low",
+              "sequence": 3
+            },
+            {
+              "source_tag": "wm:INVOKE:GLD_ACHAdaptersServices:selectACHBatch",
+              "type": "connector_action",
+              "label": "GLD_ACHAdaptersServices:selectACHBatch",
+              "config_ref": "GLD_ACHAdaptersServices:selectACHBatch",
+              "wm_service": "GLD_ACHAdaptersServices:selectACHBatch",
+              "requires_review": true,
+              "complexity": "low",
+              "sequence": 4
+            },
+            {
+              "source_tag": "wm:INVOKE:GLD_ACHAdaptersServices:getNextBatchID",
+              "type": "connector_action",
+              "label": "GLD_ACHAdaptersServices:getNextBatchID",
+              "config_ref": "GLD_ACHAdaptersServices:getNextBatchID",
+              "wm_service": "GLD_ACHAdaptersServices:getNextBatchID",
+              "requires_review": true,
+              "complexity": "low",
+              "sequence": 5
+            },
+            {
+              "source_tag": "wm:LOOP:",
+              "type": "foreach",
+              "label": "Loop over ",
+              "loop_over": "",
+              "loop_steps": [
+                {
+                  "source_tag": "wm:MAP",
+                  "type": "transform",
+                  "label": "Map (STANDALONE)",
+                  "requires_review": true,
+                  "sequence": 7
+                }
+              ],
+              "requires_review": false,
+              "sequence": 6
+            },
+            {
+              "source_tag": "wm:INVOKE:pub.flatFile:convertToString",
+              "type": "connector_action",
+              "label": "pub.flatFile:convertToString",
+              "config_ref": "pub.flatFile:convertToString",
+              "wm_service": "pub.flatFile:convertToString",
+              "requires_review": true,
+              "complexity": "low",
+              "sequence": 8
+            },
+            {
+              "source_tag": "wm:INVOKE:GLD_ACHAdaptersServices:updateBatchIDs",
+              "type": "connector_action",
+              "label": "GLD_ACHAdaptersServices:updateBatchIDs",
+              "config_ref": "GLD_ACHAdaptersServices:updateBatchIDs",
+              "wm_service": "GLD_ACHAdaptersServices:updateBatchIDs",
+              "requires_review": true,
+              "complexity": "low",
+              "sequence": 9
+            },
+            {
+              "source_tag": "wm:SEQUENCE:try",
+              "type": "try_catch",
+              "label": "Transfer ACH File",
+              "try_steps": [
+                {
+                  "source_tag": "wm:INVOKE:pub.client:ftp",
+                  "type": "connector_action",
+                  "label": "pub.client:ftp",
+                  "config_ref": "pub.client:ftp",
+                  "wm_service": "pub.client:ftp",
+                  "requires_review": true,
+                  "complexity": "low",
+                  "sequence": 12
+                },
+                {
+                  "source_tag": "wm:INVOKE:WSRCommon.Utilities.FlowServices:sendEmail",
+                  "type": "connector_action",
+                  "label": "WSRCommon.Utilities.FlowServices:sendEmail",
+                  "config_ref": "WSRCommon.Utilities.FlowServices:sendEmail",
+                  "wm_service": "WSRCommon.Utilities.FlowServices:sendEmail",
+                  "requires_review": true,
+                  "complexity": "low",
+                  "sequence": 13
+                }
+              ],
+              "catch_steps": [],
+              "requires_review": true,
+              "sequence": 10
+            }
+          ],
+          "catch_steps": [
+            {
+              "source_tag": "wm:INVOKE:pub.flow:getLastError",
+              "type": "connector_action",
+              "label": "pub.flow:getLastError",
+              "config_ref": "pub.flow:getLastError",
+              "wm_service": "pub.flow:getLastError",
+              "requires_review": true,
+              "complexity": "low",
+              "sequence": 16
+            },
+            {
+              "source_tag": "wm:MAP",
+              "type": "transform",
+              "label": "Modify error message",
+              "requires_review": true,
+              "sequence": 17
+            },
+            {
+              "source_tag": "wm:INVOKE:GLDMessageLog:LogXMLRequest",
+              "type": "connector_action",
+              "label": "*****ERROR*****",
+              "config_ref": "GLDMessageLog:LogXMLRequest",
+              "wm_service": "GLDMessageLog:LogXMLRequest",
+              "requires_review": true,
+              "complexity": "low",
+              "sequence": 20
+            },
+            {
+              "source_tag": "wm:MAP",
+              "type": "transform",
+              "label": "Map (STANDALONE)",
+              "requires_review": true,
+              "sequence": 21
+            },
+            {
+              "source_tag": "wm:INVOKE:WSRProcessStatistics.MainFlows:publishErrorDoc",
+              "type": "connector_action",
+              "label": "WSRProcessStatistics.MainFlows:publishErrorDoc",
+              "config_ref": "WSRProcessStatistics.MainFlows:publishErrorDoc",
+              "wm_service": "WSRProcessStatistics.MainFlows:publishErrorDoc",
+              "requires_review": true,
+              "complexity": "low",
+              "sequence": 22
+            }
+          ],
+          "requires_review": false,
+          "sequence": 1
+        }
+      ],
+      "connections_used": [],
+      "error_handling": {
+        "has_error_handler": true,
+        "strategies": [
+          "try_catch"
+        ]
+      }
+    },
+    {
+      "name": "flow",
+      "source_name": "flow",
+      "flow_type": "primary",
+      "trigger": {
+        "type": "http_listener",
+        "source_tag": "wm:http:trigger",
+        "label": "IS Service: flow",
+        "requires_review": true,
+        "note": "webMethods IS trigger type needs manual verification (HTTP, JMS, or scheduler)"
+      },
+      "steps": [
+        {
+          "source_tag": "wm:INVOKE:GLD_ACHAdaptersServices:selectACHBatch",
+          "type": "connector_action",
+          "label": "GLD_ACHAdaptersServices:selectACHBatch",
+          "config_ref": "GLD_ACHAdaptersServices:selectACHBatch",
+          "wm_service": "GLD_ACHAdaptersServices:selectACHBatch",
+          "requires_review": true,
+          "complexity": "low",
+          "sequence": 1
+        },
+        {
+          "source_tag": "wm:MAP",
+          "type": "transform",
+          "label": "Map (STANDALONE)",
+          "requires_review": true,
+          "sequence": 2
+        },
+        {
+          "source_tag": "wm:INVOKE:pub.flatFile:convertToString",
+          "type": "connector_action",
+          "label": "pub.flatFile:convertToString",
+          "config_ref": "pub.flatFile:convertToString",
+          "wm_service": "pub.flatFile:convertToString",
+          "requires_review": true,
+          "complexity": "low",
+          "sequence": 3
+        },
+        {
+          "source_tag": "wm:LOOP:",
+          "type": "foreach",
+          "label": "Loop over ",
+          "loop_over": "",
+          "loop_steps": [
+            {
+              "source_tag": "wm:MAP",
+              "type": "transform",
+              "label": "Map (STANDALONE)",
+              "requires_review": true,
+              "sequence": 5
+            }
+          ],
+          "requires_review": false,
+          "sequence": 4
+        },
+        {
+          "source_tag": "wm:INVOKE:pub.client:ftp",
+          "type": "connector_action",
+          "label": "pub.client:ftp",
+          "config_ref": "pub.client:ftp",
+          "wm_service": "pub.client:ftp",
+          "requires_review": true,
+          "complexity": "low",
+          "sequence": 6
+        },
+        {
+          "source_tag": "wm:INVOKE:WSRCommon.Utilities.FlowServices:sendEmail",
+          "type": "connector_action",
+          "label": "WSRCommon.Utilities.FlowServices:sendEmail",
+          "config_ref": "WSRCommon.Utilities.FlowServices:sendEmail",
+          "wm_service": "WSRCommon.Utilities.FlowServices:sendEmail",
+          "requires_review": true,
+          "complexity": "low",
+          "sequence": 7
+        }
+      ],
+      "connections_used": [],
+      "error_handling": {
+        "has_error_handler": false,
+        "strategies": []
+      }
+    },
+    {
+      "name": "flow",
+      "source_name": "flow",
+      "flow_type": "primary",
+      "trigger": {
+        "type": "http_listener",
+        "source_tag": "wm:http:trigger",
+        "label": "IS Service: flow",
+        "requires_review": true,
+        "note": "webMethods IS trigger type needs manual verification (HTTP, JMS, or scheduler)"
+      },
+      "steps": [
+        {
+          "source_tag": "wm:BRANCH:/debug",
+          "type": "choice_router",
+          "label": "Branch on /debug",
+          "condition": "/debug EQUALS true path",
+          "true_steps": [],
+          "false_steps": [],
+          "requires_review": true,
+          "sequence": 1
+        },
+        {
+          "source_tag": "wm:SEQUENCE:try_catch",
+          "type": "try_catch",
+          "label": "Try/Catch block",
+          "try_steps": [
+            {
+              "source_tag": "wm:MAP",
+              "type": "transform",
+              "label": "Map (STANDALONE)",
+              "requires_review": true,
+              "sequence": 10
+            },
+            {
+              "source_tag": "wm:LOOP:",
+              "type": "foreach",
+              "label": "Loop over ",
+              "loop_over": "",
+              "loop_steps": [
+                {
+                  "source_tag": "wm:SEQUENCE:try_catch",
+                  "type": "try_catch",
+                  "label": "Try/Catch block",
+                  "try_steps": [
+                    {
+                      "source_tag": "wm:BRANCH:/fundingEngineWrapperInput/ns1:fundingEngineWrapper/fundingRequest/payments/payment/type",
+                      "type": "route",
+                      "label": "Switch on /fundingEngineWrapperInput/ns1:fundingEngineWrapper/fundingRequest/payments/payment/type",
+                      "switch_variable": "/fundingEngineWrapperInput/ns1:fundingEngineWrapper/fundingRequest/payments/payment/type",
+                      "paths": [
+                        {
+                          "label": "Check",
+                          "condition": "Check",
+                          "steps": [
+                            {
+                              "source_tag": "wm:INVOKE:GLDExpressGateway.ProcessFlows.CheckWriter:invokeGetUniquePayee",
+                              "type": "connector_action",
+                              "label": "GLDExpressGateway.ProcessFlows.CheckWriter:invokeGetUniquePayee",
+                              "config_ref": "GLDExpressGateway.ProcessFlows.CheckWriter:invokeGetUniquePayee",
+                              "wm_service": "GLDExpressGateway.ProcessFlows.CheckWriter:invokeGetUniquePayee",
+                              "requires_review": true,
+                              "complexity": "low",
+                              "sequence": 16
+                            },
+                            {
+                              "source_tag": "wm:BRANCH:/payeeKey",
+                              "type": "route",
+                              "label": "Switch on /payeeKey",
+                              "switch_variable": "/payeeKey",
+                              "paths": [
+                                {
+                                  "label": "$null",
+                                  "condition": "$null",
+                                  "steps": []
+                                }
+                              ],
+                              "requires_review": true,
+                              "sequence": 17
+                            },
+                            {
+                              "source_tag": "wm:INVOKE:GLDExpressGateway.ProcessFlows.CheckWriter:invokeCreateCheckRequest",
+                              "type": "connector_action",
+                              "label": "GLDExpressGateway.ProcessFlows.CheckWriter:invokeCreateCheckRequest",
+                              "config_ref": "GLDExpressGateway.ProcessFlows.CheckWriter:invokeCreateCheckRequest",
+                              "wm_service": "GLDExpressGateway.ProcessFlows.CheckWriter:invokeCreateCheckRequest",
+                              "requires_review": true,
+                              "complexity": "low",
+                              "sequence": 21
+                            },
+                            {
+                              "source_tag": "wm:MAP",
+                              "type": "transform",
+                              "label": "Map (STANDALONE)",
+                              "requires_review": true,
+                              "sequence": 22
+                            }
+                          ]
+                        },
+                        {
+                          "label": "ACH",
+                          "condition": "ACH",
+                          "steps": [
+                            {
+                              "source_tag": "wm:INVOKE:GLD_ACHAdaptersServices:insertPayment",
+                              "type": "connector_action",
+                              "label": "GLD_ACHAdaptersServices:insertPayment",
+                              "config_ref": "GLD_ACHAdaptersServices:insertPayment",
+                              "wm_service": "GLD_ACHAdaptersServices:insertPayment",
+                              "requires_review": true,
+                              "complexity": "low",
+                              "sequence": 24
+                            },
+                            {
+                              "source_tag": "wm:MAP",
+                              "type": "transform",
+                              "label": "Map (STANDALONE)",
+                              "requires_review": true,
+                              "sequence": 25
+                            }
+                          ]
+                        },
+                        {
+                          "label": "$default",
+                          "condition": "$default",
+                          "steps": [
+                            {
+                              "source_tag": "wm:MAP",
+                              "type": "transform",
+                              "label": "Map (STANDALONE)",
+                              "requires_review": true,
+                              "sequence": 27
+                            }
+                          ]
+                        }
+                      ],
+                      "requires_review": true,
+                      "sequence": 14
+                    }
+                  ],
+                  "catch_steps": [
+                    {
+                      "source_tag": "wm:INVOKE:pub.flow:getLastError",
+                      "type": "connector_action",
+                      "label": "pub.flow:getLastError",
+                      "config_ref": "pub.flow:getLastError",
+                      "wm_service": "pub.flow:getLastError",
+                      "requires_review": true,
+                      "complexity": "low",
+                      "sequence": 30
+                    },
+                    {
+                      "source_tag": "wm:MAP",
+                      "type": "transform",
+                      "label": "Modify error message",
+                      "requires_review": true,
+                      "sequence": 31
+                    },
+                    {
+                      "source_tag": "wm:INVOKE:GLDMessageLog:LogXMLRequest",
+                      "type": "connector_action",
+                      "label": "*****ERROR*****",
+                      "config_ref": "GLDMessageLog:LogXMLRequest",
+                      "wm_service": "GLDMessageLog:LogXMLRequest",
+                      "requires_review": true,
+                      "complexity": "low",
+                      "sequence": 34
+                    },
+                    {
+                      "source_tag": "wm:MAP",
+                      "type": "transform",
+                      "label": "Map (STANDALONE)",
+                      "requires_review": true,
+                      "sequence": 35
+                    },
+                    {
+                      "source_tag": "wm:MAP",
+                      "type": "transform",
+                      "label": "Map (STANDALONE)",
+                      "requires_review": true,
+                      "sequence": 36
+                    },
+                    {
+                      "source_tag": "wm:INVOKE:WSRProcessStatistics.MainFlows:publishErrorDoc",
+                      "type": "connector_action",
+                      "label": "WSRProcessStatistics.MainFlows:publishErrorDoc",
+                      "config_ref": "WSRProcessStatistics.MainFlows:publishErrorDoc",
+                      "wm_service": "WSRProcessStatistics.MainFlows:publishErrorDoc",
+                      "requires_review": true,
+                      "complexity": "low",
+                      "sequence": 37
+                    }
+                  ],
+                  "requires_review": false,
+                  "sequence": 12
+                }
+              ],
+              "requires_review": false,
+              "sequence": 11
+            }
+          ],
+          "catch_steps": [
+            {
+              "source_tag": "wm:INVOKE:pub.flow:getLastError",
+              "type": "connector_action",
+              "label": "pub.flow:getLastError",
+              "config_ref": "pub.flow:getLastError",
+              "wm_service": "pub.flow:getLastError",
+              "requires_review": true,
+              "complexity": "low",
+              "sequence": 40
+            },
+            {
+              "source_tag": "wm:MAP",
+              "type": "transform",
+              "label": "Modify error message",
+              "requires_review": true,
+              "sequence": 41
+            },
+            {
+              "source_tag": "wm:INVOKE:GLDMessageLog:LogXMLRequest",
+              "type": "connector_action",
+              "label": "*****ERROR*****",
+              "config_ref": "GLDMessageLog:LogXMLRequest",
+              "wm_service": "GLDMessageLog:LogXMLRequest",
+              "requires_review": true,
+              "complexity": "low",
+              "sequence": 44
+            },
+            {
+              "source_tag": "wm:MAP",
+              "type": "transform",
+              "label": "Map (STANDALONE)",
+              "requires_review": true,
+              "sequence": 45
+            },
+            {
+              "source_tag": "wm:INVOKE:WSRProcessStatistics.MainFlows:publishErrorDoc",
+              "type": "connector_action",
+              "label": "WSRProcessStatistics.MainFlows:publishErrorDoc",
+              "config_ref": "WSRProcessStatistics.MainFlows:publishErrorDoc",
+              "wm_service": "WSRProcessStatistics.MainFlows:publishErrorDoc",
+              "requires_review": true,
+              "complexity": "low",
+              "sequence": 46
+            }
+          ],
+          "requires_review": false,
+          "sequence": 8
+        }
+      ],
+      "connections_used": [],
+      "error_handling": {
+        "has_error_handler": true,
+        "strategies": [
+          "try_catch"
+        ]
+      }
+    },
+    {
+      "name": "flow",
+      "source_name": "flow",
+      "flow_type": "primary",
+      "trigger": {
+        "type": "http_listener",
+        "source_tag": "wm:http:trigger",
+        "label": "IS Service: flow",
+        "requires_review": true,
+        "note": "webMethods IS trigger type needs manual verification (HTTP, JMS, or scheduler)"
+      },
+      "steps": [
+        {
+          "source_tag": "wm:INVOKE:pub.soap.utils:getBody",
+          "type": "connector_action",
+          "label": "====== Extract body from SOAP request",
+          "config_ref": "pub.soap.utils:getBody",
+          "wm_service": "pub.soap.utils:getBody",
+          "requires_review": true,
+          "complexity": "low",
+          "sequence": 1
+        },
+        {
+          "source_tag": "wm:INVOKE:pub.xml:xmlNodeToDocument",
+          "type": "connector_action",
+          "label": "====== Convert body to document",
+          "config_ref": "pub.xml:xmlNodeToDocument",
+          "wm_service": "pub.xml:xmlNodeToDocument",
+          "requires_review": true,
+          "complexity": "low",
+          "sequence": 2
+        },
+        {
+          "source_tag": "wm:INVOKE:GLDMessageLog:LogXMLRequest",
+          "type": "connector_action",
+          "label": "*****Funding Engine*****",
+          "config_ref": "GLDMessageLog:LogXMLRequest",
+          "wm_service": "GLDMessageLog:LogXMLRequest",
+          "requires_review": true,
+          "complexity": "low",
+          "sequence": 3
+        },
+        {
+          "source_tag": "wm:INVOKE:GLDFundingEngine.MainFlows:processFundingRequest",
+          "type": "connector_action",
+          "label": "GLDFundingEngine.MainFlows:processFundingRequest",
+          "config_ref": "GLDFundingEngine.MainFlows:processFundingRequest",
+          "wm_service": "GLDFundingEngine.MainFlows:processFundingRequest",
+          "requires_review": true,
+          "complexity": "low",
+          "sequence": 4
+        },
+        {
+          "source_tag": "wm:INVOKE:GLDMessageLog:LogXMLResponse",
+          "type": "connector_action",
+          "label": "GLDMessageLog:LogXMLResponse",
+          "config_ref": "GLDMessageLog:LogXMLResponse",
+          "wm_service": "GLDMessageLog:LogXMLResponse",
+          "requires_review": true,
+          "complexity": "low",
+          "sequence": 5
+        },
+        {
+          "source_tag": "wm:INVOKE:pub.xml:documentToXMLString",
+          "type": "connector_action",
+          "label": "====== Convert response document into XML string",
+          "config_ref": "pub.xml:documentToXMLString",
+          "wm_service": "pub.xml:documentToXMLString",
+          "requires_review": true,
+          "complexity": "low",
+          "sequence": 6
+        },
+        {
+          "source_tag": "wm:INVOKE:pub.xml:xmlStringToXMLNode",
+          "type": "connector_action",
+          "label": "pub.xml:xmlStringToXMLNode",
+          "config_ref": "pub.xml:xmlStringToXMLNode",
+          "wm_service": "pub.xml:xmlStringToXMLNode",
+          "requires_review": true,
+          "complexity": "low",
+          "sequence": 7
+        },
+        {
+          "source_tag": "wm:INVOKE:pub.soap.utils:createSoapData",
+          "type": "connector_action",
+          "label": "pub.soap.utils:createSoapData",
+          "config_ref": "pub.soap.utils:createSoapData",
+          "wm_service": "pub.soap.utils:createSoapData",
+          "requires_review": true,
+          "complexity": "low",
+          "sequence": 8
+        },
+        {
+          "source_tag": "wm:INVOKE:pub.soap.utils:addBodyEntry",
+          "type": "connector_action",
+          "label": "pub.soap.utils:addBodyEntry",
+          "config_ref": "pub.soap.utils:addBodyEntry",
+          "wm_service": "pub.soap.utils:addBodyEntry",
+          "requires_review": true,
+          "complexity": "low",
+          "sequence": 9
+        }
+      ],
+      "connections_used": [],
+      "error_handling": {
+        "has_error_handler": false,
+        "strategies": []
+      }
+    },
+    {
+      "name": "flow",
+      "source_name": "flow",
+      "flow_type": "primary",
+      "trigger": {
+        "type": "http_listener",
+        "source_tag": "wm:http:trigger",
+        "label": "IS Service: flow",
+        "requires_review": true,
+        "note": "webMethods IS trigger type needs manual verification (HTTP, JMS, or scheduler)"
+      },
+      "steps": [
+        {
+          "source_tag": "wm:INVOKE:pub.soap.processor:registerProcessor",
+          "type": "connector_action",
+          "label": "pub.soap.processor:registerProcessor",
+          "config_ref": "pub.soap.processor:registerProcessor",
+          "wm_service": "pub.soap.processor:registerProcessor",
+          "requires_review": true,
+          "complexity": "low",
+          "sequence": 1
+        }
+      ],
+      "connections_used": [],
+      "error_handling": {
+        "has_error_handler": false,
+        "strategies": []
+      }
+    },
+    {
+      "name": "flow",
+      "source_name": "flow",
+      "flow_type": "primary",
+      "trigger": {
+        "type": "http_listener",
+        "source_tag": "wm:http:trigger",
+        "label": "IS Service: flow",
+        "requires_review": true,
+        "note": "webMethods IS trigger type needs manual verification (HTTP, JMS, or scheduler)"
+      },
+      "steps": [
+        {
+          "source_tag": "wm:INVOKE:pub.soap.processor:unregisterProcessor",
+          "type": "connector_action",
+          "label": "pub.soap.processor:unregisterProcessor",
+          "config_ref": "pub.soap.processor:unregisterProcessor",
+          "wm_service": "pub.soap.processor:unregisterProcessor",
+          "requires_review": true,
+          "complexity": "low",
+          "sequence": 1
+        }
+      ],
+      "connections_used": [],
+      "error_handling": {
+        "has_error_handler": false,
+        "strategies": []
+      }
+    }
+  ],
+  "gaps": [
+    {
+      "flow": "flow",
+      "component": "trigger"
+    },
+    {
+      "flow": "flow",
+      "component": "trigger"
+    },
+    {
+      "flow": "flow",
+      "step_type": "connector_action",
+      "sequence": 1
+    },
+    {
+      "flow": "flow",
+      "step_type": "transform",
+      "sequence": 2
+    },
+    {
+      "flow": "flow",
+      "step_type": "connector_action",
+      "sequence": 3
+    },
+    {
+      "flow": "flow",
+      "step_type": "connector_action",
+      "sequence": 6
+    },
+    {
+      "flow": "flow",
+      "step_type": "connector_action",
+      "sequence": 7
+    },
+    {
+      "flow": "flow",
+      "component": "trigger"
+    },
+    {
+      "flow": "flow",
+      "step_type": "choice_router",
+      "sequence": 1
+    },
+    {
+      "flow": "flow",
+      "component": "trigger"
+    },
+    {
+      "flow": "flow",
+      "step_type": "connector_action",
+      "sequence": 1
+    },
+    {
+      "flow": "flow",
+      "step_type": "connector_action",
+      "sequence": 2
+    },
+    {
+      "flow": "flow",
+      "step_type": "connector_action",
+      "sequence": 3
+    },
+    {
+      "flow": "flow",
+      "step_type": "connector_action",
+      "sequence": 4
+    },
+    {
+      "flow": "flow",
+      "step_type": "connector_action",
+      "sequence": 5
+    },
+    {
+      "flow": "flow",
+      "step_type": "connector_action",
+      "sequence": 6
+    },
+    {
+      "flow": "flow",
+      "step_type": "connector_action",
+      "sequence": 7
+    },
+    {
+      "flow": "flow",
+      "step_type": "connector_action",
+      "sequence": 8
+    },
+    {
+      "flow": "flow",
+      "step_type": "connector_action",
+      "sequence": 9
+    },
+    {
+      "flow": "flow",
+      "component": "trigger"
+    },
+    {
+      "flow": "flow",
+      "step_type": "connector_action",
+      "sequence": 1
+    },
+    {
+      "flow": "flow",
+      "component": "trigger"
+    },
+    {
+      "flow": "flow",
+      "step_type": "connector_action",
+      "sequence": 1
+    }
+  ],
+  "migration_notes": "webMethods IS INVOKE steps referencing custom packages require manual review."
+}

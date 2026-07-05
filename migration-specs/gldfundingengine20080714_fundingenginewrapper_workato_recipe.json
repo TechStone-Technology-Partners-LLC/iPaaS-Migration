@@ -1,0 +1,147 @@
+{
+  "name": "MIG_WM_GLDFUNDINGENGINE20080714_FUNDINGENGINEWRAPPER",
+  "description": "Migrated from webMethods IS service GLDFundingEngine/Wrappers/fundingEngineWrapper (package: gldfundingengine20080714). This recipe acts as a SOAP wrapper for the GLD Funding Engine. It receives an inbound SOAP request, extracts the SOAP body from the envelope (equivalent to pub.soap.utils:getBody), converts the extracted XML body node into a document/string representation (equivalent to pub.xml:xmlNodeToDocument), and then forwards the structured payload to the downstream Funding Engine service for processing. The recipe exposes a callable HTTP POST endpoint that accepts a SOAP request payload as a JSON-serialised string. GAPS: (1) The native IS services pub.soap.utils:getBody and pub.xml:xmlNodeToDocument have no direct Workato equivalents and are represented as HTTP POST placeholders — an SME must provide the actual endpoint URLs or replace these steps with appropriate Workato XML/string manipulation. (2) Full SOAP envelope parsing and XML-to-document conversion logic must be implemented externally or via a custom connector. (3) The internal pipeline variable mappings (soapRequestData → soapData → body) are approximated via data pills but require manual wiring in the Workato GUI.",
+  "code": {
+    "number": 0,
+    "keyword": "trigger",
+    "provider": "workato",
+    "name": "callable_recipe",
+    "as": "callable_recipe",
+    "uuid": "550e8400-e29b-41d4-a716-446655440000",
+    "dynamicPickListSelection": {},
+    "toggleCfg": {},
+    "input": {
+      "http_method": "post",
+      "request_url_suffix": "/funding-engine-wrapper",
+      "response_type": "dynamic",
+      "input_fields_raw_schema": "[{\"name\":\"soapRequestData\",\"type\":\"string\",\"optional\":false,\"label\":\"SOAP Request Data (serialised SOAP envelope object as JSON string)\"},{\"name\":\"soapResponseData\",\"type\":\"string\",\"optional\":true,\"label\":\"SOAP Response Data (serialised SOAP response object as JSON string)\"}]"
+    },
+    "block": [
+      {
+        "number": 2,
+        "keyword": "action",
+        "provider": "http",
+        "name": "post",
+        "as": "get_body_response",
+        "title": "Extract body from SOAP request (pub.soap.utils:getBody — PLACEHOLDER)",
+        "uuid": "550e8400-e29b-41d4-a716-446655440020",
+        "dynamicPickListSelection": {},
+        "toggleCfg": {},
+        "input": {
+          "url": "PLACEHOLDER — obtain from SME: pub.soap.utils:getBody",
+          "content_type": "application/json",
+          "payload": "{\"soapData\": \"[PILL: callable_recipe.soapRequestData]\"}"
+        },
+        "block": []
+      },
+      {
+        "number": 3,
+        "keyword": "if",
+        "title": "Check if body was extracted successfully",
+        "uuid": "550e8400-e29b-41d4-a716-446655440030",
+        "input": {
+          "type": "compound",
+          "operand": "and",
+          "conditions": [
+            {
+              "operand": "is_not_empty",
+              "lhs": "[PILL: get_body_response.body]"
+            }
+          ]
+        },
+        "block": [
+          {
+            "number": 4,
+            "keyword": "action",
+            "provider": "http",
+            "name": "post",
+            "as": "xml_node_to_document_response",
+            "title": "Convert body XML node to document (pub.xml:xmlNodeToDocument — PLACEHOLDER)",
+            "uuid": "550e8400-e29b-41d4-a716-446655440040",
+            "dynamicPickListSelection": {},
+            "toggleCfg": {},
+            "input": {
+              "url": "PLACEHOLDER — obtain from SME: pub.xml:xmlNodeToDocument",
+              "content_type": "application/json",
+              "payload": "{\"node\": \"[PILL: get_body_response.body]\"}"
+            },
+            "block": []
+          },
+          {
+            "number": 5,
+            "keyword": "action",
+            "provider": "http",
+            "name": "post",
+            "as": "funding_engine_response",
+            "title": "Invoke GLD Funding Engine with parsed document",
+            "uuid": "550e8400-e29b-41d4-a716-446655440050",
+            "dynamicPickListSelection": {},
+            "toggleCfg": {},
+            "input": {
+              "url": "PLACEHOLDER — obtain from SME: GLDFundingEngine core service endpoint",
+              "content_type": "application/json",
+              "payload": "{\"document\": \"[PILL: xml_node_to_document_response.body]\", \"soapRequestData\": \"[PILL: callable_recipe.soapRequestData]\", \"soapResponseData\": \"[PILL: callable_recipe.soapResponseData]\"}"
+            },
+            "block": []
+          },
+          {
+            "number": 6,
+            "keyword": "else",
+            "uuid": "550e8400-e29b-41d4-a716-446655440060",
+            "block": [
+              {
+                "number": 7,
+                "keyword": "action",
+                "provider": "http",
+                "name": "post",
+                "as": "body_empty_handler",
+                "title": "Handle empty SOAP body — no-op placeholder",
+                "uuid": "550e8400-e29b-41d4-a716-446655440070",
+                "dynamicPickListSelection": {},
+                "toggleCfg": {},
+                "input": {
+                  "url": "PLACEHOLDER — not migrated: empty body branch handler",
+                  "content_type": "application/json",
+                  "payload": "{\"message\": \"SOAP body was empty or could not be extracted\", \"soapRequestData\": \"[PILL: callable_recipe.soapRequestData]\"}"
+                },
+                "block": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "number": 8,
+        "keyword": "rescue",
+        "uuid": "550e8400-e29b-41d4-a716-446655440080",
+        "block": [
+          {
+            "number": 9,
+            "keyword": "action",
+            "provider": "http",
+            "name": "post",
+            "as": "error_handler",
+            "title": "Handle error in funding engine wrapper",
+            "uuid": "550e8400-e29b-41d4-a716-446655440090",
+            "dynamicPickListSelection": {},
+            "toggleCfg": {},
+            "input": {
+              "url": "PLACEHOLDER — obtain from SME: error notification or logging endpoint",
+              "content_type": "application/json",
+              "payload": "{\"error\": \"Error occurred in fundingEngineWrapper\", \"soapRequestData\": \"[PILL: callable_recipe.soapRequestData]\"}"
+            },
+            "block": []
+          }
+        ]
+      }
+    ]
+  },
+  "config": [
+    {
+      "keyword": "application",
+      "provider": "http",
+      "account_id": null,
+      "skip_validation": true
+    }
+  ]
+}

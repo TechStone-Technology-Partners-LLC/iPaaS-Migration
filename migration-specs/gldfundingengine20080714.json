@@ -1,0 +1,783 @@
+{
+  "schema_version": "1.0",
+  "source_system": "webmethods",
+  "source_version": "webmethods_is_or_io",
+  "analyzed_at": "2026-07-01T19:33:10.208155+00:00",
+  "project_name": "gldfundingengine20080714",
+  "source_files_analyzed": [
+    "C:\\Users\\manis\\OneDrive\\Desktop\\iPaaS-Migration\\active-development\\wm_upload\\extracted"
+  ],
+  "summary": {
+    "total_flows": 6,
+    "primary_flows": 6,
+    "sub_flows": 0,
+    "total_connections": 0,
+    "gaps_found": 16,
+    "overall_complexity": "high"
+  },
+  "connections": {},
+  "integrations": [
+    {
+      "name": "processACHBatch",
+      "flow_type": "primary",
+      "trigger": {
+        "type": "http_listener",
+        "label": "HTTP inbound trigger for ACH batch processing",
+        "note": "Exposed via HTTP listener; likely called on a schedule or by an upstream orchestrator to process pending ACH batches"
+      },
+      "steps": [
+        {
+          "sequence": 1,
+          "type": "try_catch",
+          "label": "Outer SUCCESS sequence wrapping TRY/CATCH block",
+          "complexity": "low",
+          "requires_review": false,
+          "details": {
+            "exit_on": "SUCCESS",
+            "note": "Outer SEQUENCE EXIT-ON=SUCCESS contains an inner EXIT-ON=FAILURE (TRY) block; pattern implements try/catch semantics"
+          }
+        },
+        {
+          "sequence": 2,
+          "type": "try_catch",
+          "label": "TRY block — ACH batch main processing logic",
+          "complexity": "high",
+          "requires_review": true,
+          "details": {
+            "exit_on": "FAILURE",
+            "note": "Inner SEQUENCE EXIT-ON=FAILURE acts as TRY; failure falls through to sibling SEQUENCE acting as CATCH"
+          }
+        },
+        {
+          "sequence": 3,
+          "type": "connector_action",
+          "label": "Get current system date/time from ACH adapter",
+          "complexity": "low",
+          "requires_review": false,
+          "details": {
+            "service_name": "GLD_ACHAdaptersServices:getSystemDateTime",
+            "package": "GLD_ACHAdaptersServices",
+            "adapter_type": "database_adapter",
+            "params": {},
+            "output_mapping": "Extracts SYS_DATE from results[0] into pipeline variable maxDateTime; drops getSystemDateTimeOutput wrapper"
+          }
+        },
+        {
+          "sequence": 4,
+          "type": "transform",
+          "label": "Map SYS_DATE to maxDateTime pipeline variable",
+          "complexity": "low",
+          "requires_review": false,
+          "details": {
+            "mapping_fields": [
+              {
+                "from": "/getSystemDateTimeOutput/results[0]/SYS_DATE",
+                "to": "/maxDateTime",
+                "note": "Promoted from nested adapter output to flat pipeline variable"
+              }
+            ],
+            "drop_fields": [
+              "/getSystemDateTimeOutput"
+            ]
+          }
+        },
+        {
+          "sequence": 5,
+          "type": "connector_action",
+          "label": "Select ACH batch records up to maxDateTime",
+          "complexity": "medium",
+          "requires_review": false,
+          "details": {
+            "service_name": "GLD_ACHAdaptersServices:selectACHBatch",
+            "package": "GLD_ACHAdaptersServices",
+            "adapter_type": "database_adapter",
+            "params": {
+              "maxDateTime": "pipeline variable maxDateTime"
+            },
+            "input_mapping": "Maps /maxDateTime → /selectACHBatchInput/maxDateTime",
+            "output_mapping": "Exposes selectACHBatchOutput; drops selectACHBatchInput wrapper; retains maxDateTime in pipeline"
+          }
+        },
+        {
+          "sequence": 6,
+          "type": "transform",
+          "label": "Map selectACHBatch input/output into pipeline",
+          "complexity": "low",
+          "requires_review": false,
+          "details": {
+            "mapping_fields": [
+              {
+                "from": "/maxDateTime",
+                "to": "/selectACHBatchInput/maxDateTime"
+              }
+            ],
+            "drop_fields": [
+              "/selectACHBatchInput"
+            ]
+          }
+        },
+        {
+          "sequence": 7,
+          "type": "connector_action",
+          "label": "Get next ACH batch sequence ID",
+          "complexity": "low",
+          "requires_review": false,
+          "details": {
+            "service_name": "GLD_ACHAdaptersServices:getNextBatchID",
+            "package": "GLD_ACHAdaptersServices",
+            "adapter_type": "database_adapter",
+            "params": {},
+            "output_mapping": "Extracts batchID from getNextBatchIDOutput/results[0]; exposes NACHA_SchemaDT document reference; drops getNextBatchIDOutput wrapper"
+          }
+        },
+        {
+          "sequence": 8,
+          "type": "transform",
+          "label": "Flatten batchID and initialize NACHA schema document",
+          "complexity": "medium",
+          "requires_review": true,
+          "details": {
+            "mapping_fields": [
+              {
+                "from": "/getNextBatchIDOutput/results[0]/BATCH_ID",
+                "to": "/batchID",
+                "note": "Assumed field name from adapter pattern; verify against actual adapter output signature"
+              }
+            ],
+            "document_references": [
+              "GLDFundingEngine.Schemas:NACHA_SchemaDT"
+            ],
+            "note": "NACHA_SchemaDT recref introduced here for downstream NACHA file construction"
+          }
+        },
+        {
+          "sequence": 9,
+          "type": "foreach",
+          "label": "Loop over selectACHBatchOutput result rows to build NACHA entries",
+          "complexity": "high",
+          "requires_review": true,
+          "details": {
+            "loop_variable": "row (ACH batch record)",
+            "source_array": "/selectACHBatchOutput/results",
+            "note": "XML truncated before loop body visible; based on pattern this iterates over DB result rows and maps each to NACHA entry structure"
+          }
+        }
+      ],
+      "error_handling": {
+        "has_error_handler": true,
+        "strategy": "catch and log",
+        "note": "EXIT-ON=FAILURE inner SEQUENCE paired with outer EXIT-ON=SUCCESS implements standard webMethods try/catch; CATCH block content truncated in source but pattern implies error capture"
+      },
+      "connections_used": [
+        "GLD_ACHAdaptersServices:getSystemDateTime",
+        "GLD_ACHAdaptersServices:selectACHBatch",
+        "GLD_ACHAdaptersServices:getNextBatchID"
+      ],
+      "migration_notes": "1. Three DB adapter calls (getSystemDateTime, selectACHBatch, getNextBatchID) must be re-implemented as database connector actions in the target platform with equivalent SQL. 2. maxDateTime is used as a watermark — ensure idempotency logic is preserved. 3. NACHA_SchemaDT document type (GLDFundingEngine.Schemas:NACHA_SchemaDT) must be recreated as a schema/document model. 4. Full loop body is truncated; source XML must be re-examined to enumerate all inner steps. 5. batchID sequence generation (getNextBatchID) likely uses a DB sequence — replace with equivalent sequence/counter mechanism. 6. Error handling strategy (try/catch via EXIT-ON sequences) should be replaced with native try/catch blocks in the target platform."
+    },
+    {
+      "name": "processACHBatch_venkat",
+      "flow_type": "primary",
+      "trigger": {
+        "type": "http_listener",
+        "label": "HTTP inbound trigger — developer/test variant of processACHBatch",
+        "note": "Name suffix '_venkat' strongly indicates a developer sandbox or prototype flow; should NOT be migrated as a production service — treat as reference/archive"
+      },
+      "steps": [
+        {
+          "sequence": 1,
+          "type": "connector_action",
+          "label": "Select ACH batch records (no input filter)",
+          "complexity": "low",
+          "requires_review": true,
+          "details": {
+            "service_name": "GLD_ACHAdaptersServices:selectACHBatch",
+            "package": "GLD_ACHAdaptersServices",
+            "adapter_type": "database_adapter",
+            "params": {},
+            "note": "Unlike processACHBatch, no maxDateTime is passed — selects ALL batch records; likely unintentional or for dev testing only"
+          }
+        },
+        {
+          "sequence": 2,
+          "type": "transform",
+          "label": "Initialize NACHA_Schema with hard-coded test data and expose selectACHBatchOutput",
+          "complexity": "medium",
+          "requires_review": true,
+          "details": {
+            "mapping_fields": [
+              {
+                "from": "MAPSET literal",
+                "to": "/NACHA_Schema",
+                "note": "Sets NACHA_Schema (recref GLDFundingEngine.Schemas:NACHA_SchemaDT) with two hard-coded rows: [Record Type Code=1,Transaction Code=1,...] and [Record Type Code=9,...]"
+              }
+            ],
+            "document_references": [
+              "GLDFundingEngine.Schemas:NACHA_SchemaDT"
+            ],
+            "hard_coded_data": [
+              {
+                "Record Type Code": "1",
+                "Transaction Code": "1",
+                "Routing/Transit Number": "1",
+                "R/T CheckDigit": "1",
+                "Individual Account Number": "1",
+                "Amount": "1",
+                "Individual ID Number": "1",
+                "Individual Name": "1",
+                "Discretionary Data": "",
+                "Addenda Indicator": "1",
+                "Trace Number": "1"
+              },
+              {
+                "Record Type Code": "9",
+                "Transaction Code": "9",
+                "Routing/Transit Number": "9",
+                "R/T CheckDigit": "9",
+                "Individual Account Number": "9",
+                "Amount": "9",
+                "Individual ID Number": "9",
+                "Individual Name": "9",
+                "Discretionary Data": "9",
+                "Addenda Indicator": "9",
+                "Trace Number": "9"
+              }
+            ],
+            "note": "Hard-coded test data confirms this is a developer test flow"
+          }
+        },
+        {
+          "sequence": 3,
+          "type": "transform",
+          "label": "Initialize BatchRecord pipeline variable to empty string",
+          "complexity": "low",
+          "requires_review": false,
+          "details": {
+            "mapping_fields": [
+              {
+                "from": "MAPSET literal empty string",
+                "to": "/BatchRecord",
+                "note": "BatchRecord initialized as empty string placeholder for flat-file output accumulation"
+              }
+            ]
+          }
+        },
+        {
+          "sequence": 4,
+          "type": "connector_action",
+          "label": "Convert NACHA flat-file document to string using pub.flatFile:convertToString",
+          "complexity": "medium",
+          "requires_review": true,
+          "details": {
+            "service_name": "pub.flatFile:convertToString",
+            "package": "pub.flatFile (webMethods built-in)",
+            "params": {
+              "ffValues": "NACHA_Schema document contents",
+              "ffSchema": "not explicitly mapped — must verify schema reference is wired",
+              "spacePad": "not set — defaults to none",
+              "signalError": "not set",
+              "noEmptyTrailingFields": "not set",
+              "outputFileName": "not set",
+              "Encoding": "not set"
+            },
+            "note": "ffSchema input not visibly mapped in truncated XML — high risk; must confirm NACHA flat-file schema is wired correctly. Output is a string representation of the NACHA file."
+          }
+        }
+      ],
+      "error_handling": {
+        "has_error_handler": false,
+        "strategy": "none",
+        "note": "No try/catch pattern detected; flat flow with no error handling — consistent with developer prototype"
+      },
+      "connections_used": [
+        "GLD_ACHAdaptersServices:selectACHBatch",
+        "pub.flatFile:convertToString"
+      ],
+      "migration_notes": "1. THIS FLOW SHOULD NOT BE MIGRATED TO PRODUCTION — it is a developer prototype by 'venkat'. 2. Hard-coded NACHA test data rows (all 1s and all 9s) confirm non-production intent. 3. selectACHBatch called without date filter — would select entire table. 4. pub.flatFile:convertToString requires equivalent flat-file serialization in target platform; NACHA schema definition (GLDFundingEngine.Schemas:NACHA_SchemaDT) must be ported. 5. If logic is needed for reference, extract the pub.flatFile conversion pattern and apply it in processACHBatch instead. 6. Archive this flow as documentation artifact only."
+    },
+    {
+      "name": "processFundingRequest",
+      "flow_type": "primary",
+      "trigger": {
+        "type": "http_listener",
+        "label": "HTTP inbound trigger for funding request processing (payment routing)",
+        "note": "Receives fundingEngineWrapperInput document; routes payments by type (Check vs other); iterates over payment array"
+      },
+      "steps": [
+        {
+          "sequence": 1,
+          "type": "branch",
+          "label": "Debug mode branch — save/restore pipeline to/from file",
+          "complexity": "low",
+          "requires_review": true,
+          "details": {
+            "switch_variable": "/debug",
+            "branch_conditions": [
+              {
+                "condition": "$null (no debug flag set)",
+                "action": "Save pipeline to file named 'FundingEngineRequest' via pub.flow:savePipelineToFile"
+              },
+              {
+                "condition": "true",
+                "action": "Restore pipeline from file named 'FundingEngineRequest' via pub.flow:restorePipelineFromFile"
+              }
+            ],
+            "note": "Debug mechanism persists pipeline state to disk for replay/diagnostic purposes; must be removed or replaced with logging in target platform"
+          }
+        },
+        {
+          "sequence": 2,
+          "type": "connector_action",
+          "label": "Save pipeline to file (debug=$null branch)",
+          "complexity": "low",
+          "requires_review": true,
+          "details": {
+            "service_name": "pub.flow:savePipelineToFile",
+            "package": "pub.flow (webMethods built-in)",
+            "params": {
+              "fileName": "FundingEngineRequest (hard-coded literal)"
+            },
+            "note": "Only executes when debug is null/unset; writes pipeline snapshot to IS server filesystem"
+          }
+        },
+        {
+          "sequence": 3,
+          "type": "connector_action",
+          "label": "Restore pipeline from file (debug=true branch)",
+          "complexity": "low",
+          "requires_review": true,
+          "details": {
+            "service_name": "pub.flow:restorePipelineFromFile",
+            "package": "pub.flow (webMethods built-in)",
+            "params": {
+              "fileName": "FundingEngineRequest (hard-coded literal)",
+              "merge": "not set"
+            },
+            "note": "Replays a previously saved pipeline; used to re-run a payment request without re-invoking the SOAP entry point"
+          }
+        },
+        {
+          "sequence": 4,
+          "type": "try_catch",
+          "label": "Outer SUCCESS / inner FAILURE sequence — try/catch wrapper for payment loop",
+          "complexity": "low",
+          "requires_review": false,
+          "details": {
+            "outer_exit_on": "SUCCESS",
+            "inner_exit_on": "FAILURE",
+            "note": "Standard webMethods try/catch idiom"
+          }
+        },
+        {
+          "sequence": 5,
+          "type": "transform",
+          "label": "Initialize pipeline — set empty fundingEngineWrapperOutput and REQUESTOR=1",
+          "complexity": "low",
+          "requires_review": false,
+          "details": {
+            "mapping_fields": [
+              {
+                "from": "MAPSET literal",
+                "to": "/fundingEngineWrapperOutput/ns1:fundingEngineWrapperResponse/paymentResponses/paymentResponse",
+                "note": "Initializes response document with empty paymentResponse array and empty Errors array"
+              },
+              {
+                "from": "MAPSET literal '1'",
+                "to": "/REQUESTOR",
+                "note": "REQUESTOR hard-coded to '1' — may need to be made dynamic in target platform"
+              }
+            ],
+            "document_references": [
+              "GLDFundingEngine.Wrappers:fundingEngineWrapperInput",
+              "GLDFundingEngine.Wrappers:fundingEngineWrapperOutput"
+            ]
+          }
+        },
+        {
+          "sequence": 6,
+          "type": "foreach",
+          "label": "Iterate over payment array in funding request",
+          "complexity": "high",
+          "requires_review": true,
+          "details": {
+            "loop_variable": "payment",
+            "source_array": "/fundingEngineWrapperInput/ns1:fundingEngineWrapper/fundingRequest/payments/payment",
+            "output_array": "/fundingEngineWrapperOutput/ns1:fundingEngineWrapperResponse/paymentResponses/paymentResponse",
+            "note": "Each payment is processed individually; output written back to paymentResponse array; inner try/catch per payment to allow other payments to continue on error"
+          }
+        },
+        {
+          "sequence": 7,
+          "type": "try_catch",
+          "label": "Per-payment try/catch — 'On Error Try other payments'",
+          "complexity": "medium",
+          "requires_review": true,
+          "details": {
+            "strategy": "continue on individual payment failure",
+            "note": "Inner SEQUENCE EXIT-ON=FAILURE with comment 'On Error Try other payments' — errors on one payment do not abort the loop"
+          }
+        },
+        {
+          "sequence": 8,
+          "type": "branch",
+          "label": "Route payment by type (Check vs other payment types)",
+          "complexity": "high",
+          "requires_review": true,
+          "details": {
+            "switch_variable": "/fundingEngineWrapperInput/ns1:fundingEngineWrapper/fundingRequest/payments/payment/type",
+            "branch_conditions": [
+              {
+                "condition": "Check",
+                "action": "Execute Check payment processing via GLDExpressGateway.ProcessFlows.CheckWriter:invokeGetUniquePayee and downstream check writer services",
+                "sequence_name": "Check"
+              }
+            ],
+            "note": "XML truncated; additional payment types (e.g. ACH, Wire) likely exist as additional BRANCH children — must review full XML"
+          }
+        },
+        {
+          "sequence": 9,
+          "type": "connector_action",
+          "label": "Check type: invoke GetUniquePayee on GLDExpressGateway CheckWriter",
+          "complexity": "medium",
+          "requires_review": true,
+          "details": {
+            "service_name": "GLDExpressGateway.ProcessFlows.CheckWriter:invokeGetUniquePayee",
+            "package": "GLDExpressGateway (external package — cross-package dependency)",
+            "params": {
+              "PayeeInformation": "recref GLDExpressGateway.DocumentTypes.CheckWriter:PayeeSearch — mapped from current payment pipeline variables"
+            },
+            "cross_package_dependency": true,
+            "note": "Cross-package call to GLDExpressGateway; PayeeSearch document type must be mapped from fundingEngineWrapperInput payment fields; full input mapping truncated in source XML"
+          }
+        }
+      ],
+      "error_handling": {
+        "has_error_handler": true,
+        "strategy": "catch and continue per payment",
+        "note": "Two-level error handling: outer try/catch for the entire flow, plus inner per-payment try/catch that allows remaining payments to be processed after a single payment failure. CATCH block content not visible in truncated XML."
+      },
+      "connections_used": [
+        "pub.flow:savePipelineToFile",
+        "pub.flow:restorePipelineFromFile",
+        "GLDExpressGateway.ProcessFlows.CheckWriter:invokeGetUniquePayee"
+      ],
+      "migration_notes": "1. Debug pipeline save/restore mechanism (pub.flow:savePipelineToFile / restorePipelineFromFile) has no direct equivalent in most target platforms — replace with structured logging or a test harness pattern. 2. REQUESTOR hard-coded to '1' — verify whether this should be dynamic (e.g. from incoming request headers or JWT claims). 3. Cross-package dependency on GLDExpressGateway.ProcessFlows.CheckWriter:invokeGetUniquePayee — migration of this service requires coordinating with GLDExpressGateway package migration; PayeeSearch document type must also be migrated. 4. Payment type routing (BRANCH on /type) likely has additional branches beyond 'Check' that are truncated — full XML review mandatory before migration. 5. Per-payment error isolation (continue on failure) must be explicitly implemented in target platform loop error handling. 6. fundingEngineWrapperInput/Output document types (GLDFundingEngine.Wrappers) must be recreated as data models. 7. Namespace prefix 'ns1' on fundingEngineWrapper elements must be resolved against WSDL/schema definitions."
+    },
+    {
+      "name": "fundingEngineWrapper",
+      "flow_type": "primary",
+      "trigger": {
+        "type": "soap_listener",
+        "label": "SOAP inbound entry point for GLD Funding Engine",
+        "note": "Registered as SOAP processor via directive 'GLDFundingEngine'; receives raw SOAP envelope, extracts body, deserializes to fundingEngineWrapperInput document, then delegates to processFundingRequest"
+      },
+      "steps": [
+        {
+          "sequence": 1,
+          "type": "connector_action",
+          "label": "Extract SOAP body from incoming SOAP request envelope",
+          "complexity": "low",
+          "requires_review": false,
+          "details": {
+            "service_name": "pub.soap.utils:getBody",
+            "package": "pub.soap.utils (webMethods built-in)",
+            "params": {
+              "soapData": "mapped from /soapRequestData (SOAP request object in pipeline)"
+            },
+            "output_mapping": "Exposes 'body' (DOM node) in pipeline; drops soapData; retains soapRequestData and soapResponseData"
+          }
+        },
+        {
+          "sequence": 2,
+          "type": "transform",
+          "label": "Map soapRequestData to soapData input for getBody",
+          "complexity": "low",
+          "requires_review": false,
+          "details": {
+            "mapping_fields": [
+              {
+                "from": "/soapRequestData",
+                "to": "/soapData",
+                "type": "object (DOM)"
+              }
+            ],
+            "drop_fields": [
+              "/soapData (after getBody output)"
+            ]
+          }
+        },
+        {
+          "sequence": 3,
+          "type": "connector_action",
+          "label": "Convert SOAP body DOM node to fundingEngineWrapperInput document",
+          "complexity": "medium",
+          "requires_review": true,
+          "details": {
+            "service_name": "pub.xml:xmlNodeToDocument",
+            "package": "pub.xml (webMethods built-in)",
+            "params": {
+              "node": "/body (DOM node from getBody output)",
+              "documentTypeName": "GLDFundingEngine.Wrappers:fundingEngineWrapperInput (hard-coded)",
+              "makeArrays": "true (hard-coded via MAPSET)",
+              "nsDecls": {
+                "ns1": "namespace URI for GLDFundingEngine WSDL namespace — must verify actual URI"
+              }
+            },
+            "output_mapping": "Populates fundingEngineWrapperInput document in pipeline using the typed document reference",
+            "note": "documentTypeName hard-coded; makeArrays=true ensures repeated elements (payments) are treated as arrays"
+          }
+        },
+        {
+          "sequence": 4,
+          "type": "transform",
+          "label": "Wire body node and set xmlNodeToDocument parameters",
+          "complexity": "low",
+          "requires_review": false,
+          "details": {
+            "mapping_fields": [
+              {
+                "from": "/body",
+                "to": "/node"
+              },
+              {
+                "from": "MAPSET literal 'GLDFundingEngine.Wrappers:fundingEngineWrapperInput'",
+                "to": "/documentTypeName"
+              },
+              {
+                "from": "MAPSET literal 'true'",
+                "to": "/makeArrays"
+              }
+            ]
+          }
+        },
+        {
+          "sequence": 5,
+          "type": "connector_action",
+          "label": "Delegate to processFundingRequest for payment routing",
+          "complexity": "high",
+          "requires_review": true,
+          "details": {
+            "service_name": "GLDFundingEngine.MainFlows:processFundingRequest",
+            "package": "GLDFundingEngine (same package — internal delegation)",
+            "note": "XML truncated before this INVOKE is visible but is implied by the wrapper pattern; wrapper's role is SOAP deserialization then hand-off to processFundingRequest"
+          }
+        },
+        {
+          "sequence": 6,
+          "type": "connector_action",
+          "label": "Serialize fundingEngineWrapperOutput back to SOAP response",
+          "complexity": "medium",
+          "requires_review": true,
+          "details": {
+            "service_name": "pub.soap.utils:setBody or pub.soap.utils:createEnvelope (likely)",
+            "note": "XML truncated; response serialization step is implied by SOAP wrapper pattern — must confirm in full source"
+          }
+        }
+      ],
+      "error_handling": {
+        "has_error_handler": false,
+        "strategy": "none visible",
+        "note": "No explicit try/catch in wrapper flow; error handling deferred to processFundingRequest inner flow"
+      },
+      "connections_used": [
+        "pub.soap.utils:getBody",
+        "pub.xml:xmlNodeToDocument",
+        "GLDFundingEngine.MainFlows:processFundingRequest"
+      ],
+      "migration_notes": "1. This is the SOAP entry point — in the target platform replace with a native REST/SOAP endpoint definition with schema-based request deserialization; the manual pub.soap.utils/pub.xml pipeline is unnecessary in modern platforms. 2. documentTypeName 'GLDFundingEngine.Wrappers:fundingEngineWrapperInput' must be migrated as a data model/schema. 3. namespace prefix 'ns1' must be resolved to the actual WSDL targetNamespace URI (likely from the WSDL file in the package). 4. makeArrays=true for 'payment' element is critical — target platform schema must define payments/payment as an array type. 5. The wrapper + processFundingRequest split can likely be collapsed into a single service operation in the target platform. 6. SOAP processor registration (registerFlowServiceForSOAP) must be replaced with native endpoint configuration — no equivalent manual registration step needed."
+    },
+    {
+      "name": "registerFlowServiceForSOAP",
+      "flow_type": "primary",
+      "trigger": {
+        "type": "manual",
+        "label": "Manual one-time registration of SOAP processor for GLDFundingEngine",
+        "note": "Must be executed once after package deployment to register fundingEngineWrapper as the SOAP processor for directive 'GLDFundingEngine'; typically called from a startup service or manually"
+      },
+      "steps": [
+        {
+          "sequence": 1,
+          "type": "connector_action",
+          "label": "Register fundingEngineWrapper as SOAP processor with directive GLDFundingEngine",
+          "complexity": "low",
+          "requires_review": false,
+          "details": {
+            "service_name": "pub.soap.processor:registerProcessor",
+            "package": "pub.soap.processor (webMethods built-in)",
+            "params": {
+              "svcName": "GLDFundingEngine.Wrappers:fundingEngineWrapper (hard-coded)",
+              "directive": "GLDFundingEngine (hard-coded)",
+              "descriptiveName": "SOAP processor for GLD funding requests (hard-coded)",
+              "validateSOAPMessage": "not set (defaults to false)"
+            },
+            "note": "Registers the wrapper service as the handler for inbound SOAP messages with SOAPAction/directive 'GLDFundingEngine'"
+          }
+        }
+      ],
+      "error_handling": {
+        "has_error_handler": false,
+        "strategy": "none",
+        "note": "Single INVOKE with no error handling; failure would require manual re-execution"
+      },
+      "connections_used": [
+        "pub.soap.processor:registerProcessor"
+      ],
+      "migration_notes": "1. This service has NO equivalent in modern integration platforms — SOAP endpoint registration is handled by deployment/configuration, not runtime service invocation. 2. Do not migrate this as a runnable service; instead document the SOAP endpoint binding in the target platform's service definition. 3. The directive 'GLDFundingEngine' maps to the SOAPAction header value or URL path suffix used by clients — preserve this in the target API endpoint URL/operation name. 4. descriptiveName 'SOAP processor for GLD funding requests' can be used as the API description in the target platform."
+    },
+    {
+      "name": "unregisterFlowServiceForSOAP",
+      "flow_type": "primary",
+      "trigger": {
+        "type": "manual",
+        "label": "Manual de-registration of GLDFundingEngine SOAP processor",
+        "note": "Counterpart to registerFlowServiceForSOAP; removes the SOAP processor binding for directive 'GLDFundingEngine'; called during package unload or maintenance"
+      },
+      "steps": [
+        {
+          "sequence": 1,
+          "type": "connector_action",
+          "label": "Unregister GLDFundingEngine SOAP processor",
+          "complexity": "low",
+          "requires_review": false,
+          "details": {
+            "service_name": "pub.soap.processor:unregisterProcessor",
+            "package": "pub.soap.processor (webMethods built-in)",
+            "params": {
+              "directive": "GLDFundingEngine (hard-coded)"
+            },
+            "note": "Removes runtime SOAP processor binding; directive matches the value set in registerFlowServiceForSOAP"
+          }
+        }
+      ],
+      "error_handling": {
+        "has_error_handler": false,
+        "strategy": "none",
+        "note": "Single INVOKE with no error handling"
+      },
+      "connections_used": [
+        "pub.soap.processor:unregisterProcessor"
+      ],
+      "migration_notes": "1. As with registerFlowServiceForSOAP, this service has NO equivalent in modern integration platforms. 2. Do not migrate — endpoint lifecycle (deploy/undeploy) is managed by the platform, not by explicit runtime calls. 3. Document as a lifecycle management artifact only. 4. If the target platform has an API gateway, disabling/undeploying the API achieves the same effect."
+    }
+  ],
+  "gaps": [
+    {
+      "flow": "flow",
+      "component": "trigger"
+    },
+    {
+      "flow": "flow",
+      "component": "trigger"
+    },
+    {
+      "flow": "flow",
+      "step_type": "connector_action",
+      "sequence": 1
+    },
+    {
+      "flow": "flow",
+      "step_type": "transform",
+      "sequence": 2
+    },
+    {
+      "flow": "flow",
+      "step_type": "connector_action",
+      "sequence": 3
+    },
+    {
+      "flow": "flow",
+      "step_type": "connector_action",
+      "sequence": 6
+    },
+    {
+      "flow": "flow",
+      "step_type": "connector_action",
+      "sequence": 7
+    },
+    {
+      "flow": "flow",
+      "component": "trigger"
+    },
+    {
+      "flow": "flow",
+      "step_type": "choice_router",
+      "sequence": 1
+    },
+    {
+      "flow": "flow",
+      "component": "trigger"
+    },
+    {
+      "flow": "flow",
+      "step_type": "connector_action",
+      "sequence": 1
+    },
+    {
+      "flow": "flow",
+      "step_type": "connector_action",
+      "sequence": 2
+    },
+    {
+      "flow": "flow",
+      "step_type": "connector_action",
+      "sequence": 3
+    },
+    {
+      "flow": "flow",
+      "step_type": "connector_action",
+      "sequence": 4
+    },
+    {
+      "flow": "flow",
+      "step_type": "connector_action",
+      "sequence": 5
+    },
+    {
+      "flow": "flow",
+      "step_type": "connector_action",
+      "sequence": 6
+    },
+    {
+      "flow": "flow",
+      "step_type": "connector_action",
+      "sequence": 7
+    },
+    {
+      "flow": "flow",
+      "step_type": "connector_action",
+      "sequence": 8
+    },
+    {
+      "flow": "flow",
+      "step_type": "connector_action",
+      "sequence": 9
+    },
+    {
+      "flow": "flow",
+      "component": "trigger"
+    },
+    {
+      "flow": "flow",
+      "step_type": "connector_action",
+      "sequence": 1
+    },
+    {
+      "flow": "flow",
+      "component": "trigger"
+    },
+    {
+      "flow": "flow",
+      "step_type": "connector_action",
+      "sequence": 1
+    }
+  ],
+  "migration_notes": "webMethods IS INVOKE steps referencing custom packages require manual review.",
+  "enrichment_metadata": {
+    "enricher": "enrich_webmethods",
+    "model": "claude-sonnet-4-6",
+    "services_analysed": 6,
+    "flows_before": 6,
+    "flows_after": 6
+  }
+}

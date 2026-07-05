@@ -1,0 +1,45 @@
+{
+  "name": "Copy of Migrate Google Sheet contacts to Salesforce by industry - Foreach Framework",
+  "description": "Foreach framework only - all child steps stripped",
+  "version": 1,
+  "private": true,
+  "concurrency": 1,
+  "code": {
+    "number": 0,
+    "provider": "clock",
+    "name": "scheduled_event",
+    "as": "7626d6c0",
+    "keyword": "trigger",
+    "input": {
+      "time_unit": "minutes",
+      "trigger_every": "5"
+    },
+    "block": [
+      {
+        "number": 1,
+        "as": "07568046",
+        "keyword": "each",
+        "repeat_mode": "simple",
+        "clear_scope": "false",
+        "dynamicPickListSelection": {},
+        "toggleCfg": {},
+        "input": {
+          "source": ""
+        },
+        "block": [],
+        "uuid": "48711e2e-ad38-4855-90bd-14c0972a9992"
+      }
+    ],
+    "uuid": "ecb36d54-5e2c-49ec-b695-0b2c3f01cbd0",
+    "unfinished": false,
+    "format_version": 2
+  },
+  "config": [
+    {
+      "keyword": "application",
+      "provider": "clock",
+      "skip_validation": false,
+      "account_id": null
+    }
+  ]
+}

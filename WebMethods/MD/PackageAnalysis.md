@@ -292,17 +292,23 @@ Full 22-row mapping: see `WebMethods/Agent Bridge Web Methods to Workato Compone
 | Step | Workato Type | Label | Notes |
 |---|---|---|---|
 | Trigger | callable_recipe | HTTP POST — Compliance Check | Receives 25-field JSON |
+Put Workato Handle error block
 | 1 | Oracle SP | Log Check Request | SP ACCLOGCHECKREQUEST, 25 IN params |
+Configure the Workato Action as Execute Stored Procedure and give all the details for input
 | 2 | Oracle SP | Log Check Request XML | SP LOGXMLREQUEST, 5 IN params |
+Configure the Workato Action as Execute Stored Procedureand give all the details for input
 | 3 | HTTP action | Call CIU System | Placeholder — wire endpoint URL |
+Please use all the connection details from the Webmethods connection and configure it in Workato
 | 4 | Oracle SP | Update CIU Reference | SP ACCUPDATECIUREFNBR, 2 IN params |
+Configure the Workato Action as Execute Stored Procedure and give all the details for input
 | 5 | IF/ELSE | Check CIU Result | Condition: CIUResult == "TRUE" |
 | 5a | Oracle SP | Log Check Reply (TRUE) | SP ACCLOGCHECKREPLY, 3 IN params |
+Configure the Workato Action as Execute Stored Procedure and give all the details for input
 | 5b | Oracle SP | Log Check Reply Error (ELSE) | SP ACCLOGCHECKREPLYERROR, 4 IN params |
+Configure the Workato Action as Execute Stored Procedure and give all the details for input
 | 6 | Oracle SELECT | Select Customer and Request | SELECT JOIN, 1 IN, 28 OUT columns |
+Configure the Workato Action as Select Records and give all the details for input
 | catch | Oracle SP | Log Error (catch block) | SP ACCLOGCHECKREPLYERROR on system error |
-
----
 
 ## 6. Map Shape Field Mappings
 

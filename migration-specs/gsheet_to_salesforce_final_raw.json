@@ -1,0 +1,343 @@
+{
+  "name": "Copy of Migrate Google Sheet contacts to Salesforce by industry - FINAL",
+  "version": 1,
+  "private": true,
+  "concurrency": 1,
+  "code": {
+    "number": 0,
+    "provider": "clock",
+    "name": "scheduled_event",
+    "as": "7626d6c0",
+    "keyword": "trigger",
+    "input": {
+      "time_unit": "minutes",
+      "trigger_every": "5"
+    },
+    "block": [
+      {
+        "number": 1,
+        "provider": "google_sheets",
+        "name": "get_spreadsheet_rows_v4",
+        "as": "4f7992d7",
+        "keyword": "action",
+        "dynamicPickListSelection": {"spreadsheet": "Customer Contact List"},
+        "toggleCfg": {},
+        "input": {
+          "team_drives": "my_drive",
+          "sheet": "Sheet1",
+          "range": "2:20",
+          "spreadsheet": "13j9efnn3JLhUGuGp_qZ3YyE3kFY3gCyodhX2cGHuRR8"
+        },
+        "uuid": "ddc20e39-a54b-41fe-a77b-0a6e63d0fc36"
+      },
+      {
+        "number": 2,
+        "provider": "workato_variable",
+        "name": "declare_variable",
+        "as": "cfd315c4",
+        "keyword": "action",
+        "dynamicPickListSelection": {},
+        "toggleCfg": {},
+        "input": {
+          "variables": {
+            "schema": "[{\"control_type\":\"integer\",\"label\":\"Successful Count\",\"parse_output\":\"integer_conversion\",\"name\":\"successful_count\",\"type\":\"integer\",\"optional\":true,\"details\":{\"real_name\":\"Successful Count\"},\"parent\":[\"variables\",\"data\"],\"hint\":\"Defaults to nil if not supplied.\",\"sticky\":true},{\"name\":\"failed_count\",\"type\":\"integer\",\"optional\":true,\"label\":\"Failed Count\",\"details\":{\"real_name\":\"Failed Count\"},\"control_type\":\"integer\",\"parent\":[\"variables\",\"data\"]}]",
+            "data": {
+              "successful_count": "0",
+              "failed_count": "0"
+            }
+          }
+        },
+        "uuid": "f818c90b-d7e1-4998-ace3-eb914d76a46a"
+      },
+      {
+        "number": 3,
+        "as": "07568046",
+        "keyword": "each",
+        "dynamicPickListSelection": {},
+        "toggleCfg": {},
+        "input": {
+          "source": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"google_sheets\",\"line\":\"4f7992d7\",\"path\":[\"rows\"]}')}",
+          "type": "list"
+        },
+        "block": [
+          {
+            "number": 4,
+            "keyword": "try",
+            "dynamicPickListSelection": {},
+            "toggleCfg": {},
+            "input": {},
+            "block": [
+              {
+                "number": 5,
+                "provider": "lookup_table",
+                "name": "search_entries",
+                "as": "c91a0bbc",
+                "keyword": "action",
+                "dynamicPickListSelection": {"lookup_table_id": "US Postal Codes"},
+                "toggleCfg": {},
+                "input": {
+                  "lookup_table_id": null,
+                  "parameters": {
+                    "col1": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"foreach\",\"line\":\"07568046\",\"path\":[\"col_Postal Code\"]}')}"
+                  }
+                },
+                "uuid": "03084877-95a1-48bf-884c-a9a717657f28"
+              },
+              {
+                "number": 6,
+                "keyword": "if",
+                "dynamicPickListSelection": {},
+                "toggleCfg": {},
+                "input": {
+                  "type": "compound",
+                  "operand": "and",
+                  "conditions": [
+                    {
+                      "operand": "equals_to",
+                      "lhs": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"foreach\",\"line\":\"07568046\",\"path\":[\"col_Industry\"]}')}" ,
+                      "rhs": "Education",
+                      "uuid": "condition-3e97ffc7-0992-4936-bf59-b8a6cdfe909f"
+                    }
+                  ]
+                },
+                "block": [
+                  {
+                    "number": 7,
+                    "provider": "salesforce",
+                    "name": "upsert_sobject",
+                    "as": "bd2038a8",
+                    "keyword": "action",
+                    "dynamicPickListSelection": {
+                      "sobject_name": "Contact",
+                      "query_field.primary_key": [{"label": "Last Name", "value": "LastName"}]
+                    },
+                    "toggleCfg": {},
+                    "input": {
+                      "sobject_name": "Contact",
+                      "LastName": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"foreach\",\"line\":\"07568046\",\"path\":[\"col_Last Name\"]}')}" ,
+                      "FirstName": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"foreach\",\"line\":\"07568046\",\"path\":[\"col_First Name\"]}')}" ,
+                      "Email": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"foreach\",\"line\":\"07568046\",\"path\":[\"col_Email Address\"]}')}" ,
+                      "query_field": {"primary_key": "LastName"}
+                    },
+                    "uuid": "4932eb42-2cd7-4a25-bd2f-eda32447e084"
+                  },
+                  {
+                    "number": 8,
+                    "provider": "google_sheets",
+                    "name": "update_row_v4_new",
+                    "as": "3708e2a6",
+                    "keyword": "action",
+                    "dynamicPickListSelection": {"spreadsheet": "Customer Contact List"},
+                    "toggleCfg": {},
+                    "input": {
+                      "team_drives": "my_drive",
+                      "sheet": "Sheet1",
+                      "row_number": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"foreach\",\"line\":\"07568046\",\"path\":[\"row_number\"]}')}" ,
+                      "data": {"col_Status": "OK"},
+                      "spreadsheet": "13j9efnn3JLhUGuGp_qZ3YyE3kFY3gCyodhX2cGHuRR8"
+                    },
+                    "uuid": "4ef1b6c0-0db6-47a4-b624-57301917b2d4"
+                  },
+                  {
+                    "number": 9,
+                    "keyword": "else",
+                    "dynamicPickListSelection": {},
+                    "toggleCfg": {},
+                    "input": {},
+                    "block": [
+                      {
+                        "number": 10,
+                        "provider": "logger",
+                        "name": "log_message",
+                        "as": "8d6f6310",
+                        "keyword": "action",
+                        "dynamicPickListSelection": {},
+                        "toggleCfg": {},
+                        "input": {
+                          "message": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"foreach\",\"line\":\"07568046\",\"path\":[\"col_Industry\"]}')}"
+                        },
+                        "uuid": "3021fe0d-1b24-4d11-98f1-7ed70f1789b2"
+                      }
+                    ],
+                    "uuid": "d495da81-8278-4025-bd80-7817a8ae1567"
+                  }
+                ],
+                "uuid": "bcab494e-ff91-41ae-9822-158ef7ac24ed"
+              },
+              {
+                "number": 11,
+                "provider": "workato_variable",
+                "name": "declare_list",
+                "as": "f99b4099",
+                "keyword": "action",
+                "dynamicPickListSelection": {},
+                "toggleCfg": {},
+                "input": {
+                  "name": "Successful Migrations",
+                  "list_item_schema_json": "[{\"name\":\"Email\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\",\"label\":\"Email\"},{\"name\":\"Status\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\",\"label\":\"Status\"},{\"name\":\"SalesforceObjectID\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\",\"label\":\"Salesforce object ID\"}]",
+                  "list_items": {
+                    "____source": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"google_sheets\",\"line\":\"4f7992d7\",\"path\":[\"rows\"]}')}" ,
+                    "Email": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"foreach\",\"line\":\"07568046\",\"path\":[\"col_Email Address\"]}')}" ,
+                    "Status": "OK",
+                    "SalesforceObjectID": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"salesforce\",\"line\":\"bd2038a8\",\"path\":[\"id\"]}')}"
+                  }
+                },
+                "uuid": "c96d373e-1b45-430a-9449-e624cde89451"
+              },
+              {
+                "number": 12,
+                "provider": "workato_variable",
+                "name": "insert_to_list_batch",
+                "as": "ed9df69e",
+                "keyword": "action",
+                "dynamicPickListSelection": {"name": "Successful Migrations (step 11)"},
+                "toggleCfg": {},
+                "input": {
+                  "location": "end",
+                  "name": "c96d373e-1b45-430a-9449-e624cde89451:f99b4099",
+                  "list_items": {
+                    "____source": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"workato_variable\",\"line\":\"f99b4099\",\"path\":[\"list_items\"]}')}" ,
+                    "Email": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"foreach\",\"line\":\"07568046\",\"path\":[\"col_Email Address\"]}')}" ,
+                    "Status": "OK",
+                    "SalesforceObjectID": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"salesforce\",\"line\":\"bd2038a8\",\"path\":[\"id\"]}')}"
+                  }
+                },
+                "uuid": "cc58ec76-f13a-46bf-a299-1eccf10eeaa6"
+              },
+              {
+                "number": 13,
+                "provider": "workato_variable",
+                "name": "update_variables",
+                "as": "c895cc44",
+                "keyword": "action",
+                "dynamicPickListSelection": {
+                  "name": [{"label": "Successful Count (step 3)", "value": "f818c90b-d7e1-4998-ace3-eb914d76a46a:cfd315c4:successful_count"}]
+                },
+                "toggleCfg": {},
+                "input": {
+                  "name": "f818c90b-d7e1-4998-ace3-eb914d76a46a:cfd315c4:successful_count",
+                  "successful_count": "=_dp('{\"pill_type\":\"output\",\"provider\":\"workato_variable\",\"line\":\"cfd315c4\",\"path\":[\"successful_count\"]}')+1"
+                },
+                "uuid": "1d6cf641-f41d-4c80-a645-767728aa067e"
+              },
+              {
+                "number": 14,
+                "as": "d7031dfb",
+                "keyword": "catch",
+                "dynamicPickListSelection": {},
+                "toggleCfg": {},
+                "input": {
+                  "max_retry_count": "0",
+                  "retry_interval": "2"
+                },
+                "block": [
+                  {
+                    "number": 15,
+                    "provider": "logger",
+                    "name": "log_message",
+                    "as": "fb318601",
+                    "keyword": "action",
+                    "dynamicPickListSelection": {},
+                    "toggleCfg": {},
+                    "input": {
+                      "message": "ERROR: #{_dp('{\"pill_type\":\"output\",\"provider\":\"catch\",\"line\":\"d7031dfb\",\"path\":[\"message\"]}')}"
+                    },
+                    "uuid": "995b9f13-5ed8-44aa-a5eb-582683110ee1"
+                  },
+                  {
+                    "number": 16,
+                    "provider": "google_sheets",
+                    "name": "update_row_v4_new",
+                    "as": "a4420b04",
+                    "keyword": "action",
+                    "dynamicPickListSelection": {"spreadsheet": "Customer Contact List"},
+                    "toggleCfg": {},
+                    "input": {
+                      "team_drives": "my_drive",
+                      "spreadsheet": "13j9efnn3JLhUGuGp_qZ3YyE3kFY3gCyodhX2cGHuRR8",
+                      "sheet": "Sheet1",
+                      "row_number": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"foreach\",\"line\":\"07568046\",\"path\":[\"row_number\"]}')}" ,
+                      "data": {
+                        "col_Status": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"catch\",\"line\":\"d7031dfb\",\"path\":[\"message\"]}')}"
+                      }
+                    },
+                    "uuid": "3c366577-f53e-4f85-8f2f-a6145b42ed88"
+                  },
+                  {
+                    "number": 17,
+                    "provider": "workato_list",
+                    "name": "accumulate_list_items",
+                    "as": "4dfe9ffa",
+                    "keyword": "action",
+                    "dynamicPickListSelection": {},
+                    "toggleCfg": {},
+                    "input": {
+                      "name": "Failed Migrations",
+                      "list_item": {
+                        "schema": "[{\"name\":\"email_address\",\"type\":\"string\",\"optional\":true,\"label\":\"Email Address\",\"details\":{\"real_name\":\"Email Address\"},\"control_type\":\"text\"},{\"name\":\"Status\",\"type\":\"string\",\"optional\":true,\"label\":\"Status\",\"details\":{\"real_name\":\"Status\"},\"control_type\":\"text\"},{\"name\":\"salesforce_record_id\",\"type\":\"string\",\"optional\":true,\"label\":\"Salesforce Record ID\",\"details\":{\"real_name\":\"Salesforce Record ID\"},\"control_type\":\"text\"}]",
+                        "data": {
+                          "email_address": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"foreach\",\"line\":\"07568046\",\"path\":[\"col_Email Address\"]}')}" ,
+                          "Status": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"catch\",\"line\":\"d7031dfb\",\"path\":[\"message\"]}')}" ,
+                          "salesforce_record_id": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"salesforce\",\"line\":\"bd2038a8\",\"path\":[\"id\"]}')}"
+                        }
+                      }
+                    },
+                    "uuid": "99294692-b011-4705-a661-7b12a1a10b5e"
+                  },
+                  {
+                    "number": 18,
+                    "provider": "workato_variable",
+                    "name": "update_variables",
+                    "as": "347871af",
+                    "keyword": "action",
+                    "dynamicPickListSelection": {
+                      "name": [{"label": "Failed Count (step 3)", "value": "f818c90b-d7e1-4998-ace3-eb914d76a46a:cfd315c4:failed_count"}]
+                    },
+                    "toggleCfg": {},
+                    "input": {
+                      "name": "f818c90b-d7e1-4998-ace3-eb914d76a46a:cfd315c4:failed_count",
+                      "failed_count": "=_dp('{\"pill_type\":\"output\",\"provider\":\"workato_variable\",\"line\":\"cfd315c4\",\"path\":[\"failed_count\"]}')+1"
+                    },
+                    "uuid": "c1401e5f-fa2c-41de-8b60-9d0d668bf92b"
+                  }
+                ],
+                "uuid": "597542a3-d65e-4c6e-a71a-189f25f5a9f2"
+              }
+            ],
+            "uuid": "0e9c57ed-0fe2-44c7-8e76-fcc1d3443bab"
+          }
+        ],
+        "uuid": "48711e2e-ad38-4855-90bd-14c0972a9992"
+      },
+      {
+        "number": 19,
+        "provider": "email",
+        "name": "send_mail",
+        "as": "c1ef5505",
+        "keyword": "action",
+        "dynamicPickListSelection": {},
+        "toggleCfg": {},
+        "input": {
+          "email_type": "html",
+          "to": "youremail@yourdomain.com",
+          "subject": "Migration status",
+          "body": "='Successful Migrations - ' + _dp('{\"pill_type\":\"output\",\"provider\":\"workato_variable\",\"line\":\"cfd315c4\",\"path\":[\"successful_count\"]}') + '<br>' + (_dp('{\"pill_type\":\"output\",\"provider\":\"workato_variable\",\"line\":\"f99b4099\",\"path\":[\"list_items\"]}')&.join(\"<br>\") or \"None\") + '<br><br> Failed Migrations - ' + _dp('{\"pill_type\":\"output\",\"provider\":\"workato_variable\",\"line\":\"cfd315c4\",\"path\":[\"failed_count\"]}') + '<br>' + (_dp('{\"pill_type\":\"output\",\"provider\":\"workato_list\",\"line\":\"4dfe9ffa\",\"path\":[\"list_items\"]}')&.join(\"<br>\") or \"None\")"
+        },
+        "uuid": "3cc3046f-eef0-430e-98a2-4fc359b5fded"
+      }
+    ],
+    "uuid": "ecb36d54-5e2c-49ec-b695-0b2c3f01cbd0",
+    "unfinished": false,
+    "format_version": 2
+  },
+  "config": [
+    {"keyword": "application", "provider": "clock", "skip_validation": false, "account_id": null},
+    {"keyword": "application", "provider": "google_sheets", "skip_validation": true, "account_id": null},
+    {"keyword": "application", "provider": "salesforce", "skip_validation": true, "account_id": null},
+    {"keyword": "application", "provider": "logger", "skip_validation": false, "account_id": null},
+    {"keyword": "application", "provider": "workato_list", "skip_validation": false, "account_id": null},
+    {"keyword": "application", "provider": "email", "skip_validation": false, "account_id": null},
+    {"keyword": "application", "provider": "workato_variable", "skip_validation": false, "account_id": null},
+    {"keyword": "application", "provider": "lookup_table", "skip_validation": true, "account_id": null}
+  ]
+}

@@ -1,0 +1,714 @@
+{
+  "schema_version": "1.0",
+  "source_system": "workato",
+  "source_version": "workato_cloud",
+  "analyzed_at": "2026-06-09T00:26:52.704337+00:00",
+  "project_name": "workato_migration",
+  "source_files_analyzed": [
+    "workato:folder/31286666"
+  ],
+  "summary": {
+    "total_flows": 7,
+    "primary_flows": 7,
+    "sub_flows": 0,
+    "total_connections": 0,
+    "gaps_found": 6,
+    "overall_complexity": "medium"
+  },
+  "connections": {},
+  "integrations": [
+    {
+      "name": "[Data warehousing] SQL server Daily sync to Snowflake warehouse via Amazon S3",
+      "source_name": "[Data warehousing] SQL server Daily sync to Snowflake warehouse via Amazon S3",
+      "recipe_id": 73006508,
+      "description": "When there is a trigger event, do action",
+      "flow_type": "primary",
+      "trigger": {
+        "source_tag": "clock:timer",
+        "type": "unknown",
+        "label": "363c0263",
+        "requires_review": true,
+        "workato_provider": "clock",
+        "workato_name": "timer"
+      },
+      "steps": [
+        {
+          "source_tag": ":",
+          "type": "connector_action",
+          "label": "",
+          "config_ref": "",
+          "requires_review": true,
+          "workato_provider": "",
+          "workato_name": "",
+          "complexity": "low",
+          "sequence": 1,
+          "_source_ref": "[Data warehousing] SQL server Daily sync to Snowflake warehouse via Amazon S3:step-1",
+          "input_pill_refs": null,
+          "behavioral_difference": "Workato connector action \u2014 verify Boomi has equivalent native connector before using REST.",
+          "suggested_resolution": "Run boomi-component-search.sh to find native connector; if none found, use REST with custom auth.",
+          "severity": "medium",
+          "decision_required": false
+        },
+        {
+          "source_tag": "email:send_mail",
+          "type": "send_email",
+          "label": "594a9c41",
+          "config_ref": "email",
+          "requires_review": false,
+          "workato_provider": "email",
+          "workato_name": "send_mail",
+          "complexity": "low",
+          "sequence": 2,
+          "_source_ref": "[Data warehousing] SQL server Daily sync to Snowflake warehouse via Amazon S3:step-2",
+          "input_pill_refs": null,
+          "email_to": "bennett.goh@workato.com",
+          "email_subject": "SQL Server daily export success",
+          "email_body": "=\"Data flow completed at\" + today"
+        }
+      ],
+      "connections_used": [
+        "onprem_files",
+        "snowflake",
+        "email",
+        "mssql",
+        "amazon_s3",
+        "clock"
+      ],
+      "error_handling": {
+        "has_error_handler": false,
+        "strategies": []
+      }
+    },
+    {
+      "name": "TEST | WORKFLOW | SQS -> Slack Message",
+      "source_name": "TEST | WORKFLOW | SQS -> Slack Message",
+      "recipe_id": 72946767,
+      "description": "",
+      "flow_type": "primary",
+      "trigger": {
+        "source_tag": "aws_sqs:new_message",
+        "type": "event_trigger",
+        "label": "7187a716",
+        "requires_review": false,
+        "workato_provider": "aws_sqs",
+        "workato_name": "new_message"
+      },
+      "steps": [
+        {
+          "source_tag": "logger:log_message",
+          "type": "log_message",
+          "label": "ebe0ba50",
+          "config_ref": "logger",
+          "requires_review": false,
+          "workato_provider": "logger",
+          "workato_name": "log_message",
+          "complexity": "low",
+          "sequence": 1,
+          "_source_ref": "TEST | WORKFLOW | SQS -> Slack Message:step-1",
+          "input_pill_refs": null,
+          "message": "Message: #{_dp('{\"pill_type\":\"output\",\"provider\":\"aws_sqs\",\"line\":\"7187a716\",\"path\":[\"Body\"]}')}"
+        },
+        {
+          "source_tag": "js_eval:invoke_custom_js_code",
+          "type": "connector_action",
+          "label": "js_eval: a9d2f994",
+          "config_ref": "js_eval",
+          "requires_review": true,
+          "workato_provider": "js_eval",
+          "workato_name": "invoke_custom_js_code",
+          "complexity": "low",
+          "sequence": 2,
+          "_source_ref": "TEST | WORKFLOW | SQS -> Slack Message:step-2",
+          "input_pill_refs": null,
+          "behavioral_difference": "Workato connector action \u2014 verify Boomi has equivalent native connector before using REST.",
+          "suggested_resolution": "Run boomi-component-search.sh to find native connector; if none found, use REST with custom auth.",
+          "severity": "medium",
+          "decision_required": false
+        },
+        {
+          "source_tag": "slack:post_message_to_channel",
+          "type": "log_message",
+          "label": "82f67361",
+          "config_ref": "slack",
+          "requires_review": false,
+          "workato_provider": "slack",
+          "workato_name": "post_message_to_channel",
+          "complexity": "low",
+          "sequence": 3,
+          "_source_ref": "TEST | WORKFLOW | SQS -> Slack Message:step-3",
+          "input_pill_refs": null,
+          "message": "Message from SQS Queue"
+        }
+      ],
+      "connections_used": [
+        "logger",
+        "aws_sqs",
+        "js_eval",
+        "slack"
+      ],
+      "error_handling": {
+        "has_error_handler": false,
+        "strategies": []
+      }
+    },
+    {
+      "name": "Assign account rep to review subscription when product usage limit is exceeded",
+      "source_name": "Assign account rep to review subscription when product usage limit is exceeded",
+      "recipe_id": 72945891,
+      "description": "1. Check for rows where expected limit is exceeded by actual usage\n2. Look up account rep for this user\n3. Create a follow up task in Salesforce to review subscription limits",
+      "flow_type": "primary",
+      "trigger": {
+        "source_tag": "snowflake:new_row",
+        "type": "connector_trigger",
+        "label": "New row in PUBLIC.CUSTOMER_PRODUCT_USAGE",
+        "requires_review": false,
+        "workato_provider": "snowflake",
+        "workato_name": "new_row"
+      },
+      "steps": [
+        {
+          "source_tag": "salesforce:search_sobjects",
+          "type": "salesforce_action",
+          "label": "Search Users",
+          "config_ref": "salesforce",
+          "requires_review": false,
+          "workato_provider": "salesforce",
+          "workato_name": "search_sobjects",
+          "complexity": "low",
+          "sequence": 1,
+          "_source_ref": "Assign account rep to review subscription when product usage limit is exceeded:step-1",
+          "input_pill_refs": null,
+          "salesforce_operation": "QUERY",
+          "salesforce_object": "User"
+        },
+        {
+          "source_tag": "salesforce:create_custom_object",
+          "type": "salesforce_action",
+          "label": "Create Task",
+          "config_ref": "salesforce",
+          "requires_review": false,
+          "workato_provider": "salesforce",
+          "workato_name": "create_custom_object",
+          "complexity": "low",
+          "sequence": 2,
+          "_source_ref": "Assign account rep to review subscription when product usage limit is exceeded:step-2",
+          "input_pill_refs": null,
+          "salesforce_operation": "CREATE",
+          "salesforce_object": "Task"
+        }
+      ],
+      "connections_used": [
+        "salesforce",
+        "snowflake"
+      ],
+      "error_handling": {
+        "has_error_handler": false,
+        "strategies": []
+      }
+    },
+    {
+      "name": "Post Slack notifications when new leads are created in Salesforce",
+      "source_name": "Post Slack notifications when new leads are created in Salesforce",
+      "recipe_id": 72945425,
+      "description": "1. New lead is created in Salesforce.\n2. Workato posts a message in Slack with the lead details.",
+      "flow_type": "primary",
+      "trigger": {
+        "source_tag": "salesforce:new_custom_object",
+        "type": "connector_trigger",
+        "label": "New Lead",
+        "requires_review": false,
+        "workato_provider": "salesforce",
+        "workato_name": "new_custom_object"
+      },
+      "steps": [
+        {
+          "source_tag": "slack:post_message_to_channel",
+          "type": "log_message",
+          "label": "post_message_to_channel",
+          "config_ref": "slack",
+          "requires_review": false,
+          "workato_provider": "slack",
+          "workato_name": "post_message_to_channel",
+          "complexity": "low",
+          "sequence": 1,
+          "_source_ref": "Post Slack notifications when new leads are created in Salesforce:step-1",
+          "input_pill_refs": null,
+          "message": "New lead in Salesforce"
+        }
+      ],
+      "connections_used": [
+        "salesforce",
+        "slack"
+      ],
+      "error_handling": {
+        "has_error_handler": false,
+        "strategies": []
+      }
+    },
+    {
+      "name": "Upload Salesforce account files to Box",
+      "source_name": "Upload Salesforce account files to Box",
+      "recipe_id": 72907746,
+      "description": "1. A new account with attachments is created in Salesforce.\n2. Workato searches for a matching folder in Box by **account name** and creates a new folder if it doesn't already exists.\n3. Workato uploads the account attachments to Box.\n\n**Notes**\nYou can specify the Box folder to upload attachments to.",
+      "flow_type": "primary",
+      "trigger": {
+        "source_tag": "salesforce:new_custom_object",
+        "type": "connector_trigger",
+        "label": "New Account",
+        "requires_review": false,
+        "workato_provider": "salesforce",
+        "workato_name": "new_custom_object"
+      },
+      "steps": [
+        {
+          "source_tag": "box:search_files",
+          "type": "connector_action",
+          "label": "box: search_files",
+          "config_ref": "box",
+          "requires_review": true,
+          "workato_provider": "box",
+          "workato_name": "search_files",
+          "complexity": "low",
+          "sequence": 1,
+          "_source_ref": "Upload Salesforce account files to Box:step-1",
+          "input_pill_refs": null,
+          "behavioral_difference": "Workato connector action \u2014 verify Boomi has equivalent native connector before using REST.",
+          "suggested_resolution": "Run boomi-component-search.sh to find native connector; if none found, use REST with custom auth.",
+          "severity": "medium",
+          "decision_required": false
+        },
+        {
+          "source_tag": ":",
+          "type": "choice_router",
+          "label": "If condition",
+          "config_ref": "",
+          "requires_review": false,
+          "workato_provider": "",
+          "workato_name": "",
+          "complexity": "medium",
+          "sequence": 2,
+          "_source_ref": "Upload Salesforce account files to Box:step-2",
+          "condition": "blank =",
+          "true_steps": [
+            {
+              "source_tag": "box:create_folder",
+              "type": "connector_action",
+              "label": "box: create_folder",
+              "config_ref": "box",
+              "requires_review": true,
+              "workato_provider": "box",
+              "workato_name": "create_folder",
+              "complexity": "low",
+              "sequence": 3,
+              "_source_ref": "Upload Salesforce account files to Box:step-3",
+              "input_pill_refs": null,
+              "behavioral_difference": "Workato connector action \u2014 verify Boomi has equivalent native connector before using REST.",
+              "suggested_resolution": "Run boomi-component-search.sh to find native connector; if none found, use REST with custom auth.",
+              "severity": "medium",
+              "decision_required": false
+            }
+          ],
+          "false_steps": []
+        },
+        {
+          "source_tag": ":",
+          "type": "loop",
+          "label": "foreach",
+          "config_ref": "",
+          "requires_review": false,
+          "workato_provider": "",
+          "workato_name": "",
+          "complexity": "medium",
+          "sequence": 3,
+          "_source_ref": "Upload Salesforce account files to Box:step-3",
+          "input_pill_refs": null,
+          "loop_steps": [
+            {
+              "source_tag": "salesforce:get_combined_attachment",
+              "type": "salesforce_action",
+              "label": "get_combined_attachment",
+              "config_ref": "salesforce",
+              "requires_review": false,
+              "workato_provider": "salesforce",
+              "workato_name": "get_combined_attachment",
+              "complexity": "low",
+              "sequence": 4,
+              "_source_ref": "Upload Salesforce account files to Box:step-4",
+              "input_pill_refs": null,
+              "salesforce_operation": "QUERY",
+              "salesforce_object": ""
+            },
+            {
+              "source_tag": "box:upload_file_content",
+              "type": "connector_action",
+              "label": "box: upload_file_content",
+              "config_ref": "box",
+              "requires_review": true,
+              "workato_provider": "box",
+              "workato_name": "upload_file_content",
+              "complexity": "low",
+              "sequence": 5,
+              "_source_ref": "Upload Salesforce account files to Box:step-5",
+              "input_pill_refs": null,
+              "behavioral_difference": "Workato connector action \u2014 verify Boomi has equivalent native connector before using REST.",
+              "suggested_resolution": "Run boomi-component-search.sh to find native connector; if none found, use REST with custom auth.",
+              "severity": "medium",
+              "decision_required": false
+            }
+          ],
+          "loop_over": ""
+        }
+      ],
+      "connections_used": [
+        "box",
+        "salesforce"
+      ],
+      "error_handling": {
+        "has_error_handler": false,
+        "strategies": []
+      }
+    },
+    {
+      "name": "Sync new/updated issue from Jira to Salesforce",
+      "source_name": "Sync new/updated issue from Jira to Salesforce",
+      "recipe_id": 72883400,
+      "description": "**Who it is for:** Product/Project Managers\n\n**Business Context:** Enable sales and product teams to have real-time visibility into customer-reported issues and development progress. Better track and manage customer requests, and prioritize and address issues promptly.\n\n**Customize it your way:** You can replace Jira with other apps like Asana or Trello, and Salesforce with other CRMs of your choice like HubSpot or ZoHo CRM.\n\n**How it works:** \n\n1. A new issue is created in Jira.\n\n2. Workato searches for a matching case in Salesforce by Jira **summary**.\n\n3. Workato searches for a matching account in Salesforce by Jira **key**. If no matching account is found in Salesforce, Workato creates a new account.\n\n4. If no matching case is found in Salesforce, Workato creates a new case in Salesforce.\n\n5. If  matching case is found in Salesforce, Workato updates a case in Salesforce.",
+      "flow_type": "primary",
+      "trigger": {
+        "source_tag": "jira:updated_issue_webhook",
+        "type": "connector_trigger",
+        "label": "updated_issue_webhook",
+        "requires_review": false,
+        "workato_provider": "jira",
+        "workato_name": "updated_issue_webhook"
+      },
+      "steps": [
+        {
+          "source_tag": "salesforce:search_sobjects",
+          "type": "salesforce_action",
+          "label": "Search Cases",
+          "config_ref": "salesforce",
+          "requires_review": false,
+          "workato_provider": "salesforce",
+          "workato_name": "search_sobjects",
+          "complexity": "low",
+          "sequence": 1,
+          "_source_ref": "Sync new/updated issue from Jira to Salesforce:step-1",
+          "input_pill_refs": null,
+          "salesforce_operation": "QUERY",
+          "salesforce_object": "Case"
+        },
+        {
+          "source_tag": "salesforce:search_sobjects",
+          "type": "salesforce_action",
+          "label": "Search Accounts",
+          "config_ref": "salesforce",
+          "requires_review": false,
+          "workato_provider": "salesforce",
+          "workato_name": "search_sobjects",
+          "complexity": "low",
+          "sequence": 2,
+          "_source_ref": "Sync new/updated issue from Jira to Salesforce:step-2",
+          "input_pill_refs": null,
+          "salesforce_operation": "QUERY",
+          "salesforce_object": "Account"
+        },
+        {
+          "source_tag": ":",
+          "type": "choice_router",
+          "label": "If condition",
+          "config_ref": "",
+          "requires_review": false,
+          "workato_provider": "",
+          "workato_name": "",
+          "complexity": "medium",
+          "sequence": 3,
+          "_source_ref": "Sync new/updated issue from Jira to Salesforce:step-3",
+          "condition": "blank =",
+          "true_steps": [
+            {
+              "source_tag": "salesforce:create_custom_object",
+              "type": "salesforce_action",
+              "label": "Create Account",
+              "config_ref": "salesforce",
+              "requires_review": false,
+              "workato_provider": "salesforce",
+              "workato_name": "create_custom_object",
+              "complexity": "low",
+              "sequence": 4,
+              "_source_ref": "Sync new/updated issue from Jira to Salesforce:step-4",
+              "input_pill_refs": null,
+              "salesforce_operation": "CREATE",
+              "salesforce_object": "Account"
+            }
+          ],
+          "false_steps": []
+        },
+        {
+          "source_tag": ":",
+          "type": "choice_router",
+          "label": "If condition",
+          "config_ref": "",
+          "requires_review": false,
+          "workato_provider": "",
+          "workato_name": "",
+          "complexity": "medium",
+          "sequence": 4,
+          "_source_ref": "Sync new/updated issue from Jira to Salesforce:step-4",
+          "condition": "blank =",
+          "true_steps": [
+            {
+              "source_tag": "salesforce:create_custom_object",
+              "type": "salesforce_action",
+              "label": "Create Case",
+              "config_ref": "salesforce",
+              "requires_review": false,
+              "workato_provider": "salesforce",
+              "workato_name": "create_custom_object",
+              "complexity": "low",
+              "sequence": 5,
+              "_source_ref": "Sync new/updated issue from Jira to Salesforce:step-5",
+              "input_pill_refs": null,
+              "salesforce_operation": "CREATE",
+              "salesforce_object": "Case"
+            }
+          ],
+          "false_steps": []
+        },
+        {
+          "source_tag": ":",
+          "type": "choice_router",
+          "label": "If condition",
+          "config_ref": "",
+          "requires_review": false,
+          "workato_provider": "",
+          "workato_name": "",
+          "complexity": "medium",
+          "sequence": 5,
+          "_source_ref": "Sync new/updated issue from Jira to Salesforce:step-5",
+          "condition": "present =",
+          "true_steps": [
+            {
+              "source_tag": "salesforce:update_sobject",
+              "type": "salesforce_action",
+              "label": "Update Case",
+              "config_ref": "salesforce",
+              "requires_review": false,
+              "workato_provider": "salesforce",
+              "workato_name": "update_sobject",
+              "complexity": "low",
+              "sequence": 6,
+              "_source_ref": "Sync new/updated issue from Jira to Salesforce:step-6",
+              "input_pill_refs": null,
+              "salesforce_operation": "UPDATE",
+              "salesforce_object": "Case"
+            }
+          ],
+          "false_steps": []
+        }
+      ],
+      "connections_used": [
+        "jira",
+        "salesforce"
+      ],
+      "error_handling": {
+        "has_error_handler": false,
+        "strategies": []
+      }
+    },
+    {
+      "name": "Sync new/updated account from Salesforce to NetSuite",
+      "source_name": "Sync new/updated account from Salesforce to NetSuite",
+      "recipe_id": 72876957,
+      "description": "**Who it is for:** Finance Manager/Accounts Payable Manager\n\n**Business Context:** Ensure that account data in Salesforce is always synchronized with NetSuite, preventing data inconsistencies between your CRM and ERP systems. \n\n**Customize it your way:** You can replace Salesforce with other CRMs like HubSpot or ZoHo CRM, and NetSuite with other ERPs like SAP or QuickBooks.\n\n**How it works:**\n1. An account is created or updated in Salesforce.\n2. Workato searches for a matching customer in NetSuite by **account name**.\n3. If no matching customer is found in NetSuite, Workato creates a new customer.\n4. If a matching customer is found in NetSuite, Workato updates that customer.",
+      "flow_type": "primary",
+      "trigger": {
+        "source_tag": "salesforce:updated_custom_object",
+        "type": "connector_trigger",
+        "label": "New/updated Account",
+        "requires_review": false,
+        "workato_provider": "salesforce",
+        "workato_name": "updated_custom_object"
+      },
+      "steps": [
+        {
+          "source_tag": "netsuite:search_object_v2",
+          "type": "http_request",
+          "label": "Search Customers",
+          "config_ref": "netsuite",
+          "requires_review": false,
+          "workato_provider": "netsuite",
+          "workato_name": "search_object_v2",
+          "complexity": "low",
+          "sequence": 1,
+          "_source_ref": "Sync new/updated account from Salesforce to NetSuite:step-1",
+          "input_pill_refs": null,
+          "http_method": "GET",
+          "url": ""
+        },
+        {
+          "source_tag": ":",
+          "type": "choice_router",
+          "label": "If condition",
+          "config_ref": "",
+          "requires_review": false,
+          "workato_provider": "",
+          "workato_name": "",
+          "complexity": "medium",
+          "sequence": 2,
+          "_source_ref": "Sync new/updated account from Salesforce to NetSuite:step-2",
+          "condition": "blank =",
+          "true_steps": [
+            {
+              "source_tag": "netsuite:search_object_v2",
+              "type": "http_request",
+              "label": "Search Subsidiaries",
+              "config_ref": "netsuite",
+              "requires_review": false,
+              "workato_provider": "netsuite",
+              "workato_name": "search_object_v2",
+              "complexity": "low",
+              "sequence": 3,
+              "_source_ref": "Sync new/updated account from Salesforce to NetSuite:step-3",
+              "input_pill_refs": null,
+              "http_method": "GET",
+              "url": ""
+            },
+            {
+              "source_tag": "netsuite:add_object",
+              "type": "http_request",
+              "label": "Create Customer",
+              "config_ref": "netsuite",
+              "requires_review": false,
+              "workato_provider": "netsuite",
+              "workato_name": "add_object",
+              "complexity": "low",
+              "sequence": 4,
+              "_source_ref": "Sync new/updated account from Salesforce to NetSuite:step-4",
+              "input_pill_refs": null,
+              "http_method": "GET",
+              "url": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"salesforce\",\"line\":\"updated_custom_object\",\"path\":[\"Website\"]}')}"
+            }
+          ],
+          "false_steps": []
+        },
+        {
+          "source_tag": ":",
+          "type": "choice_router",
+          "label": "If condition",
+          "config_ref": "",
+          "requires_review": false,
+          "workato_provider": "",
+          "workato_name": "",
+          "complexity": "medium",
+          "sequence": 3,
+          "_source_ref": "Sync new/updated account from Salesforce to NetSuite:step-3",
+          "condition": "present =",
+          "true_steps": [
+            {
+              "source_tag": "netsuite:update_object",
+              "type": "http_request",
+              "label": "Update Customer",
+              "config_ref": "netsuite",
+              "requires_review": false,
+              "workato_provider": "netsuite",
+              "workato_name": "update_object",
+              "complexity": "low",
+              "sequence": 4,
+              "_source_ref": "Sync new/updated account from Salesforce to NetSuite:step-4",
+              "input_pill_refs": null,
+              "http_method": "GET",
+              "url": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"salesforce\",\"line\":\"updated_custom_object\",\"path\":[\"Website\"]}')}"
+            }
+          ],
+          "false_steps": []
+        }
+      ],
+      "connections_used": [
+        "netsuite",
+        "salesforce"
+      ],
+      "error_handling": {
+        "has_error_handler": false,
+        "strategies": []
+      }
+    }
+  ],
+  "gaps": [
+    {
+      "flow": "[Data warehousing] SQL server Daily sync to Snowflake warehouse via Amazon S3",
+      "component": "trigger",
+      "label": "363c0263",
+      "note": "Unknown trigger type \u2014 map to Boomi passthrough start and configure manually",
+      "severity": "medium",
+      "decision_required": true,
+      "auto_resolved": false
+    },
+    {
+      "flow": "[Data warehousing] SQL server Daily sync to Snowflake warehouse via Amazon S3",
+      "step_type": "connector_action",
+      "sequence": 1,
+      "source_ref": "[Data warehousing] SQL server Daily sync to Snowflake warehouse via Amazon S3:step-1",
+      "label": "",
+      "note": "Manual review required",
+      "behavioral_difference": "Workato connector action \u2014 verify Boomi has equivalent native connector before using REST.",
+      "suggested_resolution": "Run boomi-component-search.sh to find native connector; if none found, use REST with custom auth.",
+      "severity": "medium",
+      "decision_required": false,
+      "auto_resolved": false
+    },
+    {
+      "flow": "TEST | WORKFLOW | SQS -> Slack Message",
+      "step_type": "connector_action",
+      "sequence": 2,
+      "source_ref": "TEST | WORKFLOW | SQS -> Slack Message:step-2",
+      "label": "js_eval: a9d2f994",
+      "note": "Manual review required",
+      "behavioral_difference": "Workato connector action \u2014 verify Boomi has equivalent native connector before using REST.",
+      "suggested_resolution": "Run boomi-component-search.sh to find native connector; if none found, use REST with custom auth.",
+      "severity": "medium",
+      "decision_required": false,
+      "auto_resolved": false
+    },
+    {
+      "flow": "Upload Salesforce account files to Box",
+      "step_type": "connector_action",
+      "sequence": 1,
+      "source_ref": "Upload Salesforce account files to Box:step-1",
+      "label": "box: search_files",
+      "note": "Manual review required",
+      "behavioral_difference": "Workato connector action \u2014 verify Boomi has equivalent native connector before using REST.",
+      "suggested_resolution": "Run boomi-component-search.sh to find native connector; if none found, use REST with custom auth.",
+      "severity": "medium",
+      "decision_required": false,
+      "auto_resolved": false
+    },
+    {
+      "flow": "Upload Salesforce account files to Box",
+      "step_type": "connector_action",
+      "sequence": 3,
+      "source_ref": "Upload Salesforce account files to Box:step-3",
+      "label": "box: create_folder",
+      "note": "Manual review required",
+      "behavioral_difference": "Workato connector action \u2014 verify Boomi has equivalent native connector before using REST.",
+      "suggested_resolution": "Run boomi-component-search.sh to find native connector; if none found, use REST with custom auth.",
+      "severity": "medium",
+      "decision_required": false,
+      "auto_resolved": false
+    },
+    {
+      "flow": "Upload Salesforce account files to Box",
+      "step_type": "connector_action",
+      "sequence": 5,
+      "source_ref": "Upload Salesforce account files to Box:step-5",
+      "label": "box: upload_file_content",
+      "note": "Manual review required",
+      "behavioral_difference": "Workato connector action \u2014 verify Boomi has equivalent native connector before using REST.",
+      "suggested_resolution": "Run boomi-component-search.sh to find native connector; if none found, use REST with custom auth.",
+      "severity": "medium",
+      "decision_required": false,
+      "auto_resolved": false
+    }
+  ],
+  "migration_notes": ""
+}

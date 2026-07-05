@@ -1,0 +1,171 @@
+{
+  "schema_version": "1.0",
+  "source_system": "workato",
+  "source_version": "workato_cloud",
+  "analyzed_at": "2026-06-09T00:26:52.704337+00:00",
+  "project_name": "workato_migration",
+  "source_files_analyzed": [
+    "workato:folder/31286666"
+  ],
+  "summary": {
+    "total_flows": 1,
+    "primary_flows": 1,
+    "sub_flows": 0,
+    "total_connections": 0,
+    "gaps_found": 0,
+    "overall_complexity": "medium"
+  },
+  "connections": {},
+  "integrations": [
+    {
+      "name": "Sync new/updated issue from Jira to Salesforce",
+      "source_name": "Sync new/updated issue from Jira to Salesforce",
+      "recipe_id": 72883400,
+      "description": "**Who it is for:** Product/Project Managers\n\n**Business Context:** Enable sales and product teams to have real-time visibility into customer-reported issues and development progress. Better track and manage customer requests, and prioritize and address issues promptly.\n\n**Customize it your way:** You can replace Jira with other apps like Asana or Trello, and Salesforce with other CRMs of your choice like HubSpot or ZoHo CRM.\n\n**How it works:** \n\n1. A new issue is created in Jira.\n\n2. Workato searches for a matching case in Salesforce by Jira **summary**.\n\n3. Workato searches for a matching account in Salesforce by Jira **key**. If no matching account is found in Salesforce, Workato creates a new account.\n\n4. If no matching case is found in Salesforce, Workato creates a new case in Salesforce.\n\n5. If  matching case is found in Salesforce, Workato updates a case in Salesforce.",
+      "flow_type": "primary",
+      "trigger": {
+        "source_tag": "jira:updated_issue_webhook",
+        "type": "connector_trigger",
+        "label": "updated_issue_webhook",
+        "requires_review": false,
+        "workato_provider": "jira",
+        "workato_name": "updated_issue_webhook"
+      },
+      "steps": [
+        {
+          "source_tag": "salesforce:search_sobjects",
+          "type": "salesforce_action",
+          "label": "Search Cases",
+          "config_ref": "salesforce",
+          "requires_review": false,
+          "workato_provider": "salesforce",
+          "workato_name": "search_sobjects",
+          "complexity": "low",
+          "sequence": 1,
+          "_source_ref": "Sync new/updated issue from Jira to Salesforce:step-1",
+          "input_pill_refs": null,
+          "salesforce_operation": "QUERY",
+          "salesforce_object": "Case"
+        },
+        {
+          "source_tag": "salesforce:search_sobjects",
+          "type": "salesforce_action",
+          "label": "Search Accounts",
+          "config_ref": "salesforce",
+          "requires_review": false,
+          "workato_provider": "salesforce",
+          "workato_name": "search_sobjects",
+          "complexity": "low",
+          "sequence": 2,
+          "_source_ref": "Sync new/updated issue from Jira to Salesforce:step-2",
+          "input_pill_refs": null,
+          "salesforce_operation": "QUERY",
+          "salesforce_object": "Account"
+        },
+        {
+          "source_tag": ":",
+          "type": "choice_router",
+          "label": "If condition",
+          "config_ref": "",
+          "requires_review": false,
+          "workato_provider": "",
+          "workato_name": "",
+          "complexity": "medium",
+          "sequence": 3,
+          "_source_ref": "Sync new/updated issue from Jira to Salesforce:step-3",
+          "condition": "blank =",
+          "true_steps": [
+            {
+              "source_tag": "salesforce:create_custom_object",
+              "type": "salesforce_action",
+              "label": "Create Account",
+              "config_ref": "salesforce",
+              "requires_review": false,
+              "workato_provider": "salesforce",
+              "workato_name": "create_custom_object",
+              "complexity": "low",
+              "sequence": 4,
+              "_source_ref": "Sync new/updated issue from Jira to Salesforce:step-4",
+              "input_pill_refs": null,
+              "salesforce_operation": "CREATE",
+              "salesforce_object": "Account"
+            }
+          ],
+          "false_steps": []
+        },
+        {
+          "source_tag": ":",
+          "type": "choice_router",
+          "label": "If condition",
+          "config_ref": "",
+          "requires_review": false,
+          "workato_provider": "",
+          "workato_name": "",
+          "complexity": "medium",
+          "sequence": 4,
+          "_source_ref": "Sync new/updated issue from Jira to Salesforce:step-4",
+          "condition": "blank =",
+          "true_steps": [
+            {
+              "source_tag": "salesforce:create_custom_object",
+              "type": "salesforce_action",
+              "label": "Create Case",
+              "config_ref": "salesforce",
+              "requires_review": false,
+              "workato_provider": "salesforce",
+              "workato_name": "create_custom_object",
+              "complexity": "low",
+              "sequence": 5,
+              "_source_ref": "Sync new/updated issue from Jira to Salesforce:step-5",
+              "input_pill_refs": null,
+              "salesforce_operation": "CREATE",
+              "salesforce_object": "Case"
+            }
+          ],
+          "false_steps": []
+        },
+        {
+          "source_tag": ":",
+          "type": "choice_router",
+          "label": "If condition",
+          "config_ref": "",
+          "requires_review": false,
+          "workato_provider": "",
+          "workato_name": "",
+          "complexity": "medium",
+          "sequence": 5,
+          "_source_ref": "Sync new/updated issue from Jira to Salesforce:step-5",
+          "condition": "present =",
+          "true_steps": [
+            {
+              "source_tag": "salesforce:update_sobject",
+              "type": "salesforce_action",
+              "label": "Update Case",
+              "config_ref": "salesforce",
+              "requires_review": false,
+              "workato_provider": "salesforce",
+              "workato_name": "update_sobject",
+              "complexity": "low",
+              "sequence": 6,
+              "_source_ref": "Sync new/updated issue from Jira to Salesforce:step-6",
+              "input_pill_refs": null,
+              "salesforce_operation": "UPDATE",
+              "salesforce_object": "Case"
+            }
+          ],
+          "false_steps": []
+        }
+      ],
+      "connections_used": [
+        "jira",
+        "salesforce"
+      ],
+      "error_handling": {
+        "has_error_handler": false,
+        "strategies": []
+      }
+    }
+  ],
+  "gaps": [],
+  "migration_notes": ""
+}

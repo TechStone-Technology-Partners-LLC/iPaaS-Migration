@@ -1,0 +1,48 @@
+{
+  "id": 73560615,
+  "user_id": 4927573,
+  "name": "Compliance Check \u2014 MIG_WM_GLDComplianceAdapterServices",
+  "created_at": "2026-06-19T12:25:40.562-07:00",
+  "updated_at": "2026-06-19T12:25:40.562-07:00",
+  "copy_count": 1,
+  "trigger_application": "workato",
+  "action_applications": [
+    "oracle",
+    "http"
+  ],
+  "applications": [
+    "workato",
+    "oracle",
+    "http"
+  ],
+  "description": "GLD Compliance check \u2014 webMethods IS 6.5 GLDComplianceAdapterServices \u2192 Workato. v4: callable_recipe trigger (HTTP POST /compliance-check, 25 fields), Actions 1-2 execute_stored_procedure, Action 3 HTTP POST CIU (wire URL from SME), Action 4 execute_stored_procedure, IF/ELSE \"Check CIU Result\" (5a ACCLOGCHECKREPLY / 5b ACCLOGCHECKREPLYERROR), Action 6 select_rows 28-col JOIN, rescue block: ACCLOGCHECKREPLYERROR on system error.",
+  "project_id": 16524542,
+  "parameters_schema": [],
+  "parameters": {},
+  "folder_id": 31661117,
+  "running": false,
+  "job_succeeded_count": 0,
+  "job_failed_count": 0,
+  "lifetime_task_count": 0,
+  "last_run_at": null,
+  "stopped_at": null,
+  "webhook_url": null,
+  "stop_cause": null,
+  "config": [
+    {
+      "keyword": "application",
+      "name": "oracle",
+      "provider": "oracle",
+      "account_id": 19657520,
+      "skip_validation": false
+    }
+  ],
+  "trigger_closure": null,
+  "code": "{\"number\":0,\"keyword\":\"trigger\",\"provider\":\"workato\",\"name\":\"callable_recipe\",\"as\":\"callable_recipe\",\"uuid\":\"54df442a-f74a-49bb-bb2e-ec7aa79d111d\",\"dynamicPickListSelection\":{},\"toggleCfg\":{},\"input\":{},\"block\":[{\"number\":1,\"keyword\":\"action\",\"provider\":\"oracle\",\"name\":\"execute_stored_procedure\",\"as\":\"log_check_request\",\"uuid\":\"428b4455-2acb-461a-8234-c78a1217e952\",\"dynamicPickListSelection\":{\"procedure_name\":\"GLD_SCHEMA.ACCLOGCHECKREQUEST\"},\"toggleCfg\":{},\"input\":{}},{\"number\":2,\"keyword\":\"action\",\"provider\":\"oracle\",\"name\":\"execute_stored_procedure\",\"as\":\"log_check_request_xml\",\"uuid\":\"c5370c10-3552-44fe-925b-99cd0cbfbdc5\",\"dynamicPickListSelection\":{\"procedure_name\":\"GLD_SCHEMA.LOGXMLREQUEST\"},\"toggleCfg\":{},\"input\":{}},{\"number\":3,\"keyword\":\"action\",\"provider\":\"http\",\"name\":\"post\",\"as\":\"ciu_call\",\"title\":\"Action 3 \u2014 Call CIU System (HTTP POST) [wire endpoint URL in GUI]\",\"uuid\":\"ad2eda3f-59a8-4e3d-9aa5-dd767ecd1a32\",\"dynamicPickListSelection\":{},\"toggleCfg\":{},\"input\":{}},{\"number\":4,\"keyword\":\"action\",\"provider\":\"oracle\",\"name\":\"execute_stored_procedure\",\"as\":\"update_ciu_ref\",\"uuid\":\"8f8df667-a503-451a-8c50-cb7ff4753972\",\"dynamicPickListSelection\":{\"procedure_name\":\"GLD_SCHEMA.ACCUPDATECIUREFNBR\"},\"toggleCfg\":{},\"input\":{}},{\"number\":5,\"keyword\":\"if\",\"title\":\"Check CIU Result\",\"uuid\":\"4735f67a-b86f-4d22-9660-c86b8212ad34\",\"input\":{\"type\":\"compound\",\"operand\":\"and\",\"conditions\":[{\"operand\":\"equals\",\"lhs\":\"#{_dp('{\\\\\\\"pill_type\\\\\\\": \\\\\\\"output\\\\\\\", \\\\\\\"provider\\\\\\\": \\\\\\\"http\\\\\\\", \\\\\\\"line\\\\\\\": \\\\\\\"ciu_call\\\\\\\", \\\\\\\"path\\\\\\\": [\\\\\\\"CheckResult\\\\\\\"]}')}\",\"rhs\":\"TRUE\"}]},\"block\":[{\"number\":6,\"keyword\":\"action\",\"provider\":\"oracle\",\"name\":\"execute_stored_procedure\",\"as\":\"log_check_reply\",\"uuid\":\"6b614216-323f-41d8-88d3-77503564a1b6\",\"dynamicPickListSelection\":{\"procedure_name\":\"GLD_SCHEMA.ACCLOGCHECKREPLY\"},\"toggleCfg\":{},\"input\":{}}]},{\"number\":7,\"keyword\":\"else\",\"uuid\":\"b987fc48-9378-4a3d-918b-08f5efe64409\",\"block\":[{\"number\":8,\"keyword\":\"action\",\"provider\":\"oracle\",\"name\":\"execute_stored_procedure\",\"as\":\"log_check_reply_error\",\"uuid\":\"11c92459-d70d-4756-8509-0bb0a4c9b999\",\"dynamicPickListSelection\":{\"procedure_name\":\"GLD_SCHEMA.ACCLOGCHECKREPLYERROR\"},\"toggleCfg\":{},\"input\":{}}]},{\"number\":9,\"keyword\":\"action\",\"provider\":\"oracle\",\"name\":\"select_rows\",\"as\":\"select_customer\",\"uuid\":\"a6047e3c-3908-4c54-a775-fb9dff979df4\",\"dynamicPickListSelection\":{},\"toggleCfg\":{},\"input\":{}},{\"number\":11,\"keyword\":\"rescue\",\"uuid\":\"360137bf-f3fc-482b-9cd0-81e963cc4aee\",\"block\":[{\"number\":12,\"keyword\":\"action\",\"provider\":\"oracle\",\"name\":\"execute_stored_procedure\",\"as\":\"log_system_error\",\"title\":\"CATCH \u2014 Log System Error (ACCLOGCHECKREPLYERROR)\",\"uuid\":\"9b10f44b-203f-4d16-9d31-83124a7c1f88\",\"dynamicPickListSelection\":{\"procedure_name\":\"GLD_SCHEMA.ACCLOGCHECKREPLYERROR\"},\"toggleCfg\":{},\"input\":{\"procedure_name\":\"GLD_SCHEMA.ACCLOGCHECKREPLYERROR\",\"ERRORTYPE\":\"#{_dp('{\\\\\\\"pill_type\\\\\\\": \\\\\\\"output\\\\\\\", \\\\\\\"provider\\\\\\\": \\\\\\\"workato\\\\\\\", \\\\\\\"line\\\\\\\": \\\\\\\"error_monitor\\\\\\\", \\\\\\\"path\\\\\\\": [\\\\\\\"error\\\\\\\", \\\\\\\"type\\\\\\\"]}')}\",\"ERRORCODE\":\"SYSTEM_ERROR\",\"ERRORDESC\":\"#{_dp('{\\\\\\\"pill_type\\\\\\\": \\\\\\\"output\\\\\\\", \\\\\\\"provider\\\\\\\": \\\\\\\"workato\\\\\\\", \\\\\\\"line\\\\\\\": \\\\\\\"error_monitor\\\\\\\", \\\\\\\"path\\\\\\\": [\\\\\\\"error\\\\\\\", \\\\\\\"message\\\\\\\"]}')}\",\"CIUREFNBR\":\"N/A\"}}]}]}",
+  "version_no": 1,
+  "version_author_name": "Sai Manish Avasarala",
+  "version_author_email": "manish@techstonellc.com",
+  "version_comment": null,
+  "author_name": "Sai Manish Avasarala",
+  "last_job_started_at": null
+}

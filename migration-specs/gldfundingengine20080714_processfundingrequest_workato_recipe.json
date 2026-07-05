@@ -1,0 +1,165 @@
+{
+  "name": "MIG_WM_GLDFUNDINGENGINE20080714_PROCESSFUNDINGREQUEST",
+  "description": "Migrated from webMethods IS service GLDFundingEngine/MainFlows/processFundingRequest (package: gldfundingengine20080714). This recipe accepts a funding request payload via a callable trigger, optionally handles a debug pipeline save/restore branch (pub.flow:savePipelineToFile and pub.flow:restorePipelineFromFile — these are IS-internal pipeline utilities with no direct Workato equivalent and are represented as HTTP POST placeholders), then enters a try/catch sequence that invokes the funding engine wrapper logic. The main processing block maps pipeline variables including fundingEngineWrapperInput and REQUESTOR, and is expected to call downstream funding engine services. GAPS: (1) pub.flow:savePipelineToFile and pub.flow:restorePipelineFromFile are IS-internal debug services not migrated to Workato — represented as no-op HTTP POST placeholders; (2) the actual downstream funding engine invocation services referenced in the truncated flow XML are unknown and represented as HTTP POST placeholders requiring SME input; (3) the full pipeline variable mapping (fundingEngineWrapperInput, REQUESTOR, etc.) must be wired by the integrator in the Workato GUI.",
+  "code": {
+    "number": 0,
+    "keyword": "trigger",
+    "provider": "workato",
+    "name": "callable_recipe",
+    "as": "callable_recipe",
+    "uuid": "550e8400-e29b-41d4-a716-446655440000",
+    "dynamicPickListSelection": {},
+    "toggleCfg": {},
+    "input": {
+      "http_method": "post",
+      "request_url_suffix": "/process-funding-request",
+      "response_type": "dynamic",
+      "input_fields_raw_schema": "[{\"name\":\"debug\",\"type\":\"string\",\"optional\":true,\"label\":\"Debug flag (set to true to enable pipeline save/restore)\"},{\"name\":\"REQUESTOR\",\"type\":\"string\",\"optional\":true,\"label\":\"Requestor identifier\"},{\"name\":\"fundingEngineWrapperInput\",\"type\":\"string\",\"optional\":false,\"label\":\"Funding Engine Wrapper Input (JSON string — caller serializes as JSON)\"},{\"name\":\"fileName\",\"type\":\"string\",\"optional\":true,\"label\":\"File name for pipeline save/restore (default: FundingEngineRequest)\"}]"
+    },
+    "block": [
+      {
+        "number": 1,
+        "keyword": "if",
+        "title": "Check debug flag",
+        "uuid": "550e8400-e29b-41d4-a716-446655440010",
+        "input": {
+          "type": "compound",
+          "operand": "and",
+          "conditions": [
+            {
+              "operand": "equals",
+              "lhs": "[PILL: callable_recipe.debug]",
+              "rhs": "true"
+            }
+          ]
+        },
+        "block": [
+          {
+            "number": 2,
+            "keyword": "action",
+            "provider": "http",
+            "name": "post",
+            "as": "save_pipeline",
+            "title": "PLACEHOLDER — not migrated: pub.flow:savePipelineToFile (debug branch — save pipeline to file named FundingEngineRequest)",
+            "uuid": "550e8400-e29b-41d4-a716-446655440011",
+            "dynamicPickListSelection": {},
+            "toggleCfg": {},
+            "input": {
+              "url": "PLACEHOLDER — not migrated: pub.flow:savePipelineToFile",
+              "content_type": "application/json",
+              "payload": "{\"fileName\": \"FundingEngineRequest\"}"
+            },
+            "block": []
+          },
+          {
+            "number": 3,
+            "keyword": "action",
+            "provider": "http",
+            "name": "post",
+            "as": "restore_pipeline",
+            "title": "PLACEHOLDER — not migrated: pub.flow:restorePipelineFromFile (debug branch — restore pipeline from file named FundingEngineRequest)",
+            "uuid": "550e8400-e29b-41d4-a716-446655440012",
+            "dynamicPickListSelection": {},
+            "toggleCfg": {},
+            "input": {
+              "url": "PLACEHOLDER — not migrated: pub.flow:restorePipelineFromFile",
+              "content_type": "application/json",
+              "payload": "{\"fileName\": \"FundingEngineRequest\", \"merge\": \"true\"}"
+            },
+            "block": []
+          },
+          {
+            "number": 4,
+            "keyword": "else",
+            "uuid": "550e8400-e29b-41d4-a716-446655440013",
+            "block": [
+              {
+                "number": 5,
+                "keyword": "action",
+                "provider": "http",
+                "name": "post",
+                "as": "debug_noop",
+                "title": "No-op — debug flag not set, skipping pipeline save/restore",
+                "uuid": "550e8400-e29b-41d4-a716-446655440014",
+                "dynamicPickListSelection": {},
+                "toggleCfg": {},
+                "input": {
+                  "url": "PLACEHOLDER — not migrated: debug branch skipped (debug flag not true)",
+                  "content_type": "application/json",
+                  "payload": "{\"status\": \"debug_skipped\"}"
+                },
+                "block": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "number": 7,
+        "keyword": "action",
+        "provider": "http",
+        "name": "post",
+        "as": "set_pipeline_vars",
+        "title": "Map pipeline variables — set fundingEngineWrapperInput, REQUESTOR, fileName",
+        "uuid": "550e8400-e29b-41d4-a716-446655440021",
+        "dynamicPickListSelection": {},
+        "toggleCfg": {},
+        "input": {
+          "url": "PLACEHOLDER — obtain from SME: pipeline variable mapping step (no Workato equivalent for standalone MAP)",
+          "content_type": "application/json",
+          "payload": "{\"fileName\": \"FundingEngineRequest\", \"REQUESTOR\": \"[PILL: callable_recipe.REQUESTOR]\", \"fundingEngineWrapperInput\": \"[PILL: callable_recipe.fundingEngineWrapperInput]\"}"
+        },
+        "block": []
+      },
+      {
+        "number": 8,
+        "keyword": "action",
+        "provider": "http",
+        "name": "post",
+        "as": "funding_engine_call",
+        "title": "Call GLDFundingEngine — process funding request via funding engine wrapper",
+        "uuid": "550e8400-e29b-41d4-a716-446655440022",
+        "dynamicPickListSelection": {},
+        "toggleCfg": {},
+        "input": {
+          "url": "PLACEHOLDER — obtain from SME: GLDFundingEngine fundingEngineWrapper endpoint",
+          "content_type": "application/json",
+          "payload": "{\"fundingEngineWrapperInput\": \"[PILL: callable_recipe.fundingEngineWrapperInput]\", \"REQUESTOR\": \"[PILL: callable_recipe.REQUESTOR]\"}"
+        },
+        "block": []
+      },
+      {
+        "number": 9,
+        "keyword": "rescue",
+        "uuid": "550e8400-e29b-41d4-a716-446655440030",
+        "block": [
+          {
+            "number": 10,
+            "keyword": "action",
+            "provider": "http",
+            "name": "post",
+            "as": "error_handler",
+            "title": "Handle error — notify or log funding request processing failure",
+            "uuid": "550e8400-e29b-41d4-a716-446655440031",
+            "dynamicPickListSelection": {},
+            "toggleCfg": {},
+            "input": {
+              "url": "PLACEHOLDER — obtain from SME: error notification/logging endpoint for processFundingRequest failures",
+              "content_type": "application/json",
+              "payload": "{\"error\": \"processFundingRequest failed\", \"REQUESTOR\": \"[PILL: callable_recipe.REQUESTOR]\", \"fundingEngineWrapperInput\": \"[PILL: callable_recipe.fundingEngineWrapperInput]\"}"
+            },
+            "block": []
+          }
+        ]
+      }
+    ]
+  },
+  "config": [
+    {
+      "keyword": "application",
+      "provider": "http",
+      "account_id": null,
+      "skip_validation": true
+    }
+  ]
+}

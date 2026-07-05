@@ -162,34 +162,52 @@ def _step(number, provider, name, keyword, input_cfg, block=None, label=None):
 
 # ── Trigger builders ─────────────────────────────────────────────────────────
 
-def trigger_http(http_method, path, description=""):
+def trigger_http(http_method, path, description="", input_schema=None):
     """
     Workato callable recipe trigger — exposes the recipe as an HTTP endpoint.
-    provider: workato, name: callable_recipe
+    provider: workato, name: callable_recipe, as: callable_recipe (required for pills).
+
+    input_schema: list of flat field dicts with name/type/optional/label.
+    IMPORTANT: Workato silently wipes trigger input if input_fields_raw_schema
+    contains any type:"object" or type:"array" field — use only scalar types
+    (string, integer, number, boolean, date, datetime).
     """
-    return _step(
-        number=0,
-        provider="workato",
-        name="callable_recipe",
-        keyword="trigger",
-        input_cfg={
-            "http_method": http_method.lower(),
-            "request_url_suffix": path,
-            "response_type": "dynamic",
-        },
-        label=description or f"Receive {http_method.upper()} {path}",
-    )
+    input_cfg = {
+        "http_method": http_method.lower(),
+        "request_url_suffix": path,
+        "response_type": "dynamic",
+    }
+    if input_schema:
+        input_cfg["input_fields_raw_schema"] = json.dumps(input_schema)
+    return {
+        "number": 0,
+        "keyword": "trigger",
+        "provider": "workato",
+        "name": "callable_recipe",
+        "as": "callable_recipe",
+        "title": description or f"Receive {http_method.upper()} {path}",
+        "dynamicPickListSelection": {},
+        "toggleCfg": {},
+        "input": input_cfg,
+        "uuid": new_uuid(),
+    }
 
 
-def trigger_scheduler(cron_expression="0 * * * *"):
-    """Workato scheduled trigger (clock)."""
+def trigger_scheduler(time_unit="minutes", trigger_every="5", label="Run on schedule"):
+    """
+    Workato scheduled trigger (clock/scheduled_event).
+    time_unit: "seconds" | "minutes" | "hours" | "days" | "weeks" | "months"
+    trigger_every: string integer; minimum is "5" when time_unit is "minutes".
+    Note: Workato's API does not echo trigger_every back in GET responses when it
+    equals the platform default (5 for minutes), but the value is applied at runtime.
+    """
     return _step(
         number=0,
         provider="clock",
         name="scheduled_event",
         keyword="trigger",
-        input_cfg={"time_unit": "hours", "trigger_every": "1"},
-        label="Run on schedule",
+        input_cfg={"time_unit": time_unit, "trigger_every": str(trigger_every)},
+        label=label,
     )
 
 
@@ -239,18 +257,69 @@ def action_http_response(number, body_expr, status_code="200", label="Return res
     }, label=label)
 
 
-def action_if(number, operand, operator, value, true_block, label="If condition"):
-    """Workato IF condition action."""
-    return _step(number, "workato", "if_condition", "action", {
-        "operand": operand,
-        "operator": operator,
-        "value": value,
+def _control_step(number, keyword, input_cfg=None, block=None, label=None, as_alias=None):
+    """
+    Build a Workato built-in keyword step (if, else, each, rescue).
+    These must NOT have provider/name/as/dynamicPickListSelection — Workato will
+    reject or misrender them if those fields are present.
+    """
+    s = {
+        "number": number,
+        "keyword": keyword,
+        "uuid": new_uuid(),
+    }
+    if label:
+        s["title"] = label
+    if as_alias:
+        s["as"] = as_alias
+    if input_cfg:
+        s["input"] = input_cfg
+    if block is not None:
+        s["block"] = block
+    return s
+
+
+def action_if(number, lhs, operator, rhs, true_block, label="If condition"):
+    """
+    Workato IF keyword step.
+
+    Correct format: keyword="if" with compound conditions input.
+    DO NOT use keyword="action" + provider="workato" + name="if_condition" —
+    that renders as 'Select an app and action' in the Workato UI.
+
+    operator: one of equals, not_equals, greater_than, less_than, contains,
+              starts_with, is_empty, is_not_empty
+    """
+    cond = {"operand": operator, "lhs": lhs}
+    if operator not in ("is_empty", "is_not_empty"):
+        cond["rhs"] = rhs
+    return _control_step(number, "if", input_cfg={
+        "type": "compound",
+        "operand": "and",
+        "conditions": [cond],
     }, block=true_block, label=label)
 
 
-def action_else(number, block, label="Else"):
-    """Workato ELSE action (follows IF)."""
-    return _step(number, "workato", "else_condition", "action", {}, block=block, label=label)
+def action_if_multi(number, conditions, conjunction, true_block, label="If condition"):
+    """
+    Workato IF with multiple conditions (AND/OR).
+    conditions: list of {"operand": op, "lhs": lhs_pill, "rhs": rhs_value}
+    conjunction: "and" | "or"
+    """
+    return _control_step(number, "if", input_cfg={
+        "type": "compound",
+        "operand": conjunction,
+        "conditions": conditions,
+    }, block=true_block, label=label)
+
+
+def action_else(number, block, label=None):
+    """
+    Workato ELSE keyword step.
+    Must immediately follow an IF step at the same nesting level.
+    DO NOT use keyword="action" + name="else_condition".
+    """
+    return _control_step(number, "else", block=block, label=label)
 
 
 def action_note(number, message, label="Note"):
@@ -260,16 +329,47 @@ def action_note(number, message, label="Note"):
     }, label=f"[REVIEW REQUIRED] {label}")
 
 
-def action_repeat(number, source_list, block, label="Repeat for each"):
-    """Workato foreach/repeat action."""
-    return _step(number, "workato", "repeat", "action", {
-        "source": source_list or "[]",
-    }, block=block, label=label)
+def action_repeat(number, source_list, block, label="Repeat for each", as_alias="loop_item"):
+    """
+    Workato EACH keyword step (foreach loop).
+
+    Correct format: keyword="each" with input={"source": "<pill or array>"}.
+    DO NOT use keyword="action" + name="repeat" or name="repeat_for_each" —
+    that renders as 'Select an app and action' in the Workato UI.
+
+    source_list: a data pill string or literal array. If the source is a JSON
+    string pill (e.g. from a callable_recipe string field), append .parse_json:
+        "#{_dp('...').parse_json}"
+    as_alias: the loop variable name (default "loop_item").
+    """
+    return _control_step(number, "each", input_cfg={"source": source_list or "[]"},
+                         block=block, label=label, as_alias=as_alias)
 
 
-def action_monitor(number, block, label="Monitor"):
-    """Workato error-monitoring (try/catch) action."""
-    return _step(number, "workato", "monitor", "action", {}, block=block, label=label)
+def action_monitor(monitor_num, rescue_num, try_steps, catch_steps, label=None):
+    """
+    Build a Workato 'Handle errors' monitor+rescue block.
+
+    Pattern: monitor (outer try-body wrapper) contains all try_steps followed
+    by a rescue (nested catch block) that contains catch_steps.
+
+        monitor  ← labeled "Handle errors" in the UI
+          try_step_1
+          try_step_2
+          rescue  ← catch block (nested inside monitor)
+            catch_step_1
+
+    rescue_num MUST come from self.next_num() AFTER all try_steps and catch_steps
+    are built, so the counter is correct and there are no number collisions.
+    """
+    rescue = _control_step(rescue_num, "rescue", block=list(catch_steps), label=None)
+    return {
+        "number": monitor_num,
+        "keyword": "monitor",
+        "uuid": new_uuid(),
+        "title": label or "Handle errors",
+        "block": list(try_steps) + [rescue],
+    }
 
 
 def _parse_condition_text(condition_text):
@@ -338,7 +438,13 @@ class RecipeBuilder:
             method = t.get("http_method", "GET")
             path = t.get("rest_path") or t.get("path", "/endpoint")
             description = t.get("label", "")
-            return trigger_http(method, path, description)
+            # Build a flat input schema from the trigger's input field definitions.
+            # CRITICAL: Only scalar types (string/integer/number/boolean/date/datetime).
+            # type:"object" or type:"array" with of:"object" silently wipes the whole
+            # trigger input in Workato — flatten them before passing.
+            raw_fields = t.get("input_fields") or t.get("inputs") or []
+            input_schema = self._flatten_fields_to_scalar(raw_fields) if raw_fields else None
+            return trigger_http(method, path, description, input_schema=input_schema)
 
         if ttype in ("scheduler", "scheduled"):
             return trigger_scheduler()
@@ -346,21 +452,71 @@ class RecipeBuilder:
         self.notes.append(f"Trigger type '{ttype}' not automatically mapped — created placeholder")
         return trigger_http("GET", "/migrated-endpoint", f"Placeholder trigger for '{self.flow['name']}'")
 
-    def _build_steps(self):
-        """Build all top-level recipe steps."""
-        blocks = []
-        for step in self.flow.get("steps", []):
-            result = self._build_one_step(step)
-            blocks.extend(result)
+    def _flatten_fields_to_scalar(self, fields, prefix=""):
+        """
+        Recursively flatten a nested field list to only scalar Workato types.
+        type:"object" fields are exploded to prefix_fieldname_subfieldname.
+        type:"array" fields are converted to type:"string" (caller serializes as JSON).
+        Workato silently wipes trigger input if any non-scalar type appears.
+        """
+        scalar_types = {"string", "integer", "number", "boolean", "date", "datetime"}
+        result = []
+        for f in fields:
+            name = (prefix + f.get("name", "field")) if not prefix else f"{prefix}_{f.get('name', 'field')}"
+            ftype = f.get("type", "string")
+            sub_fields = f.get("properties") or f.get("fields") or []
+            if ftype == "object" and sub_fields:
+                result.extend(self._flatten_fields_to_scalar(sub_fields, prefix=name))
+            elif ftype == "array":
+                # Represent as a JSON string — caller parses with .parse_json pill
+                result.append({
+                    "name": name,
+                    "type": "string",
+                    "optional": f.get("optional", True),
+                    "label": f.get("label", name) + " (JSON string)",
+                })
+            elif ftype in scalar_types:
+                result.append({
+                    "name": name,
+                    "type": ftype,
+                    "optional": f.get("optional", True),
+                    "label": f.get("label", name),
+                })
+            else:
+                # Unknown type — default to string
+                result.append({
+                    "name": name,
+                    "type": "string",
+                    "optional": f.get("optional", True),
+                    "label": f.get("label", name),
+                })
+        return result
 
-        # If no response step was added for callable recipes, add a default 200 OK
-        if blocks and not any(s.get("name") == "callable_recipe_response" for s in blocks):
-            trigger_type = self.flow.get("trigger", {}).get("type", "")
-            if trigger_type == "http_listener":
-                blocks.append(action_http_response(
+    def _build_steps(self):
+        """
+        Build all top-level recipe steps wrapped in a Workato 'Handle errors' monitor block.
+        Structure: monitor { ...action steps..., rescue {} }
+        The rescue block is always present (empty by default — add handlers in the GUI).
+        """
+        # Reserve number 1 for the monitor wrapper before building inner steps
+        monitor_num = self.next_num()
+
+        inner = []
+        for step in self.flow.get("steps", []):
+            inner.extend(self._build_one_step(step))
+
+        # Add callable-recipe default response if none was generated
+        trigger_type = self.flow.get("trigger", {}).get("type", "")
+        if inner and trigger_type == "http_listener":
+            if not any(s.get("name") == "callable_recipe_response" for s in inner):
+                inner.append(action_http_response(
                     self.next_num(), '{"status": "ok"}', "200", "Return response"
                 ))
-        return blocks
+
+        # Wrap all steps in a top-level Handle Errors monitor block.
+        # Empty rescue catch block — add error-handling steps in the Workato GUI.
+        rescue_num = self.next_num()   # must come AFTER all inner steps are built
+        return [action_monitor(monitor_num, rescue_num, inner, [], label="Handle errors")]
 
     def _build_steps_list(self, steps):
         """Build steps from a nested list (true_steps, false_steps, loop_steps, etc.)."""
@@ -402,10 +558,17 @@ class RecipeBuilder:
                 loop_over = step.get("loop_over", step.get("collection", ""))
                 return [action_repeat(num, loop_over, loop_steps, label=label)]
 
-        # ── Try/Catch: monitor ────────────────────────────────────────────
+        # ── Try/Catch: monitor+rescue ────────────────────────────────────
         if stype in ("try_catch", "try_scope"):
-            monitored_steps = self._build_steps_list(step.get("monitored_steps", []))
-            return [action_monitor(num, monitored_steps, label=label)]
+            # Pattern: monitor (labeled "Handle errors") is the outer try-body wrapper;
+            # rescue is the nested catch block inside the monitor.
+            # spec can use {try_steps, catch_steps} or legacy {monitored_steps}.
+            try_steps_raw   = step.get("try_steps") or step.get("monitored_steps") or []
+            catch_steps_raw = step.get("catch_steps") or step.get("error_steps") or []
+            try_steps   = self._build_steps_list(try_steps_raw)
+            rescue_num  = self.next_num()   # after try_steps, before catch_steps
+            catch_steps = self._build_steps_list(catch_steps_raw)  # get nums > rescue_num
+            return [action_monitor(num, rescue_num, try_steps, catch_steps, label=label)]
 
         # ── Database ──────────────────────────────────────────────────────
         if stype == "db_select":
@@ -417,6 +580,37 @@ class RecipeBuilder:
         if stype == "db_delete":
             note = f"DB DELETE on table '{step.get('table')}' — implement as Workato delete_rows action"
             self.notes.append(note)
+            return [action_note(num, note, label=label)]
+
+        # ── Sequence (structural container) ──────────────────────────────
+        if stype == "sequence":
+            sub = step.get("steps") or step.get("loop_steps") or []
+            return self._build_steps_list(sub)
+
+        # ── Route / Switch (multi-way branch) ────────────────────────────
+        if stype == "route":
+            # Workato has no switch keyword — model as nested IF/ELSE chain.
+            paths = step.get("paths") or []
+            switch_var = step.get("switch_variable", "variable")
+            if not paths:
+                note = f"Empty route on '{switch_var}' — no paths to generate"
+                self.notes.append(note)
+                return [action_note(num, note, label=label)]
+            result = []
+            for j, path in enumerate(paths):
+                p_label = path.get("label") or path.get("condition") or f"path_{j+1}"
+                p_steps = self._build_steps_list(path.get("steps", []))
+                if j < len(paths) - 1:
+                    step_num = num if j == 0 else self.next_num()
+                    result.append(action_if(step_num, switch_var, "equals", p_label, p_steps,
+                                            label=f"If {switch_var} = {p_label}"))
+                else:
+                    result.append(action_else(self.next_num(), p_steps))
+            return result
+
+        # ── Exception / Exit ─────────────────────────────────────────────
+        if stype == "exception":
+            note = f"EXIT — implement as Workato 'Stop job' action"
             return [action_note(num, note, label=label)]
 
         # ── Response / Payload ────────────────────────────────────────────
@@ -568,13 +762,17 @@ class RecipeBuilder:
         return f"#{{trigger_input['{camel}'] || trigger_input['{param_name}']}}"
 
     def _build_config(self):
-        """Build the config list declaring which connectors are used."""
-        config = [{"keyword": "application", "name": "workato", "provider": "workato"}]
-        # Check if any step uses a DB connection
+        """
+        Build the config list declaring which external connectors are used.
+        Only external provider connections belong here — never "workato" itself.
+        """
+        config = []
         for step in self.flow.get("steps", []):
-            if step.get("type", "").startswith("db_"):
-                config.append({"keyword": "application", "name": "postgresql", "provider": "postgresql"})
-                break
+            step_type = step.get("type", "")
+            if step_type.startswith("db_"):
+                entry = {"keyword": "application", "name": "postgresql", "provider": "postgresql"}
+                if entry not in config:
+                    config.append(entry)
         return config
 
 

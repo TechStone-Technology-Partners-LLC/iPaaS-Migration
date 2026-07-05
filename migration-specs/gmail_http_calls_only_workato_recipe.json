@@ -1,0 +1,72 @@
+{
+  "name": "New email in Gmail will log message to Job report - HTTP Calls Only",
+  "description": "HTTP call steps only - all other steps stripped",
+  "version": 1,
+  "private": true,
+  "concurrency": 1,
+  "code": {
+    "number": 0,
+    "provider": "gmail",
+    "name": "new_email",
+    "as": "b63fc782",
+    "keyword": "trigger",
+    "dynamicPickListSelection": {
+      "label_ids": "1. Dev/BPO | ChatGPT"
+    },
+    "toggleCfg": {
+      "___poll_interval": false
+    },
+    "input": {
+      "___poll_interval": "5",
+      "label_ids": "Label_4073451729850302585"
+    },
+    "visible_config_fields": [
+      "label_ids",
+      "___poll_interval"
+    ],
+    "block": [
+      {
+        "number": 1,
+        "provider": "rest",
+        "name": "make_request_v2",
+        "as": "68d9174e",
+        "keyword": "action",
+        "dynamicPickListSelection": {},
+        "toggleCfg": {},
+        "input": {
+          "request_name": "Sentiment analysis"
+        },
+        "uuid": "51c93371-fdfa-421c-b456-439f5c0dba5a"
+      },
+      {
+        "number": 2,
+        "provider": "rest",
+        "name": "make_request_v2",
+        "as": "66e88bf5",
+        "keyword": "action",
+        "dynamicPickListSelection": {},
+        "toggleCfg": {},
+        "input": {
+          "request_name": "Text completion"
+        },
+        "uuid": "49c2201f-a841-44ef-9de8-9b49551b77bd"
+      }
+    ],
+    "uuid": "701886fe-d927-461f-8d1a-80cac8727b92",
+    "format_version": 2
+  },
+  "config": [
+    {
+      "keyword": "application",
+      "provider": "gmail",
+      "skip_validation": true,
+      "account_id": null
+    },
+    {
+      "keyword": "application",
+      "provider": "rest",
+      "skip_validation": true,
+      "account_id": null
+    }
+  ]
+}
