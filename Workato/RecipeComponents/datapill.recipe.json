@@ -1,0 +1,253 @@
+{
+  "name": "DataPill",
+  "description": "",
+  "version": 4,
+  "private": false,
+  "concurrency": 1,
+  "code": {
+    "number": 0,
+    "provider": "clock",
+    "name": "scheduled_event",
+    "as": "729263bb",
+    "keyword": "trigger",
+    "input": {
+      "time_unit": "minutes",
+      "trigger_every": "5"
+    },
+    "extended_input_schema": [
+      {
+        "control_type": "integer",
+        "default": "5",
+        "enforce_template_mode": true,
+        "extends_schema": true,
+        "hint": "Define repeating schedule. Enter whole numbers only.This field can be set to a minimum of 5 minutes.",
+        "label": "Trigger every",
+        "name": "trigger_every",
+        "optional": false,
+        "suffix": {
+          "text": "minutes"
+        },
+        "type": "string"
+      },
+      {
+        "control_type": "select",
+        "hint": "Select the timezone to use. Leave it blank to use <b>{{authUser.account_timezone}}</b>",
+        "label": "Timezone",
+        "name": "timezone",
+        "optional": true,
+        "pick_list": "timezone_id_global_pick_list",
+        "pick_list_connection_less": true,
+        "type": "string"
+      },
+      {
+        "control_type": "date_time",
+        "enforce_template_mode": true,
+        "extends_schema": true,
+        "hint": "Set date and time to start or leave blank to start immediately. <b>Once recipe has been run or tested, value cannot be changed.</b>",
+        "label": "Start after",
+        "name": "start_after",
+        "optional": true,
+        "parse_output": "date_time_conversion",
+        "since_field": true,
+        "type": "date_time",
+        "ignore_timezone": true,
+        "render_input": "date_time_conversion"
+      }
+    ],
+    "block": [
+      {
+        "number": 1,
+        "keyword": "try",
+        "input": {
+        },
+        "block": [
+          {
+            "number": 2,
+            "provider": "google_sheets",
+            "name": "get_spreadsheet_rows_v4",
+            "as": "0c2aa664",
+            "keyword": "action",
+            "dynamicPickListSelection": {
+              "spreadsheet": "Sample_Claude"
+            },
+            "input": {
+              "team_drives": "my_drive",
+              "spreadsheet": "1d1875U6UXi_amnzdsRq2vvNeLgwGJM9BM8UWgxrG8eE",
+              "sheet": "Sheet1",
+              "range": "0:5"
+            },
+            "extended_output_schema": [
+              {
+                "control_type": "text",
+                "label": "Spreadsheet ID",
+                "name": "spreadsheet_id",
+                "type": "string"
+              },
+              {
+                "control_type": "text",
+                "label": "Spreadsheet name",
+                "name": "spreadsheet_name",
+                "type": "string"
+              },
+              {
+                "control_type": "text",
+                "label": "Sheet name",
+                "name": "sheet",
+                "type": "string"
+              },
+              {
+                "label": "Rows",
+                "name": "rows",
+                "of": "object",
+                "properties": [
+                  {
+                    "control_type": "number",
+                    "label": "Row number",
+                    "parse_output": "integer_conversion",
+                    "type": "integer",
+                    "name": "row_number"
+                  },
+                  {
+                    "control_type": "text",
+                    "label": "To_Email",
+                    "old_name": "col_To_Email",
+                    "custom_attribute": 1,
+                    "type": "string",
+                    "name": "col_To_Email"
+                  },
+                  {
+                    "control_type": "text",
+                    "label": "Description",
+                    "old_name": "col_Description",
+                    "custom_attribute": 2,
+                    "type": "string",
+                    "name": "col_Description"
+                  }
+                ],
+                "type": "array"
+              }
+            ],
+            "extended_input_schema": [
+              {
+                "control_type": "select",
+                "extends_schema": true,
+                "hint": "Select a sheet to retrieve rows. The sheet must have at least one header row. <a href='https://docs.workato.com/connectors/google-sheets/action-add-row.html#setting-up-the-google-sheet' target='_blank'>Learn more</a>",
+                "label": "Sheet",
+                "name": "sheet",
+                "optional": false,
+                "pick_list": [
+                  [
+                    "Sheet1",
+                    "Sheet1"
+                  ]
+                ],
+                "toggle_field": {
+                  "control_type": "text",
+                  "label": "Sheet name",
+                  "toggle_hint": "Use sheet name",
+                  "extends_schema": true,
+                  "change_on_blur": true,
+                  "toggle_to_secondary_hint": "Use sheet name",
+                  "toggle_to_primary_hint": "Select a sheet",
+                  "hint": "Use <b>Sheet name</b> pill from the output of other Google Sheets’ triggers/actions. Or enter sheet name manually. The sheet must have at least 1 header row in input field.",
+                  "type": "string",
+                  "name": "sheet_name"
+                },
+                "toggle_hint": "Select a sheet",
+                "type": "string"
+              },
+              {
+                "control_type": "text",
+                "hint": "Provide range to retrieve rows from Sheet in the format <b>Start row:End row</b>. i.e. <b>2:2000</b> Note: Range should start from second row. Since first row is the header row.",
+                "label": "Range",
+                "name": "range",
+                "optional": true,
+                "sticky": true,
+                "type": "string"
+              }
+            ],
+            "uuid": "be9dd285-7075-4e47-8229-f78401383e17"
+          },
+          {
+            "number": 3,
+            "as": "c401fe46",
+            "keyword": "repeat",
+            "input": {
+            },
+            "block": [
+              {
+                "number": 4,
+                "provider": "logger",
+                "name": "log_message",
+                "as": "3ecdf873",
+                "keyword": "action",
+                "input": {
+                  "message": "Person - #{_dp('{\"pill_type\":\"output\",\"provider\":\"google_sheets\",\"line\":\"0c2aa664\",\"path\":[\"rows\",{\"path_element_type\":\"current_item\"},\"col_To_Email\"]}')}"
+                },
+                "uuid": "40d4e7e8-5ff9-4468-83f1-87d120994b16"
+              },
+              {
+                "number": 5,
+                "keyword": "while_condition",
+                "input": {
+                  "type": "compound",
+                  "operand": "and",
+                  "conditions": [
+                    {
+                      "operand": "present",
+                      "lhs": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"google_sheets\",\"line\":\"0c2aa664\",\"path\":[\"rows\",{\"path_element_type\":\"current_item\"},\"col_To_Email\"]}')}",
+                      "rhs": "",
+                      "uuid": "11bfbd10-4612-42d0-a2e7-0b017919a8d5"
+                    }
+                  ]
+                },
+                "uuid": "1e5897c6-d192-4d10-a786-8a92bc23a702"
+              }
+            ],
+            "uuid": "df9152d5-996b-4dab-8654-d7ee138960d6"
+          },
+          {
+            "number": 6,
+            "as": "aa6ba6c6",
+            "keyword": "catch",
+            "input": {
+              "max_retry_count": "0",
+              "retry_interval": "2"
+            },
+            "block": [
+
+            ],
+            "uuid": "bb555fc2-553e-4437-a080-5da19953c862"
+          }
+        ],
+        "uuid": "4eaa4e6f-559f-41d2-b698-b9b868d20fa0"
+      }
+    ],
+    "uuid": "cc2f1b0e-cb91-43c2-aaee-6a0ecc34237c",
+    "unfinished": false
+  },
+  "config": [
+    {
+      "keyword": "application",
+      "provider": "clock",
+      "skip_validation": false,
+      "account_id": null
+    },
+    {
+      "keyword": "application",
+      "provider": "google_sheets",
+      "skip_validation": false,
+      "account_id": {
+        "zip_name": "WebMethodsMigration/googlesheet_claude.connection.json",
+        "name": "GoogleSheet_Claude",
+        "folder": "WebMethodsMigration"
+      }
+    },
+    {
+      "keyword": "application",
+      "provider": "logger",
+      "skip_validation": false,
+      "account_id": null
+    }
+  ]
+}

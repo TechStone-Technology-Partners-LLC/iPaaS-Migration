@@ -1,0 +1,55 @@
+{
+  "name": "Error Handler",
+  "description": "",
+  "version": 2,
+  "private": false,
+  "concurrency": 1,
+  "code": {
+    "number": 0,
+    "provider": "clock",
+    "name": "scheduled_event",
+    "as": "37d2c076",
+    "keyword": "trigger",
+    "dynamicPickListSelection": {},
+    "toggleCfg": {},
+    "input": {
+      "time_unit": "minutes",
+      "trigger_every": "5"
+    },
+    "block": [
+      {
+        "number": 1,
+        "keyword": "try",
+        "dynamicPickListSelection": {},
+        "toggleCfg": {},
+        "input": {},
+        "block": [
+          {
+            "number": 2,
+            "as": "9150262a",
+            "keyword": "catch",
+            "dynamicPickListSelection": {},
+            "toggleCfg": {},
+            "input": {
+              "max_retry_count": "0",
+              "retry_interval": "2"
+            },
+            "block": [],
+            "uuid": "e33d5944-e1f8-4766-abde-430f3dad8721"
+          }
+        ],
+        "uuid": "0160d5a9-a044-4763-9bca-965ca6f43a95"
+      }
+    ],
+    "uuid": "09cea56c-6202-4c99-861b-532b390dd185",
+    "unfinished": false
+  },
+  "config": [
+    {
+      "keyword": "application",
+      "provider": "clock",
+      "skip_validation": false,
+      "account_id": null
+    }
+  ]
+}

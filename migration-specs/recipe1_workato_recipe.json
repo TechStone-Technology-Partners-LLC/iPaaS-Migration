@@ -1,0 +1,55 @@
+{
+  "name": "Recipe1",
+  "description": "",
+  "version": 2,
+  "private": false,
+  "concurrency": 1,
+  "code": {
+    "number": 0,
+    "provider": "clock",
+    "name": "scheduled_event",
+    "as": "3f0abf96",
+    "keyword": "trigger",
+    "dynamicPickListSelection": {},
+    "toggleCfg": {},
+    "input": {
+      "time_unit": "minutes",
+      "trigger_every": "5"
+    },
+    "block": [
+      {
+        "number": 1,
+        "keyword": "try",
+        "dynamicPickListSelection": {},
+        "toggleCfg": {},
+        "input": {},
+        "block": [
+          {
+            "number": 2,
+            "as": "67a123c3",
+            "keyword": "catch",
+            "dynamicPickListSelection": {},
+            "toggleCfg": {},
+            "input": {
+              "max_retry_count": "0",
+              "retry_interval": "2"
+            },
+            "block": [],
+            "uuid": "7040022a-23e9-4f7b-93ce-f95c39b64c3e"
+          }
+        ],
+        "uuid": "d7af1a06-ec26-44f7-b921-5badb551e329"
+      }
+    ],
+    "uuid": "5e54c3ad-41d1-474d-a7b4-73d09cf59186",
+    "unfinished": false
+  },
+  "config": [
+    {
+      "keyword": "application",
+      "provider": "clock",
+      "skip_validation": false,
+      "account_id": null
+    }
+  ]
+}

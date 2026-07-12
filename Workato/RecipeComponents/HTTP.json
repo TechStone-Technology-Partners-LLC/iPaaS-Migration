@@ -1,0 +1,352 @@
+{
+  "name": "New email in Gmail will log message to Job report - HTTP Calls Only",
+  "description": "HTTP call steps only - all other steps stripped",
+  "version": 1,
+  "private": true,
+  "concurrency": 1,
+  "code": {
+    "number": 0,
+    "provider": "gmail",
+    "name": "new_email",
+    "as": "b63fc782",
+    "keyword": "trigger",
+    "dynamicPickListSelection": {
+      "label_ids": "1. Dev/BPO | ChatGPT"
+    },
+    "toggleCfg": {
+      "___poll_interval": false
+    },
+    "input": {
+      "___poll_interval": "5",
+      "label_ids": "Label_4073451729850302585"
+    },
+    "visible_config_fields": [
+      "label_ids",
+      "___poll_interval"
+    ],
+    "block": [
+      {
+        "number": 1,
+        "provider": "rest",
+        "name": "make_request_v2",
+        "as": "68d9174e",
+        "keyword": "action",
+        "input": {
+          "request_name": "Sentiment analysis"
+        },
+        "extended_output_schema": [
+          {
+            "label": "Headers",
+            "name": "headers",
+            "properties": [],
+            "type": "object"
+          },
+          {
+            "label": "Response",
+            "name": "response",
+            "properties": [],
+            "type": "object"
+          }
+        ],
+        "extended_input_schema": [
+          {
+            "label": "Response",
+            "name": "response",
+            "override": true,
+            "properties": [
+              {
+                "control_type": "select",
+                "label": "Response content type",
+                "pick_list": [
+                  [
+                    "Text",
+                    "rawdatatxt"
+                  ],
+                  [
+                    "Binary",
+                    "rawdata"
+                  ],
+                  [
+                    "JSON",
+                    "json"
+                  ],
+                  [
+                    "XML",
+                    "xml2"
+                  ],
+                  [
+                    "Multipart",
+                    "multipart"
+                  ]
+                ],
+                "hint": "Select expected format of data response type, e.g. JSON or XML. <a href=\"https://docs.workato.com/developing-connectors/http.html#response-type\" target=\"_blank\">Learn more</a>",
+                "default": "json",
+                "extends_schema": true,
+                "type": "string",
+                "name": "output_type"
+              },
+              {
+                "control_type": "select",
+                "label": "Encoding",
+                "pick_list": "supported_encodings_without_binary_global_pick_list",
+                "pick_list_connection_less": true,
+                "optional": true,
+                "default": "UTF-8",
+                "hint": "Default encoding type is set to UTF-8, and typically doesn't need to be changed. <a href=\"https://docs.workato.com/developing-connectors/http.html#response-type\" target=\"_blank\">Learn more</a>",
+                "type": "string",
+                "name": "expected_encoding"
+              },
+              {
+                "control_type": "schema-designer",
+                "label": "HTTP response headers",
+                "extends_schema": true,
+                "empty_schema_title": "Describe all the response headers",
+                "optional": true,
+                "sticky": true,
+                "type": "string",
+                "name": "headers_schema"
+              },
+              {
+                "control_type": "schema-designer",
+                "label": "Multipart part headers",
+                "extends_schema": true,
+                "empty_schema_title": "Describe headers within each multipart part",
+                "optional": true,
+                "sticky": true,
+                "hint": "Define the headers that appear in each part of the multipart response (e.g., Content-Type, Content-ID)",
+                "ngIf": "input.response.output_type == 'multipart'",
+                "type": "string",
+                "name": "part_headers_schema"
+              },
+              {
+                "control_type": "checkbox",
+                "label": "Mark non-2xx response codes as success?",
+                "default": "false",
+                "hint": "If <b>yes</b>, non 2xx response codes returned will be marked as a successful action. If <b>no</b>, non 2xx response codes returned will be marked as an error.",
+                "optional": true,
+                "toggle_hint": "Select from option list",
+                "toggle_field": {
+                  "label": "Mark non-2xx response codes as success?",
+                  "control_type": "text",
+                  "toggle_hint": "Use custom value",
+                  "default": false,
+                  "hint": "If <b>yes</b>, non 2xx response codes returned will be marked as a successful action. If <b>no</b>, non 2xx response codes returned will be marked as an error.",
+                  "optional": true,
+                  "render_input": null,
+                  "parse_output": null,
+                  "type": "boolean",
+                  "name": "ignore_http_errors"
+                },
+                "type": "boolean",
+                "name": "ignore_http_errors"
+              }
+            ],
+            "type": "object"
+          }
+        ],
+        "requirements": {
+          "extended_input_schema": [],
+          "extended_output_schema": [
+            {
+              "label": "Response",
+              "name": "response",
+              "properties": [
+                {
+                  "name": "choices",
+                  "type": "array",
+                  "of": "object",
+                  "label": "Choices",
+                  "properties": [
+                    {
+                      "control_type": "text",
+                      "label": "Text",
+                      "type": "string",
+                      "name": "text"
+                    }
+                  ]
+                }
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        "uuid": "51c93371-fdfa-421c-b456-439f5c0dba5a",
+        "wizardFinished": true,
+        "skip": false
+      },
+      {
+        "number": 2,
+        "provider": "rest",
+        "name": "make_request_v2",
+        "as": "66e88bf5",
+        "keyword": "action",
+        "input": {
+          "request_name": "Text completion"
+        },
+        "extended_output_schema": [
+          {
+            "label": "Headers",
+            "name": "headers",
+            "properties": [],
+            "type": "object"
+          },
+          {
+            "label": "Response",
+            "name": "response",
+            "properties": [],
+            "type": "object"
+          }
+        ],
+        "extended_input_schema": [
+          {
+            "label": "Response",
+            "name": "response",
+            "override": true,
+            "properties": [
+              {
+                "control_type": "select",
+                "label": "Response content type",
+                "pick_list": [
+                  [
+                    "Text",
+                    "rawdatatxt"
+                  ],
+                  [
+                    "Binary",
+                    "rawdata"
+                  ],
+                  [
+                    "JSON",
+                    "json"
+                  ],
+                  [
+                    "XML",
+                    "xml2"
+                  ],
+                  [
+                    "Multipart",
+                    "multipart"
+                  ]
+                ],
+                "hint": "Select expected format of data response type, e.g. JSON or XML. <a href=\"https://docs.workato.com/developing-connectors/http.html#response-type\" target=\"_blank\">Learn more</a>",
+                "default": "json",
+                "extends_schema": true,
+                "type": "string",
+                "name": "output_type"
+              },
+              {
+                "control_type": "select",
+                "label": "Encoding",
+                "pick_list": "supported_encodings_without_binary_global_pick_list",
+                "pick_list_connection_less": true,
+                "optional": true,
+                "default": "UTF-8",
+                "hint": "Default encoding type is set to UTF-8, and typically doesn't need to be changed. <a href=\"https://docs.workato.com/developing-connectors/http.html#response-type\" target=\"_blank\">Learn more</a>",
+                "type": "string",
+                "name": "expected_encoding"
+              },
+              {
+                "control_type": "schema-designer",
+                "label": "HTTP response headers",
+                "extends_schema": true,
+                "empty_schema_title": "Describe all the response headers",
+                "optional": true,
+                "sticky": true,
+                "type": "string",
+                "name": "headers_schema"
+              },
+              {
+                "control_type": "schema-designer",
+                "label": "Multipart part headers",
+                "extends_schema": true,
+                "empty_schema_title": "Describe headers within each multipart part",
+                "optional": true,
+                "sticky": true,
+                "hint": "Define the headers that appear in each part of the multipart response (e.g., Content-Type, Content-ID)",
+                "ngIf": "input.response.output_type == 'multipart'",
+                "type": "string",
+                "name": "part_headers_schema"
+              },
+              {
+                "control_type": "checkbox",
+                "label": "Mark non-2xx response codes as success?",
+                "default": "false",
+                "hint": "If <b>yes</b>, non 2xx response codes returned will be marked as a successful action. If <b>no</b>, non 2xx response codes returned will be marked as an error.",
+                "optional": true,
+                "toggle_hint": "Select from option list",
+                "toggle_field": {
+                  "label": "Mark non-2xx response codes as success?",
+                  "control_type": "text",
+                  "toggle_hint": "Use custom value",
+                  "default": false,
+                  "hint": "If <b>yes</b>, non 2xx response codes returned will be marked as a successful action. If <b>no</b>, non 2xx response codes returned will be marked as an error.",
+                  "optional": true,
+                  "render_input": null,
+                  "parse_output": null,
+                  "type": "boolean",
+                  "name": "ignore_http_errors"
+                },
+                "type": "boolean",
+                "name": "ignore_http_errors"
+              }
+            ],
+            "type": "object"
+          }
+        ],
+        "requirements": {
+          "extended_input_schema": [],
+          "extended_output_schema": [
+            {
+              "label": "Response",
+              "name": "response",
+              "properties": [
+                {
+                  "name": "choices",
+                  "type": "array",
+                  "of": "object",
+                  "label": "Choices",
+                  "properties": [
+                    {
+                      "control_type": "text",
+                      "label": "Text",
+                      "type": "string",
+                      "name": "text"
+                    }
+                  ]
+                }
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        "uuid": "49c2201f-a841-44ef-9de8-9b49551b77bd",
+        "wizardFinished": true,
+        "skip": false
+      }
+    ],
+    "uuid": "701886fe-d927-461f-8d1a-80cac8727b92",
+    "format_version": 2
+  },
+  "config": [
+    {
+      "keyword": "application",
+      "provider": "gmail",
+      "account_id": {
+        "zip_name": "WebMethodsMigration/gmail_claude.connection.json",
+        "name": "Gmail_Claude",
+        "folder": "WebMethodsMigration"
+      },
+      "skip_validation": false
+    },
+    {
+      "keyword": "application",
+      "provider": "rest",
+      "account_id": {
+        "zip_name": "WebMethodsMigration/claude_http.connection.json",
+        "name": "Claude HTTP",
+        "folder": "WebMethodsMigration"
+      },
+      "skip_validation": false
+    }
+  ]
+}

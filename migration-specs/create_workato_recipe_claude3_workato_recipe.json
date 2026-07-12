@@ -1,0 +1,121 @@
+{
+  "name": "Copy of Create Workato Recipe From Claude 3",
+  "version": 1,
+  "private": true,
+  "concurrency": 1,
+  "code": {
+    "number": 0,
+    "provider": "clock",
+    "name": "scheduled_event",
+    "as": "scheduled_event",
+    "keyword": "trigger",
+    "dynamicPickListSelection": {},
+    "toggleCfg": {},
+    "input": {
+      "time_unit": "minutes",
+      "trigger_every": "5"
+    },
+    "block": [
+      {
+        "number": 1,
+        "keyword": "if",
+        "dynamicPickListSelection": {},
+        "toggleCfg": {},
+        "input": {
+          "type": "compound",
+          "operand": "and",
+          "conditions": [
+            {
+              "operand": "present",
+              "lhs": "true",
+              "rhs": "",
+              "uuid": "a1b2c3d4-0000-0000-0000-000000000001"
+            }
+          ]
+        },
+        "block": [
+          {
+            "number": 2,
+            "provider": "google_sheets",
+            "name": "get_spreadsheet_rows_v4",
+            "as": "a1step1g",
+            "keyword": "action",
+            "dynamicPickListSelection": {
+              "spreadsheet": "Sample_Claude"
+            },
+            "toggleCfg": {},
+            "input": {
+              "team_drives": "my_drive",
+              "spreadsheet": "1d1875U6UXi_amnzdsRq2vvNeLgwGJM9BM8UWgxrG8eE",
+              "sheet": "Sheet1",
+              "range": "2:5"
+            },
+            "uuid": "f3a47a27-201f-40b0-8a70-f8dd21a9ee4d"
+          },
+          {
+            "number": 3,
+            "provider": "workato_variable",
+            "name": "declare_list",
+            "as": "b2step2v",
+            "keyword": "action",
+            "dynamicPickListSelection": {},
+            "toggleCfg": {},
+            "input": {
+              "name": "Transform1",
+              "list_item_schema_json": "[{\"name\": \"email\", \"type\": \"string\", \"optional\": false, \"control_type\": \"text\", \"label\": \"Email\"}, {\"name\": \"description\", \"type\": \"string\", \"optional\": false, \"control_type\": \"text\", \"label\": \"Description\"}]",
+              "list_items": {
+                "____source": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"google_sheets\",\"line\":\"a1step1g\",\"path\":[\"rows\"]}')}",
+                "email": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"google_sheets\",\"line\":\"a1step1g\",\"path\":[\"rows\", {\"path_element_type\": \"current_item\"}, \"col_To_Email\"]}')}",
+                "description": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"google_sheets\",\"line\":\"a1step1g\",\"path\":[\"rows\", {\"path_element_type\": \"current_item\"}, \"col_Description\"]}')}"
+              }
+            },
+            "uuid": "d42927df-d2c4-4973-bdaa-5ca50c530064"
+          },
+          {
+            "number": 4,
+            "provider": "workato_variable",
+            "name": "insert_to_list_batch",
+            "as": "c3step3i",
+            "keyword": "action",
+            "dynamicPickListSelection": {
+              "name": "Transform1 (step 3)"
+            },
+            "toggleCfg": {},
+            "input": {
+              "location": "end",
+              "name": "d42927df-d2c4-4973-bdaa-5ca50c530064:b2step2v",
+              "list_items": {
+                "____source": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"workato_variable\",\"line\":\"b2step2v\",\"path\":[\"list_items\"]}')}",
+                "email": "vikas@techstonellc.com",
+                "description": "Claude Test"
+              }
+            },
+            "uuid": "c3926575-2b8f-4910-a65d-96294adeaf34"
+          }
+        ],
+        "uuid": "ecb36d54-5e2c-49ec-b695-0b2c3f01cda2"
+      }
+    ],
+    "uuid": "3828c385-2c41-45fe-9e4e-0647d7da02b6"
+  },
+  "config": [
+    {
+      "keyword": "application",
+      "provider": "google_sheets",
+      "account_id": 19682603,
+      "skip_validation": false
+    },
+    {
+      "keyword": "application",
+      "provider": "workato_variable",
+      "account_id": null,
+      "skip_validation": false
+    },
+    {
+      "keyword": "application",
+      "provider": "clock",
+      "account_id": null,
+      "skip_validation": false
+    }
+  ]
+}

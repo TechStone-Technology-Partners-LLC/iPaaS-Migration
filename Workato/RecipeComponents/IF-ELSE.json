@@ -1,0 +1,106 @@
+{
+  "name": "Employees Legacy Schedule - Framework",
+  "version": 1,
+  "private": true,
+  "concurrency": 1,
+  "code": {
+    "number": 0,
+    "provider": "workato_recipe_function",
+    "name": "execute",
+    "as": "bc6e47ab",
+    "keyword": "trigger",
+    "input": {
+      "parameters_schema_json": "[{\"name\":\"employee_ftp_file_path\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\",\"label\":\"Employee FTP File path\",\"hint\":\"full file path to create employees file on SFTP for Legacy Schedule\"},{\"name\":\"last_page\",\"type\":\"boolean\",\"optional\":false,\"label\":\"Last page\",\"hint\":\"pass in boolean to indicate if sending last page of data\",\"control_type\":\"checkbox\",\"render_input\":\"boolean_conversion\",\"parse_output\":\"boolean_conversion\",\"toggle_hint\":\"Select from option list\",\"toggle_field\":{\"label\":\"Last page\",\"control_type\":\"text\",\"toggle_hint\":\"Use custom value\",\"name\":\"last_page\",\"type\":\"boolean\",\"optional\":false,\"hint\":\"pass in boolean to indicate if sending last page of data\"}},{\"name\":\"employees\",\"type\":\"array\",\"optional\":false,\"properties\":[{\"name\":\"employee_id\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\",\"label\":\"Employee ID\"},{\"name\":\"first_name\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\",\"label\":\"First name\"},{\"name\":\"last_name\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\",\"label\":\"Last name\"},{\"name\":\"title\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\",\"label\":\"Title\"},{\"name\":\"employee_pay_type\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\",\"label\":\"Employee pay type\"},{\"name\":\"primary_role_expiration\",\"type\":\"string\",\"optional\":true,\"control_type\":\"text\",\"label\":\"Primary role expiration\"},{\"name\":\"remaining_pto_hours\",\"type\":\"string\",\"optional\":true,\"control_type\":\"text\",\"label\":\"Remaining pto hours\"},{\"name\":\"employment_capacity\",\"type\":\"string\",\"optional\":true,\"control_type\":\"text\",\"label\":\"Employment capacity\"},{\"name\":\"employment_overtime_rule\",\"type\":\"string\",\"optional\":true,\"control_type\":\"text\",\"label\":\"Employment overtime rule\"},{\"name\":\"employment_status\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\",\"label\":\"Employment status\"},{\"name\":\"wage\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\",\"label\":\"Wage\"},{\"name\":\"preferred_send_method\",\"type\":\"string\",\"optional\":true,\"control_type\":\"text\",\"label\":\"Preferred send method\"},{\"name\":\"home_number\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\",\"label\":\"Home number\"},{\"name\":\"mobile_number\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\",\"label\":\"Mobile number\"},{\"name\":\"email\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\",\"label\":\"Email\"},{\"name\":\"job_code\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\",\"label\":\"Job code\"},{\"name\":\"facility_id\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\",\"label\":\"Facility ID\"},{\"name\":\"termination_date\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\",\"label\":\"Termination date\"},{\"name\":\"hire_date\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\",\"label\":\"Hire date\"}],\"of\":\"object\",\"label\":\"Employees\"}]"
+    },
+    "block": [
+      {
+        "number": 1,
+        "keyword": "if",
+        "input": {
+          "type": "compound",
+          "operand": "and",
+          "conditions": [
+            {
+              "operand": "greater_than",
+              "lhs": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"workato_recipe_function\",\"line\":\"bc6e47ab\",\"path\":[\"parameters\",\"employees\",{\"path_element_type\":\"size\"}]}')}",
+              "rhs": "0",
+              "uuid": "e911e659-9ab8-4cd6-bd69-7cc9a1aa1de3"
+            }
+          ]
+        },
+        "block": [
+          {
+            "number": 2,
+            "keyword": "if",
+            "input": {
+              "type": "compound",
+              "operand": "and",
+              "conditions": [
+                {
+                  "operand": "present",
+                  "lhs": "",
+                  "rhs": "",
+                  "uuid": "5889342e-fb17-40af-90b2-8b5ee373296e"
+                }
+              ]
+            },
+            "block": [
+              {
+                "number": 3,
+                "keyword": "elsif",
+                "input": {
+                  "type": "compound",
+                  "operand": "and",
+                  "conditions": [
+                    {
+                      "operand": "present",
+                      "lhs": "",
+                      "rhs": "",
+                      "uuid": "701cc7b0-058f-4463-a6bb-c301f91f2f2b"
+                    }
+                  ]
+                },
+                "block": [
+                ],
+                "comment": "If temp file name exists, then append",
+                "uuid": "91e3f8f8-bad6-49e7-93db-b154511b7df6"
+              }
+            ],
+            "comment": "If end file name exists, delete it",
+            "uuid": "4c86ca81-eed1-4703-b7ec-caffd423e1b4"
+          },
+          {
+            "number": 4,
+            "keyword": "if",
+            "input": {
+              "type": "compound",
+              "operand": "and",
+              "conditions": [
+                {
+                  "operand": "is_true",
+                  "lhs": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"workato_recipe_function\",\"line\":\"bc6e47ab\",\"path\":[\"parameters\",\"last_page\"]}')}",
+                  "rhs": "",
+                  "uuid": "1784327a-59c5-4a52-9ca4-49319ba64079"
+                }
+              ]
+            },
+            "block": [
+            ],
+            "uuid": "e1bfe7e7-c321-4a45-a7c5-856ac2d118a4"
+          }
+        ],
+        "uuid": "e2f02cc6-de56-4416-8d42-72d5ec773cf0"
+      }
+    ],
+    "uuid": "0cdb67a8-79f1-4d89-9ecc-cbe0ac58528d",
+    "unfinished": false
+  },
+  "config": [
+    {
+      "keyword": "application",
+      "provider": "workato_recipe_function",
+      "skip_validation": false,
+      "account_id": null
+    }
+  ]
+}
