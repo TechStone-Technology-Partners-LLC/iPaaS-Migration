@@ -1,0 +1,62 @@
+{
+  "name": "Workato Service - Callable Recipe Trigger",
+  "description": "workato_service/receive_request trigger — makes a recipe callable from other recipes or via API. Define request_schema_json and reply_schema_json to set the input/output contract.",
+  "version": 1,
+  "private": true,
+  "concurrency": 1,
+  "code": {
+    "number": 0,
+    "provider": "workato_service",
+    "name": "receive_request",
+    "as": "10aff7cc",
+    "keyword": "trigger",
+    "input": {
+      "service_name": "My Callable Service",
+      "request_schema_json": "[{\"name\":\"product\",\"type\":\"array\",\"optional\":false,\"properties\":[{\"name\":\"product_name\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\"},{\"name\":\"quantity\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\"}]}]",
+      "reply_schema_json": "[{\"name\":\"valid\",\"type\":\"boolean\",\"optional\":false}]"
+    },
+    "extended_output_schema": [
+      {
+        "label": "Recipe input",
+        "name": "request",
+        "properties": [
+          {
+            "label": "Product",
+            "name": "product",
+            "type": "array",
+            "optional": false,
+            "of": "object",
+            "properties": [
+              {
+                "control_type": "text",
+                "label": "Product name",
+                "name": "product_name",
+                "type": "string",
+                "optional": false
+              },
+              {
+                "control_type": "text",
+                "label": "Quantity",
+                "name": "quantity",
+                "type": "string",
+                "optional": false
+              }
+            ]
+          }
+        ],
+        "type": "object"
+      }
+    ],
+    "parameters_schema": "",
+    "block": [],
+    "uuid": "cf09e554-c762-4cee-9b61-31fb1f22d1f5"
+  },
+  "config": [
+    {
+      "keyword": "application",
+      "provider": "workato_service",
+      "skip_validation": false,
+      "account_id": null
+    }
+  ]
+}

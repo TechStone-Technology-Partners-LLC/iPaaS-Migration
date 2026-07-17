@@ -1,0 +1,125 @@
+{
+  "name": "Workato Service - Send Reply",
+  "description": "workato_service/send_reply action — two variants: success reply (reply_type=success) and error reply (reply_type=error). Used in callable recipes to return responses to the caller.",
+  "version": 1,
+  "private": true,
+  "concurrency": 1,
+  "code": {
+    "number": 0,
+    "provider": "workato_service",
+    "name": "receive_request",
+    "as": "10aff7cc",
+    "keyword": "trigger",
+    "input": {
+      "service_name": "Send Reply Example",
+      "request_schema_json": "[]",
+      "reply_schema_json": "[{\"name\":\"valid\",\"type\":\"boolean\",\"optional\":false}]"
+    },
+    "block": [
+      {
+        "number": 1,
+        "provider": "workato_service",
+        "name": "send_reply",
+        "as": "0635df87",
+        "keyword": "action",
+        "dynamicPickListSelection": {},
+        "toggleCfg": {
+          "reply.valid": true
+        },
+        "input": {
+          "reply_type": "success",
+          "reply": {
+            "valid": "true"
+          }
+        },
+        "extended_input_schema": [
+          {
+            "label": "Reply",
+            "name": "reply",
+            "properties": [
+              {
+                "control_type": "checkbox",
+                "label": "Valid",
+                "render_input": "boolean_conversion",
+                "parse_output": "boolean_conversion",
+                "name": "valid",
+                "type": "boolean",
+                "optional": false,
+                "toggle_hint": "Select from option list",
+                "toggle_field": {
+                  "label": "Valid",
+                  "control_type": "text",
+                  "toggle_hint": "Use custom value",
+                  "name": "valid",
+                  "type": "boolean",
+                  "optional": false
+                }
+              }
+            ],
+            "type": "object"
+          }
+        ],
+        "uuid": "1efd01d2-7ab8-47d0-98c2-09ad4f1f9d27"
+      },
+      {
+        "number": 2,
+        "provider": "workato_service",
+        "name": "send_reply",
+        "as": "f0c97a7a",
+        "keyword": "action",
+        "dynamicPickListSelection": {},
+        "toggleCfg": {},
+        "input": {
+          "reply_type": "error",
+          "message": "Error message — replace with pill or literal string"
+        },
+        "extended_input_schema": [
+          {
+            "control_type": "text",
+            "hint": "Error message",
+            "label": "Message",
+            "name": "message",
+            "type": "string"
+          },
+          {
+            "control_type": "text",
+            "hint": "Use this field to set custom HTTP error code. E.g: 404/422 etc.",
+            "label": "Error code",
+            "name": "code",
+            "optional": true,
+            "type": "string"
+          },
+          {
+            "control_type": "checkbox",
+            "hint": "When set to Yes, the content of the Message field is sent as response body.",
+            "label": "Custom error response?",
+            "name": "custom_error_response",
+            "optional": true,
+            "toggle_field": {
+              "label": "Custom error response?",
+              "control_type": "text",
+              "toggle_hint": "Use custom value",
+              "optional": true,
+              "render_input": null,
+              "parse_output": null,
+              "type": "boolean",
+              "name": "custom_error_response"
+            },
+            "toggle_hint": "Select from option list",
+            "type": "boolean"
+          }
+        ],
+        "uuid": "8bdaabad-8a26-4aad-a765-8b00241b2b51"
+      }
+    ],
+    "uuid": "cf09e554-c762-4cee-9b61-31fb1f22d1f5"
+  },
+  "config": [
+    {
+      "keyword": "application",
+      "provider": "workato_service",
+      "skip_validation": false,
+      "account_id": null
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "name": "Gmail - Send Mail",
+  "description": "gmail/send_mail action — sends an email via a connected Gmail account. Distinct from the generic 'email' provider. Requires Gmail connection (OAuth). Supports text or HTML email_type. Typically used in catch blocks to notify on errors.",
+  "version": 1,
+  "private": true,
+  "concurrency": 1,
+  "code": {
+    "number": 0,
+    "provider": "clock",
+    "name": "scheduled_event",
+    "as": "clock_trigger",
+    "keyword": "trigger",
+    "input": {
+      "time_unit": "minutes",
+      "trigger_every": "5"
+    },
+    "block": [
+      {
+        "number": 1,
+        "keyword": "try",
+        "input": {},
+        "block": [
+          {
+            "number": 2,
+            "provider": "gmail",
+            "name": "send_mail",
+            "as": "78932129",
+            "keyword": "action",
+            "input": {
+              "email_type": "text",
+              "to": "recipient@example.com",
+              "subject": "Error notification",
+              "body": "An error occurred in the recipe."
+            },
+            "uuid": "79116449-290e-4f69-a030-6adee7fcc347"
+          },
+          {
+            "number": 3,
+            "as": "catch_as",
+            "keyword": "catch",
+            "dynamicPickListSelection": {},
+            "toggleCfg": {},
+            "input": { "max_retry_count": "0", "retry_interval": "2" },
+            "block": [],
+            "uuid": "catch-uuid"
+          }
+        ],
+        "uuid": "try-uuid"
+      }
+    ],
+    "uuid": "root-uuid",
+    "unfinished": false
+  },
+  "config": [
+    {
+      "keyword": "application",
+      "provider": "clock",
+      "skip_validation": false,
+      "account_id": null
+    },
+    {
+      "keyword": "application",
+      "provider": "gmail",
+      "skip_validation": false,
+      "account_id": {
+        "zip_name": "gmail_claude.connection.json",
+        "name": "Gmail_Claude",
+        "folder": ""
+      }
+    }
+  ],
+  "_notes": {
+    "provider_distinction": "Use provider:'gmail' for Gmail-specific OAuth connector. Use provider:'email' for Workato's generic SMTP email action (different connector, different credentials).",
+    "email_type": "'text' for plain text, 'html' for HTML body — controls how the body string is rendered",
+    "catch_pattern": "Commonly placed inside a catch block to send error alerts. Wire body to the catch error message pill: #{_dp('{\"pill_type\":\"output\",\"provider\":\"catch\",\"line\":\"CATCH_AS\",\"path\":[\"message\"]}')}"
+  }
+}

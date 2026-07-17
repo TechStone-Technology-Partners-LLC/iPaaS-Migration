@@ -1,0 +1,137 @@
+{
+  "name": "Lookup Table - Add Entry",
+  "description": "lookup_table/add_entry action — inserts a new row into a Workato Lookup Table. No external connection needed (provider: lookup_table, account_id: null). Table referenced by zip_name or live ID. Column names match the table schema (col1, col2, etc.).",
+  "version": 1,
+  "private": true,
+  "concurrency": 1,
+  "code": {
+    "number": 0,
+    "provider": "clock",
+    "name": "scheduled_event",
+    "as": "clock_trigger",
+    "keyword": "trigger",
+    "input": {
+      "time_unit": "minutes",
+      "trigger_every": "5"
+    },
+    "block": [
+      {
+        "number": 1,
+        "keyword": "try",
+        "input": {},
+        "block": [
+          {
+            "number": 2,
+            "provider": "lookup_table",
+            "name": "add_entry",
+            "as": "a22be479",
+            "keyword": "action",
+            "dynamicPickListSelection": {
+              "lookup_table_id": "Opportunity"
+            },
+            "input": {
+              "lookup_table_id": {
+                "zip_name": "opportunity.lookup_table.json",
+                "name": "Opportunity",
+                "folder": ""
+              },
+              "parameters": {
+                "col1": "Value for Name column",
+                "col2": "Value for Amount column"
+              }
+            },
+            "extended_output_schema": [
+              {
+                "control_type": "number",
+                "label": "Entry ID",
+                "name": "id",
+                "parse_output": "integer_conversion",
+                "type": "integer"
+              },
+              {
+                "label": "Entry",
+                "name": "entry",
+                "properties": [
+                  {
+                    "control_type": "text",
+                    "label": "Name",
+                    "name": "col1",
+                    "type": "string",
+                    "sticky": true
+                  },
+                  {
+                    "control_type": "text",
+                    "label": "Amount",
+                    "name": "col2",
+                    "type": "string",
+                    "sticky": true
+                  }
+                ],
+                "type": "object"
+              }
+            ],
+            "extended_input_schema": [
+              {
+                "hint": "Fill the fields for the new entry",
+                "label": "Entry fields",
+                "name": "parameters",
+                "properties": [
+                  {
+                    "control_type": "text",
+                    "label": "Name",
+                    "name": "col1",
+                    "type": "string",
+                    "sticky": true,
+                    "optional": true
+                  },
+                  {
+                    "control_type": "text",
+                    "label": "Amount",
+                    "name": "col2",
+                    "type": "string",
+                    "sticky": true,
+                    "optional": true
+                  }
+                ],
+                "type": "object"
+              }
+            ],
+            "uuid": "bf1b54b3-5fda-4dd1-b230-bb5d337bb852"
+          },
+          {
+            "number": 3,
+            "as": "catch_as",
+            "keyword": "catch",
+            "dynamicPickListSelection": {},
+            "toggleCfg": {},
+            "input": { "max_retry_count": "0", "retry_interval": "2" },
+            "block": [],
+            "uuid": "catch-uuid"
+          }
+        ],
+        "uuid": "try-uuid"
+      }
+    ],
+    "uuid": "root-uuid",
+    "unfinished": false
+  },
+  "config": [
+    {
+      "keyword": "application",
+      "provider": "clock",
+      "skip_validation": false,
+      "account_id": null
+    },
+    {
+      "keyword": "application",
+      "provider": "lookup_table",
+      "skip_validation": false,
+      "account_id": null
+    }
+  ],
+  "_notes": {
+    "lookup_table_id": "Can be a zip_name reference (for recipe export) or a live integer ID (for API push). Use null account_id — lookup_table has no external connection.",
+    "output_pills": "id → entry's auto-generated row ID; entry.col1, entry.col2 → column values after insert",
+    "foreach_pill_col1": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"foreach\",\"line\":\"bd72407f\",\"path\":[\"Name\"]}')}"
+  }
+}

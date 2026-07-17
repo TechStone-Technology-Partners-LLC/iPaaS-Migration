@@ -1,0 +1,245 @@
+{
+  "name": "4. [Callable] Check if product is available in Oracle [ERP] ",
+  "description": "When there is a trigger event, do action",
+  "version": 4,
+  "private": true,
+  "concurrency": 1,
+  "code": {
+    "number": 0,
+    "provider": "workato_service",
+    "name": "receive_request",
+    "as": "10aff7cc",
+    "keyword": "trigger",
+    "input": {
+      "service_name": "Check if product is available in Oracle ERP",
+      "request_schema_json": "[{\"name\":\"product\",\"type\":\"array\",\"optional\":false,\"properties\":[{\"name\":\"product_name\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\"},{\"name\":\"quantity\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\"}]}]",
+      "reply_schema_json": "[{\"name\":\"valid\",\"type\":\"boolean\",\"optional\":false}]"
+    },
+    "extended_output_schema": [
+      {
+        "label": "Recipe input",
+        "name": "request",
+        "properties": [
+          {
+            "label": "Product",
+            "name": "product",
+            "type": "array",
+            "optional": false,
+            "of": "object",
+            "properties": [
+              {
+                "control_type": "text",
+                "label": "Product name",
+                "name": "product_name",
+                "type": "string",
+                "optional": false
+              },
+              {
+                "control_type": "text",
+                "label": "Quantity",
+                "name": "quantity",
+                "type": "string",
+                "optional": false
+              }
+            ]
+          }
+        ],
+        "type": "object"
+      }
+    ],
+    "parameters_schema": "",
+    "block": [
+      {
+        "number": 1,
+        "keyword": "try",
+        "input": {
+        },
+        "block": [
+          {
+            "number": 2,
+            "provider": "oracle",
+            "name": "search_rows",
+            "as": "12526159",
+            "keyword": "action",
+            "dynamicPickListSelection": {
+              "table": "ROOT.INVENTORY"
+            },
+            "toggleCfg": {
+              "table": true
+            },
+            "input": {
+              "limit": "100",
+              "offset": "0",
+              "table": "ROOT.INVENTORY",
+              "where": "=\"PRODUCT_NAME = '\"+_dp('{\"pill_type\":\"output\",\"provider\":\"workato_service\",\"line\":\"10aff7cc\",\"path\":[\"request\",\"product\"]}').pluck('product_name').join(\"' or PRODUCT_NAME = '\") + \"'\""
+            },
+            "uuid": "782a2ca5-ab97-4a24-a047-70ed69641af2"
+          },
+          {
+            "number": 3,
+            "keyword": "if",
+            "input": {
+              "type": "compound",
+              "operand": "and",
+              "conditions": [
+                {
+                  "operand": "equals_to",
+                  "lhs": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"oracle\",\"line\":\"12526159\",\"path\":[\"rows\",{\"path_element_type\":\"size\"}]}')}",
+                  "rhs": "0",
+                  "uuid": "9d7f3dea-d27b-44ea-9a52-79c348630887"
+                }
+              ]
+            },
+            "block": [
+              {
+                "number": 4,
+                "keyword": "stop",
+                "input": {
+                  "stop_with_error": "true",
+                  "stop_reason": "Product not found in inventory"
+                },
+                "uuid": "8556729f-80d5-4037-9500-a787ae662df3"
+              },
+              {
+                "number": 5,
+                "keyword": "else",
+                "input": {
+                },
+                "block": [
+                  {
+                    "number": 6,
+                    "provider": "workato_service",
+                    "name": "send_reply",
+                    "as": "0635df87",
+                    "keyword": "action",
+                    "toggleCfg": {
+                      "reply.valid": true
+                    },
+                    "input": {
+                      "reply_type": "success",
+                      "reply": {
+                        "valid": "true"
+                      }
+                    },
+                    "extended_input_schema": [
+                      {
+                        "label": "Reply",
+                        "name": "reply",
+                        "properties": [
+                          {
+                            "control_type": "checkbox",
+                            "label": "Valid",
+                            "render_input": "boolean_conversion",
+                            "parse_output": "boolean_conversion",
+                            "name": "valid",
+                            "type": "boolean",
+                            "optional": false,
+                            "toggle_hint": "Select from option list",
+                            "toggle_field": {
+                              "label": "Valid",
+                              "control_type": "text",
+                              "toggle_hint": "Use custom value",
+                              "name": "valid",
+                              "type": "boolean",
+                              "optional": false
+                            }
+                          }
+                        ],
+                        "type": "object"
+                      }
+                    ],
+                    "uuid": "1efd01d2-7ab8-47d0-98c2-09ad4f1f9d27"
+                  }
+                ],
+                "uuid": "6d9a63ac-c378-4550-b730-6e280851090d"
+              }
+            ],
+            "uuid": "968f1eb5-2afc-4bab-92ec-e3c6c730ab92"
+          },
+          {
+            "number": 7,
+            "as": "f05c6167",
+            "keyword": "catch",
+            "input": {
+              "max_retry_count": "0",
+              "retry_interval": "2"
+            },
+            "block": [
+              {
+                "number": 8,
+                "provider": "workato_service",
+                "name": "send_reply",
+                "as": "f0c97a7a",
+                "keyword": "action",
+                "input": {
+                  "reply_type": "error",
+                  "message": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"catch\",\"line\":\"f05c6167\",\"path\":[\"message\"]}')}"
+                },
+                "extended_input_schema": [
+                  {
+                    "control_type": "text",
+                    "hint": "Error message",
+                    "label": "Message",
+                    "name": "message",
+                    "type": "string"
+                  },
+                  {
+                    "control_type": "text",
+                    "hint": "Use this field to set custom HTTP error code for service replies. E.g: 404/422 etc. This field is applicable to REST service recipes.",
+                    "label": "Error code",
+                    "name": "code",
+                    "optional": true,
+                    "type": "string"
+                  },
+                  {
+                    "control_type": "checkbox",
+                    "hint": "By default, Workato sends 'reply_type' and 'message' fields in response. When set to 'Yes', the content of the 'Message' field is sent as response body. This field is applicable to REST service recipes.",
+                    "label": "Custom error response?",
+                    "name": "custom_error_response",
+                    "optional": true,
+                    "toggle_field": {
+                      "label": "Custom error response?",
+                      "control_type": "text",
+                      "toggle_hint": "Use custom value",
+                      "optional": true,
+                      "render_input": null,
+                      "parse_output": null,
+                      "hint": "By default, Workato sends 'reply_type' and 'message' fields in response. When set to 'Yes', the content of the 'Message' field is sent as response body. This field is applicable to REST service recipes.",
+                      "type": "boolean",
+                      "name": "custom_error_response"
+                    },
+                    "toggle_hint": "Select from option list",
+                    "type": "boolean"
+                  }
+                ],
+                "uuid": "8bdaabad-8a26-4aad-a765-8b00241b2b51"
+              }
+            ],
+            "uuid": "8d9e3677-0d6c-4024-b42e-18edee128c64"
+          }
+        ],
+        "uuid": "fd8db075-d8ee-41c1-b120-5556cba208f8"
+      }
+    ],
+    "uuid": "cf09e554-c762-4cee-9b61-31fb1f22d1f5",
+    "format_version": 2
+  },
+  "config": [
+    {
+      "keyword": "application",
+      "provider": "oracle",
+      "account_id": {
+        "zip_name": "Workato-Migration/mig_wm_gld_oracle_connection.connection.json",
+        "name": "MIG_WM_GLD_Oracle_Connection",
+        "folder": "Workato-Migration"
+      },
+      "skip_validation": false
+    },
+    {
+      "keyword": "application",
+      "provider": "workato_service",
+      "skip_validation": false,
+      "account_id": null
+    }
+  ]
+}

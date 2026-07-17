@@ -1,0 +1,133 @@
+{
+  "name": "Google Sheets - Add Spreadsheet Row",
+  "description": "google_sheets/add_spreadsheet_row_v4 action — appends a new row to a Google Sheet. Requires Google Sheets connection. Use dynamicPickListSelection to set spreadsheet name. Column names (col_1, col_2…) are mapped from sheet headers.",
+  "version": 1,
+  "private": true,
+  "concurrency": 1,
+  "code": {
+    "number": 0,
+    "provider": "clock",
+    "name": "scheduled_event",
+    "as": "clock_trigger",
+    "keyword": "trigger",
+    "input": {
+      "time_unit": "minutes",
+      "trigger_every": "5"
+    },
+    "block": [
+      {
+        "number": 1,
+        "keyword": "try",
+        "input": {},
+        "block": [
+          {
+            "number": 2,
+            "provider": "google_sheets",
+            "name": "add_spreadsheet_row_v4",
+            "as": "a894a93e",
+            "keyword": "action",
+            "dynamicPickListSelection": {
+              "spreadsheet": "Sample_Claude"
+            },
+            "toggleCfg": {
+              "is_top_left": true
+            },
+            "input": {
+              "team_drives": "my_drive",
+              "is_top_left": "false",
+              "spreadsheet": "1d1875U6UXi_amnzdsRq2vvNeLgwGJM9BM8UWgxrG8eE",
+              "sheet": "Sheet1",
+              "data": {
+                "col_1": "Value for column 1",
+                "col_2": "Value for column 2"
+              }
+            },
+            "extended_input_schema": [
+              {
+                "control_type": "select",
+                "extends_schema": true,
+                "label": "Sheet",
+                "name": "sheet",
+                "optional": false,
+                "pick_list": [["Sheet1", "Sheet1"]],
+                "toggle_field": {
+                  "control_type": "text",
+                  "label": "Sheet name",
+                  "toggle_hint": "Use sheet name",
+                  "extends_schema": true,
+                  "type": "string",
+                  "name": "sheet_name"
+                },
+                "toggle_hint": "Select a sheet",
+                "type": "string"
+              },
+              {
+                "hint": "Input values of the new row.",
+                "label": "Columns",
+                "name": "data",
+                "properties": [
+                  {
+                    "control_type": "text",
+                    "label": "To_Email",
+                    "sticky": true,
+                    "optional": true,
+                    "type": "string",
+                    "name": "col_1"
+                  },
+                  {
+                    "control_type": "text",
+                    "label": "Description",
+                    "sticky": true,
+                    "optional": true,
+                    "type": "string",
+                    "name": "col_2"
+                  }
+                ],
+                "type": "object"
+              }
+            ],
+            "uuid": "e6fcaf01-9afc-475c-aedd-680654008b8e"
+          },
+          {
+            "number": 3,
+            "as": "catch_as",
+            "keyword": "catch",
+            "dynamicPickListSelection": {},
+            "toggleCfg": {},
+            "input": { "max_retry_count": "0", "retry_interval": "2" },
+            "block": [],
+            "uuid": "catch-uuid"
+          }
+        ],
+        "uuid": "try-uuid"
+      }
+    ],
+    "uuid": "root-uuid",
+    "unfinished": false
+  },
+  "config": [
+    {
+      "keyword": "application",
+      "provider": "clock",
+      "skip_validation": false,
+      "account_id": null
+    },
+    {
+      "keyword": "application",
+      "provider": "google_sheets",
+      "skip_validation": false,
+      "account_id": {
+        "zip_name": "googlesheet_claude.connection.json",
+        "name": "GoogleSheet_Claude",
+        "folder": ""
+      }
+    }
+  ],
+  "_notes": {
+    "live_account_id": 19682603,
+    "spreadsheet_id": "1d1875U6UXi_amnzdsRq2vvNeLgwGJM9BM8UWgxrG8eE",
+    "col_naming": "Column names (col_1, col_2) come from the sheet's header row — Workato maps them by position",
+    "team_drives": "Set to 'my_drive' for personal Google Drive, or Team Drive ID for shared drives",
+    "foreach_pill": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"foreach\",\"line\":\"bd72407f\",\"path\":[\"Name\"]}')}"
+  }
+}

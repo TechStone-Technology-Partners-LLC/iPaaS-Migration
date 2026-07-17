@@ -1,0 +1,97 @@
+{
+  "name": "Workato Recipe Function - Call Recipe",
+  "description": "workato_recipe_function/call_recipe action — invokes another recipe as a callable function and receives its return value. No external connection (account_id: null). Reference the target recipe by zip_name or live integer ID. Input parameters defined by the called recipe's trigger schema.",
+  "version": 1,
+  "private": true,
+  "concurrency": 1,
+  "code": {
+    "number": 0,
+    "provider": "clock",
+    "name": "scheduled_event",
+    "as": "clock_trigger",
+    "keyword": "trigger",
+    "input": {
+      "time_unit": "minutes",
+      "trigger_every": "5"
+    },
+    "block": [
+      {
+        "number": 1,
+        "keyword": "try",
+        "input": {},
+        "block": [
+          {
+            "number": 2,
+            "provider": "workato_recipe_function",
+            "name": "call_recipe",
+            "as": "a43ec35e",
+            "keyword": "action",
+            "dynamicPickListSelection": {
+              "flow_id": "My Recipe Function"
+            },
+            "input": {
+              "flow_id": {
+                "zip_name": "my_recipe_function.recipe.json",
+                "name": "My Recipe Function",
+                "folder": ""
+              },
+              "parameters": {
+                "Recipe_Id": "Enter the recipe ID or datapill here"
+              }
+            },
+            "extended_input_schema": [
+              {
+                "label": "Parameters",
+                "name": "parameters",
+                "properties": [
+                  {
+                    "control_type": "text",
+                    "label": "Recipe ID",
+                    "name": "Recipe_Id",
+                    "type": "string",
+                    "optional": false
+                  }
+                ],
+                "type": "object"
+              }
+            ],
+            "uuid": "4140d546-123e-45db-94a1-4d03cd100e12"
+          },
+          {
+            "number": 3,
+            "as": "catch_as",
+            "keyword": "catch",
+            "dynamicPickListSelection": {},
+            "toggleCfg": {},
+            "input": { "max_retry_count": "0", "retry_interval": "2" },
+            "block": [],
+            "uuid": "catch-uuid"
+          }
+        ],
+        "uuid": "try-uuid"
+      }
+    ],
+    "uuid": "root-uuid",
+    "unfinished": false
+  },
+  "config": [
+    {
+      "keyword": "application",
+      "provider": "clock",
+      "skip_validation": false,
+      "account_id": null
+    },
+    {
+      "keyword": "application",
+      "provider": "workato_recipe_function",
+      "skip_validation": false,
+      "account_id": null
+    }
+  ],
+  "_notes": {
+    "flow_id": "Can be a zip_name reference (for recipe export) or a live integer recipe ID",
+    "parameters": "The 'parameters' object fields are defined by the called recipe's workato_service/receive_request trigger schema",
+    "output": "Output schema is defined by the called recipe's reply_schema_json — pills become available after this step",
+    "account_id": "Always null — workato_recipe_function is a Workato-native connector with no external credentials"
+  }
+}

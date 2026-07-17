@@ -1,0 +1,142 @@
+{
+  "name": "Salesforce - Search Sobjects",
+  "description": "salesforce/search_sobjects action — SOQL-style search on any Salesforce object. Returns list of matching records + list_size. Requires Salesforce connection. Use dynamicPickListSelection to set sobject_name and field_list.",
+  "version": 1,
+  "private": true,
+  "concurrency": 1,
+  "code": {
+    "number": 0,
+    "provider": "clock",
+    "name": "scheduled_event",
+    "as": "clock_trigger",
+    "keyword": "trigger",
+    "input": {
+      "time_unit": "minutes",
+      "trigger_every": "5"
+    },
+    "block": [
+      {
+        "number": 1,
+        "keyword": "try",
+        "input": {},
+        "block": [
+          {
+            "number": 2,
+            "provider": "salesforce",
+            "name": "search_sobjects",
+            "as": "f4a4e84c",
+            "keyword": "action",
+            "dynamicPickListSelection": {
+              "sobject_name": "Opportunity",
+              "field_list": [
+                { "label": "Opportunity ID", "value": "Id" },
+                { "label": "Name", "value": "Name" },
+                { "label": "Description", "value": "Description" },
+                { "label": "Amount", "value": "Amount" },
+                { "label": "Last Stage Change Date", "value": "LastStageChangeDate" }
+              ]
+            },
+            "input": {
+              "limit": "150",
+              "sobject_name": "Opportunity",
+              "field_list": "Id\nName\nDescription\nAmount\nLastStageChangeDate",
+              "Name": "Sample Opportunity 1"
+            },
+            "extended_output_schema": [
+              {
+                "label": "Opportunities",
+                "name": "Opportunity",
+                "of": "object",
+                "properties": [
+                  {
+                    "control_type": "number",
+                    "label": "Amount",
+                    "parse_output": "float_conversion",
+                    "optional": true,
+                    "type": "number",
+                    "name": "Amount"
+                  },
+                  {
+                    "control_type": "text-area",
+                    "label": "Description",
+                    "optional": true,
+                    "type": "string",
+                    "name": "Description"
+                  },
+                  {
+                    "control_type": "date_time",
+                    "label": "Last Stage Change Date",
+                    "render_input": "render_iso8601_timestamp",
+                    "parse_output": "parse_iso8601_timestamp",
+                    "optional": true,
+                    "type": "date_time",
+                    "name": "LastStageChangeDate"
+                  },
+                  {
+                    "control_type": "text",
+                    "label": "Name",
+                    "optional": true,
+                    "type": "string",
+                    "name": "Name"
+                  },
+                  {
+                    "control_type": "text",
+                    "label": "Opportunity ID",
+                    "optional": true,
+                    "type": "string",
+                    "name": "Id"
+                  }
+                ],
+                "type": "array"
+              },
+              {
+                "control_type": "number",
+                "label": "List size",
+                "name": "list_size",
+                "parse_output": "integer_conversion",
+                "type": "integer"
+              }
+            ],
+            "uuid": "68d20b74-bb4e-412c-a0b5-2beb8c8744f2"
+          },
+          {
+            "number": 3,
+            "as": "catch_as",
+            "keyword": "catch",
+            "dynamicPickListSelection": {},
+            "toggleCfg": {},
+            "input": { "max_retry_count": "0", "retry_interval": "2" },
+            "block": [],
+            "uuid": "catch-uuid"
+          }
+        ],
+        "uuid": "try-uuid"
+      }
+    ],
+    "uuid": "root-uuid",
+    "unfinished": false
+  },
+  "config": [
+    {
+      "keyword": "application",
+      "provider": "clock",
+      "skip_validation": false,
+      "account_id": null
+    },
+    {
+      "keyword": "application",
+      "provider": "salesforce",
+      "skip_validation": false,
+      "account_id": {
+        "zip_name": "my_salesforce_account.connection.json",
+        "name": "My Salesforce account",
+        "folder": ""
+      }
+    }
+  ],
+  "_notes": {
+    "as": "f4a4e84c — stable identifier for data pills referencing this step's output",
+    "pill_pattern": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"salesforce\",\"line\":\"f4a4e84c\",\"path\":[\"Opportunity\",{\"path_element_type\":\"current_item\"},\"Amount\"]}')}",
+    "list_size_pill": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"salesforce\",\"line\":\"f4a4e84c\",\"path\":[\"list_size\"]}')}"
+  }
+}

@@ -1,0 +1,149 @@
+{
+  "name": "Databricks - Search Rows",
+  "description": "databricks/search_rows action — runs a WHERE-filtered SELECT on a Databricks Unity Catalog table. Requires Databricks connection. Use dynamicPickListSelection to set table name. WHERE clause supports bind variables via 'parameters' input.",
+  "version": 1,
+  "private": true,
+  "concurrency": 1,
+  "code": {
+    "number": 0,
+    "provider": "clock",
+    "name": "scheduled_event",
+    "as": "clock_trigger",
+    "keyword": "trigger",
+    "input": {
+      "time_unit": "minutes",
+      "trigger_every": "5"
+    },
+    "block": [
+      {
+        "number": 1,
+        "keyword": "try",
+        "input": {},
+        "block": [
+          {
+            "number": 2,
+            "provider": "databricks",
+            "name": "search_rows",
+            "as": "b847e189",
+            "keyword": "action",
+            "dynamicPickListSelection": {
+              "table": "default.person_notes"
+            },
+            "toggleCfg": {
+              "table": true
+            },
+            "input": {
+              "limit": "100",
+              "offset": "0",
+              "table": "default.person_notes",
+              "where": "note_text = 'Vikas Test'",
+              "parameters": {
+                "schema": "[{\"name\":\"Amount\",\"type\":\"string\",\"optional\":true,\"label\":\"Amount\",\"details\":{\"real_name\":\"Amount\"},\"control_type\":\"text\"}]"
+              }
+            },
+            "extended_output_schema": [
+              {
+                "label": "Rows",
+                "name": "rows",
+                "of": "object",
+                "properties": [
+                  {
+                    "control_type": "text",
+                    "label": "Action",
+                    "details": { "label": "action", "primary_key": false, "data_type": "STRING", "column_name": "action", "optional": true, "hint": "string" },
+                    "optional": true,
+                    "type": "string",
+                    "name": "action"
+                  },
+                  {
+                    "control_type": "text",
+                    "label": "Correlation ID",
+                    "details": { "label": "correlation_id", "primary_key": false, "data_type": "STRING", "column_name": "correlation_id", "optional": true, "hint": "string" },
+                    "optional": true,
+                    "type": "string",
+                    "name": "correlation_id"
+                  },
+                  {
+                    "control_type": "date_time",
+                    "label": "Create date time",
+                    "render_input": "date_time_conversion",
+                    "parse_output": "convert_date_time",
+                    "details": { "label": "create_date_time", "primary_key": false, "data_type": "TIMESTAMP", "column_name": "create_date_time", "optional": true, "hint": "timestamp" },
+                    "optional": true,
+                    "type": "date_time",
+                    "name": "create_date_time"
+                  },
+                  {
+                    "control_type": "text",
+                    "label": "ID",
+                    "details": { "label": "id", "primary_key": false, "data_type": "STRING", "column_name": "id", "optional": true, "hint": "string" },
+                    "optional": true,
+                    "type": "string",
+                    "name": "id"
+                  },
+                  {
+                    "control_type": "text",
+                    "label": "Note text",
+                    "details": { "label": "note_text", "primary_key": false, "data_type": "STRING", "column_name": "note_text", "optional": true, "hint": "string" },
+                    "optional": true,
+                    "type": "string",
+                    "name": "note_text"
+                  },
+                  {
+                    "control_type": "date_time",
+                    "label": "Timestamp",
+                    "render_input": "date_time_conversion",
+                    "parse_output": "convert_date_time",
+                    "details": { "label": "timestamp", "primary_key": false, "data_type": "TIMESTAMP", "column_name": "timestamp", "optional": true, "hint": "timestamp" },
+                    "optional": true,
+                    "type": "date_time",
+                    "name": "timestamp"
+                  }
+                ],
+                "type": "array"
+              }
+            ],
+            "uuid": "0fc85fc4-0acd-49fd-ae9a-c8a0c31ea893"
+          },
+          {
+            "number": 3,
+            "as": "catch_as",
+            "keyword": "catch",
+            "dynamicPickListSelection": {},
+            "toggleCfg": {},
+            "input": { "max_retry_count": "0", "retry_interval": "2" },
+            "block": [],
+            "uuid": "catch-uuid"
+          }
+        ],
+        "uuid": "try-uuid"
+      }
+    ],
+    "uuid": "root-uuid",
+    "unfinished": false
+  },
+  "config": [
+    {
+      "keyword": "application",
+      "provider": "clock",
+      "skip_validation": false,
+      "account_id": null
+    },
+    {
+      "keyword": "application",
+      "provider": "databricks",
+      "skip_validation": false,
+      "account_id": {
+        "zip_name": "my_databricks_account.connection.json",
+        "name": "My Databricks account",
+        "folder": ""
+      }
+    }
+  ],
+  "_notes": {
+    "as": "b847e189 — stable identifier for pills from this step",
+    "table_format": "catalog.schema.table (e.g. 'default.person_notes') or just 'schema.table'",
+    "bind_variables": "For parameterized WHERE, add bind variables in 'parameters.schema' as JSON string, then reference via 'parameters.data.<name>'",
+    "pill_pattern": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"databricks\",\"line\":\"b847e189\",\"path\":[\"rows\",{\"path_element_type\":\"current_item\"},\"note_text\"]}')}"
+  }
+}

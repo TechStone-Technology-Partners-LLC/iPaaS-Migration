@@ -1,0 +1,60 @@
+{
+  "name": "Oracle - Search Rows",
+  "description": "Oracle DB search_rows action — queries a table with a WHERE clause. Replace table name and where condition as needed.",
+  "version": 1,
+  "private": true,
+  "concurrency": 1,
+  "code": {
+    "number": 0,
+    "provider": "workato_service",
+    "name": "receive_request",
+    "as": "10aff7cc",
+    "keyword": "trigger",
+    "input": {
+      "service_name": "Oracle Search Rows Example",
+      "request_schema_json": "[]",
+      "reply_schema_json": "[]"
+    },
+    "block": [
+      {
+        "number": 1,
+        "provider": "oracle",
+        "name": "search_rows",
+        "as": "12526159",
+        "keyword": "action",
+        "dynamicPickListSelection": {
+          "table": "ROOT.INVENTORY"
+        },
+        "toggleCfg": {
+          "table": true
+        },
+        "input": {
+          "limit": "100",
+          "offset": "0",
+          "table": "ROOT.INVENTORY",
+          "where": "PRODUCT_NAME = 'placeholder'"
+        },
+        "uuid": "782a2ca5-ab97-4a24-a047-70ed69641af2"
+      }
+    ],
+    "uuid": "cf09e554-c762-4cee-9b61-31fb1f22d1f5"
+  },
+  "config": [
+    {
+      "keyword": "application",
+      "provider": "oracle",
+      "account_id": {
+        "zip_name": "Workato-Migration/mig_wm_gld_oracle_connection.connection.json",
+        "name": "MIG_WM_GLD_Oracle_Connection",
+        "folder": "Workato-Migration"
+      },
+      "skip_validation": false
+    },
+    {
+      "keyword": "application",
+      "provider": "workato_service",
+      "skip_validation": false,
+      "account_id": null
+    }
+  ]
+}

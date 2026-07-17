@@ -1,0 +1,164 @@
+{
+  "name": "My Recipe Function",
+  "description": "",
+  "version": 4,
+  "private": false,
+  "concurrency": 1,
+  "code": {
+    "number": 0,
+    "provider": "workato_recipe_function",
+    "name": "execute",
+    "as": "b35e7c61",
+    "keyword": "trigger",
+    "input": {
+      "parameters_schema_json": "[{\"name\":\"Recipe_Id\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\",\"label\":\"Recipe ID\"},{\"name\":\"Name\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\",\"label\":\"Name\"},{\"name\":\"Description\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\",\"label\":\"Description\"},{\"name\":\"Amount\",\"type\":\"string\",\"optional\":false,\"control_type\":\"text\",\"label\":\"Amount\"}]"
+    },
+    "extended_output_schema": [
+      {
+        "label": "Parameters",
+        "name": "parameters",
+        "properties": [
+          {
+            "control_type": "text",
+            "label": "Recipe ID",
+            "name": "Recipe_Id",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "control_type": "text",
+            "label": "Name",
+            "name": "Name",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "control_type": "text",
+            "label": "Description",
+            "name": "Description",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "control_type": "text",
+            "label": "Amount",
+            "name": "Amount",
+            "type": "string",
+            "optional": false
+          }
+        ],
+        "type": "object"
+      }
+    ],
+    "block": [
+      {
+        "number": 1,
+        "provider": "google_sheets",
+        "name": "add_spreadsheet_row_v4",
+        "as": "a2b6d83e",
+        "keyword": "action",
+        "dynamicPickListSelection": {
+          "spreadsheet": "Sample_Claude"
+        },
+        "toggleCfg": {
+          "is_top_left": true
+        },
+        "input": {
+          "team_drives": "my_drive",
+          "is_top_left": "false",
+          "spreadsheet": "1d1875U6UXi_amnzdsRq2vvNeLgwGJM9BM8UWgxrG8eE",
+          "sheet": "Sheet1",
+          "data": {
+            "col_1": "MANISH@techstonellc.com",
+            "col_2": "AVASARALA"
+          }
+        },
+        "extended_input_schema": [
+          {
+            "control_type": "select",
+            "extends_schema": true,
+            "hint": "Select a sheet to add row to. The sheet must have at least one header row. <a href='https://docs.workato.com/connectors/google-sheets/action-add-row.html#setting-up-the-google-sheet' target='_blank'>Learn more</a>",
+            "label": "Sheet",
+            "name": "sheet",
+            "optional": false,
+            "pick_list": [
+              [
+                "Sheet1",
+                "Sheet1"
+              ]
+            ],
+            "toggle_field": {
+              "control_type": "text",
+              "label": "Sheet name",
+              "toggle_hint": "Use sheet name",
+              "extends_schema": true,
+              "change_on_blur": true,
+              "toggle_to_secondary_hint": "Use sheet name",
+              "toggle_to_primary_hint": "Select a sheet",
+              "hint": "Use <b>Sheet name</b> pill from the output of other Google Sheets’ triggers/actions. Or enter sheet name manually. The sheet must have at least 1 header row in input field.",
+              "type": "string",
+              "name": "sheet_name"
+            },
+            "toggle_hint": "Select a sheet",
+            "type": "string"
+          },
+          {
+            "hint": "Input values of the new row.",
+            "label": "Columns",
+            "name": "data",
+            "properties": [
+              {
+                "control_type": "text",
+                "label": "To_Email",
+                "sticky": true,
+                "optional": true,
+                "type": "string",
+                "name": "col_1"
+              },
+              {
+                "control_type": "text",
+                "label": "Description",
+                "sticky": true,
+                "optional": true,
+                "type": "string",
+                "name": "col_2"
+              }
+            ],
+            "type": "object"
+          }
+        ],
+        "uuid": "862ffd97-73a6-4810-b8ce-bb7ba3b14962"
+      },
+      {
+        "number": 2,
+        "provider": "workato_recipe_function",
+        "name": "return_result",
+        "as": "82f7cd24",
+        "keyword": "action",
+        "input": {
+        },
+        "uuid": "027cb2ef-34b1-4dc9-b7b0-5f785c783124"
+      }
+    ],
+    "uuid": "8965e884-d2ab-4fd4-9ad0-e95b9ca1e1b4",
+    "unfinished": false
+  },
+  "config": [
+    {
+      "keyword": "application",
+      "provider": "workato_recipe_function",
+      "skip_validation": false,
+      "account_id": null
+    },
+    {
+      "keyword": "application",
+      "provider": "google_sheets",
+      "skip_validation": false,
+      "account_id": {
+        "zip_name": "googlesheet_claude.connection.json",
+        "name": "GoogleSheet_Claude",
+        "folder": ""
+      }
+    }
+  ]
+}

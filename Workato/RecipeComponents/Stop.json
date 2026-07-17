@@ -1,0 +1,40 @@
+{
+  "name": "Stop",
+  "description": "Stop step — halts recipe execution with an error message. Set stop_with_error to false for a clean stop.",
+  "version": 1,
+  "private": true,
+  "concurrency": 1,
+  "code": {
+    "number": 0,
+    "provider": "clock",
+    "name": "scheduled_event",
+    "as": "37d2c076",
+    "keyword": "trigger",
+    "input": {
+      "time_unit": "minutes",
+      "trigger_every": "5"
+    },
+    "block": [
+      {
+        "number": 1,
+        "keyword": "stop",
+        "dynamicPickListSelection": {},
+        "toggleCfg": {},
+        "input": {
+          "stop_with_error": "true",
+          "stop_reason": "Reason for stopping — replace with actual message or pill"
+        },
+        "uuid": "8556729f-80d5-4037-9500-a787ae662df3"
+      }
+    ],
+    "uuid": "09cea56c-6202-4c99-861b-532b390dd185"
+  },
+  "config": [
+    {
+      "keyword": "application",
+      "provider": "clock",
+      "skip_validation": false,
+      "account_id": null
+    }
+  ]
+}
