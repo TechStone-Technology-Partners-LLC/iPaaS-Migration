@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<Values version="2.0">
+  <value name="name">isNumericOrEmpty</value>
+  <value name="encodeutf8">true</value>
+  <value name="body">SURhdGFDdXJzb3IgaWRjID0gcGlwZWxpbmUuZ2V0Q3Vyc29yKCApOwpTdHJpbmcgaW5OdW0gPSIi
+OwoKaWYoaWRjLmZpcnN0KCJpbk51bSIpKQp7CmluTnVtID0gKFN0cmluZylpZGMuZ2V0VmFsdWUo
+KTsKfQoKdHJ5ewppZihpbk51bT09IiIpewoKaWRjLmluc2VydEFmdGVyKCJpc051bWVyaWMiLCAi
+dHJ1ZSIgKTsKfQplbHNlIHsKCkxvbmcgbnVtID0gbmV3IExvbmcoaW5OdW0pOwogaWRjLmluc2Vy
+dEFmdGVyKCJpc051bWVyaWMiLCAidHJ1ZSIgKTsKfQp9CgpjYXRjaChOdW1iZXJGb3JtYXRFeGNl
+cHRpb24gbmZleCkKCQl7CgkJCWlkYy5sYXN0KCk7CgkJIGlkYy5pbnNlcnRBZnRlcigiaXNOdW1l
+cmljIiwgImZhbHNlIiApOwoJCX0KCgppbk51bT0iIjsKaWRjLmRlc3Ryb3koKTsKCg==</value>
+</Values>
