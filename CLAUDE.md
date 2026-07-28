@@ -466,6 +466,24 @@ Folder: `WebMethodsMigration` (folderId `31661117`, account `manish@techstonellc
 4. Wire all oracle/run_sql steps with proper SP parameter bindings in Workato GUI
 5. Test end-to-end with sample compliance check request
 
+### webMethods IS → Workato: NewRecipe2 — GLD Compliance (COMPLETE — 2026-07-21)
+Source: `GLDComplianceAdapterServices` (webMethods IS 6.5, Oracle JDBC adapter, keybank.com).
+Folder: `migrAIte_Training/webMethodsMigration` (folderId `32050036`, account `manish@techstonellc.com`)
+Built from: `WebMethods/MD/WMToWorkato.md` + `Workato/RecipeComponents/oracle.json` pattern.
+
+| Component | ID / Details | Status |
+|---|---|---|
+| NewRecipe2 | `74259459` — callable recipe "Compliance Check" (25-field trigger) | Pushed (2026-07-21) |
+
+**Recipe structure:** workato_service/receive_request trigger → try/catch block → Oracle SPs: ACCLOGCHECKREQUEST (25 params), SELECT ACCCHECKREQUESTID, LOGXMLREQUEST (5 params) → HTTP POST CIU → ACCUPDATECIUREFNBR → IF/ELSE CheckResult==TRUE → ACCLOGCHECKREPLY / ACCLOGCHECKREPLYERROR → 28-col JOIN SELECT → send_reply → catch: ACCLOGCHECKREPLYERROR
+Push script: `scripts/push_newrecipe2_workato.py`
+
+**Remaining manual steps:**
+1. Wire Oracle connection `MIG_WM_GLD_Oracle_Connection` (ID: `19657520`) — authorize with GLD_SCHEMA password in GUI
+2. Step 3 (HTTP CIU): replace `[CIU_ENDPOINT_URL]` placeholder with actual endpoint URL from SME; create HTTP connection in Workato GUI
+3. Verify Step 1b SELECT correctly binds `REQUESTORSYSTEMREQUESTID` pill from trigger
+4. Test end-to-end with sample compliance check request
+
 ---
 
 ### webMethods IS → Boomi: GLD Compliance Migration (COMPLETE — 2026-06-14, org account)
