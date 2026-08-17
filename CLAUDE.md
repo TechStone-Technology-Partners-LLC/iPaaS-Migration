@@ -440,6 +440,142 @@ Folder: `WebMethodsMigration` (folderId `31661117`, account `manish@techstonellc
 5. Add `fundingEngineWrapperResponse` return body to callable recipe trigger response settings in GUI
 6. `processACHBatch` flow: **not migrated** — NACHA flat-file generation requires custom implementation (see Analysis §10 gap #1/#7)
 
+### webMethods IS → Workato: GLDFundingEngine20080714 "FundingEngine" — initiate_migration/start.md + WebMethods/start.md (COMPLETE — 2026-07-30)
+Source: `GLDFundingEngine20080714` (webMethods IS 6.5, keybank.com).
+Folder: `migrAIte_Training/webMethodsMigration` (folderId `32159265`, account `manish@techstonellc.com`)
+Built via: `initiate_migration/start.md` + `WebMethods/start.md` 6-step workflows using `initiate_migration/Instruction_Workato.md`.
+
+| Component | ID / Details | Status |
+|---|---|---|
+| FundingEngine v1 (HTTP ACH) | `74461604` — callable recipe (workato_service/receive_request "FundingEngine") | Pushed (2026-07-30) |
+| FundingEngine v2 (Oracle ACH) | `74461729` — callable recipe, ACH uses Oracle execute_stored_procedure | Pushed (2026-07-30) |
+
+**Reference files produced:**
+- `WebMethods/Analysis/MD/PackageAnalysis.md` — comprehensive 10-section analysis
+- `WebMethods/MD/FundingEngine_WMToWorkato.md` — 22 sequential build prompts (initiate_migration/start.md workflow)
+- `WebMethods/MD/GLDFundingEngine_WMToWorkato.md` — 24 section-5.2-derived prompts (WebMethods/start.md workflow)
+- `scripts/push_funding_engine_workato.py` — push script v1 (HTTP ACH, folder ID: 32159265)
+- `scripts/push_funding_engine_oracle_workato.py` — push script v2 (Oracle ACH, RecipeComponents patterns)
+
+**Recipe structure:**
+- Trigger: `workato_service/receive_request` — 7 flat fields (id, customerName, customerID, sourceName, sourceSubCategory, salesRepName, payments JSON string)
+- Step 1: outer try
+- Step 2: each loop over payments[] (`.parse_json` applied to payments string), alias: `payment_loop`
+  - Step 3: IF type=="Check" → invokeGetUniquePayee (step 4) → IF payeeKey empty → invokeAddNewPayee (step 5-6) → invokeCreateCheckRequest (step 7)
+  - Step 8: ELSIF type=="ACH" → insertPayment (step 9, 11 params incl. REQUESTOR_ID=1 static)
+  - Step 10: ELSE → Log Default (step 11, no external call)
+  - rescue (per-payment): log error (step 12)
+- outer catch: log system error (step 13)
+- Step 14: workato_service/send_reply (status=PAYMENTS_PROCESSED)
+
+**Remaining manual GUI steps (v2 — Oracle ACH, recipe 74461729):**
+1. Create HTTP connections and wire to CheckWriter + MessageLog steps:
+   - `GLDFundingEngine_CheckWriter_Connection` → steps 4, 6, 7 (CheckWriter URL from SME)
+   - `GLDFundingEngine_MessageLog_Connection` → steps 12, 13 (MessageLog URL from SME)
+2. Oracle ACH connection (MIG_WM_GLD_Oracle_Connection, ID 19657520):
+   - Confirm Oracle connection points to GLD_ACHAdaptersServices Oracle instance
+   - Verify SP name: `GLD_ACH.INSERTPAYMENT` (confirm exact schema.proc name with SME)
+   - If needed, create a dedicated Oracle connection for the ACH schema in GUI
+3. Steps 12 and 13 (error logs): wire `error.message` Workato pill in GUI
+4. Obtain real base URLs from SME to replace placeholders (see push script header)
+5. `processACHBatch` recipe: prompts 16-24 in GLDFundingEngine_WMToWorkato.md — not built; NACHA generation is a HIGH gap
+
+---
+
+### webMethods IS → Workato: GLDFundingEngine20080714 "Funding Engine using Companion" (COMPLETE — 2026-08-09)
+Source: `GLDFundingEngine20080714` (webMethods IS 6.5, keybank.com).
+Folder: `migrAIte_Training` (folderId `31835141`, account `manish@techstonellc.com`)
+Built via: `Workato/Companion/SKILL.md` (workato-integration skill) — all 15 rules applied.
+Source analysis: `WebMethods/Analysis/MD/PackageAnalysis.md` (Section 8, Recipe 1).
+
+| Component | ID / Details | Status |
+|---|---|---|
+| Funding Engine using Companion | `74633314` — callable recipe (workato_service/receive_request) | Pushed (2026-08-09) |
+
+**Recipe structure (companion build — PackageAnalysis Section 8 exact structure):**
+- Trigger: 7 flat fields (id, customerName, customerID, sourceName, sourceSubCategory, salesRepName, payments JSON string)
+- `try` → `each` (payment_loop, parse_json) → `if` Check (steps 4-7) / `elsif` ACH (step 9 Oracle) / `else` Default (logger) → `rescue` (step 12, last) → `catch` (last in try)
+- `send_reply` OUTSIDE try block — sibling in trigger.block → status=PAYMENTS_PROCESSED
+- Push script: `scripts/push_funding_engine_companion.py`
+- URL: https://app.workato.com/recipes/74633314
+
+**Remaining GUI steps:**
+1. Create folder "FundingEngine Companion" in Workato GUI (folder API is IP-whitelisted); move recipe there
+2. Create `GLDFundingEngine_CheckWriter_Connection` (HTTP) → wire to steps 4, 6, 7 (CheckWriter URL from SME)
+3. Wire `MIG_WM_GLD_Oracle_Connection` (ID 19657520) → step 9 (confirm SP name GLD_ACH.INSERTPAYMENT)
+4. Create `GLDFundingEngine_MessageLog_Connection` (HTTP) → wire to steps 12, 14 (MessageLog URL from SME)
+5. Wire `error.message` pills in rescue step 12 and catch step 14 in GUI
+
+---
+
+### webMethods IS → Workato: GLDFundingEngine20080714 v3 — initiate_migration/Instruction_Workato.md 6-step workflow (COMPLETE — 2026-08-06)
+Source: `GLDFundingEngine20080714` (webMethods IS 6.5, keybank.com).
+Folder: `migrAIte_Training` (folderId `31835141`, account `manish@techstonellc.com`)
+Built via: `initiate_migration/Instruction_Workato.md` 6-step workflow + `Workato/Companion/SKILL.md` (workato-integration skill).
+
+| Component | ID / Details | Status |
+|---|---|---|
+| GLD FundingEngine — processFundingRequest (v3) | `74597322` — callable recipe (workato_service/receive_request "FundingEngine") | Pushed (2026-08-06) |
+
+**Recipe structure (v3 — streamlined: no log request/response, Oracle ACH, all 15 SKILL.md rules):**
+- Trigger: `workato_service/receive_request` "FundingEngine" — 7 flat fields (id, customerName, customerID, sourceName, sourceSubCategory, salesRepName, payments JSON string)
+- Step 1: outer try
+- Step 2: each loop over payments[] (`.parse_json` applied to payments string), alias: `payment_loop`
+  - Step 3: IF type=="Check" → invokeGetUniquePayee (step 4) → IF payeeKey empty → invokeAddNewPayee (step 5-6) → invokeCreateCheckRequest (step 7)
+  - Step 8: ELSIF type=="ACH" → Oracle execute_stored_procedure GLD_ACH.INSERTPAYMENT (step 9, 11 params)
+  - Step 10: ELSE → Logger Default path (step 11)
+  - rescue (step 14, last in each.block): HTTP POST GLDMessageLog (step 12)
+- Step 15: catch (last in try.block): HTTP POST GLDMessageLog (step 13)
+- Step 16: workato_service/send_reply (status=PAYMENTS_PROCESSED)
+
+**Reference files:**
+- `WebMethods/MD/GLDFundingEngine_WMToWorkato.md` — 24 sequential build prompts (Recipes 1 + 2)
+- `scripts/push_gld_funding_engine_v3_workato.py` — push script (all 15 workato-integration SKILL.md rules applied)
+
+**Remaining manual GUI steps:**
+1. Create HTTP connection `GLDFundingEngine_CheckWriter_Connection` → wire to steps 4, 6, 7 (CheckWriter URL from SME)
+2. Wire Oracle connection `MIG_WM_GLD_Oracle_Connection` (ID: 19657520) → step 9 (confirm SP name GLD_ACH.INSERTPAYMENT with SME)
+3. Create HTTP connection `GLDFundingEngine_MessageLog_Connection` → wire to steps 12, 13 (MessageLog URL from SME)
+4. Wire `error.message` pills in rescue step 12 and catch step 13 in GUI
+5. URL: https://app.workato.com/recipes/74597322
+
+---
+
+### webMethods IS → Workato: GLDFundingEngine20080714 v2 — initiate_migration workflow (COMPLETE — 2026-07-30)
+Source: `GLDFundingEngine20080714` (webMethods IS 6.5, keybank.com).
+Folder: `migrAIte_Training` (folderId `31835141`, account `manish@techstonellc.com`)
+Built via: `initiate_migration/Instruction_Workato copy.md` 3-phase workflow.
+
+| Component | ID / Details | Status |
+|---|---|---|
+| MIG_WM_GLDFundingEngine_processFundingRequest | `74460780` — callable recipe (workato_service/receive_request) | Pushed (2026-07-30) |
+
+**Reference files produced:**
+- `WebMethods/MD/GLDFundingEngine_PackageAnalysis.md` — Phase 1 consolidated analysis (11 sections)
+- `WebMethods/MD/GLDFundingEngine_WMToWorkato.md` — Phase 2 sequential build prompts (27 prompts, 2 recipes)
+- `scripts/push_gld_funding_engine_v2_workato.py` — Phase 3 push script
+
+**Recipe structure (v2 — full outer try/catch + log request/response + send_reply):**
+- Trigger: `workato_service/receive_request` — 6 flat applicationInfo_* fields + payments (JSON string)
+- Step 1: outer try/catch wrapper
+- Step 2: HTTP POST GLDMessageLog:LogXMLRequest (log request, AppID=3, FE)
+- Step 3: each loop over payments[] (`.parse_json` applied to payments string)
+  - Step 4: IF type=="Check" → Get/Add payee (steps 5-7) → invokeCreateCheckRequest (step 8)
+  - Step 9: ELSE → IF type=="ACH" (step 10) → insertPayment (step 11) / ELSE Default noop (step 12-13)
+  - Step 14: rescue (per-payment) → log error (step 15)
+- Step 16: HTTP POST GLDMessageLog:LogXMLResponse (log response, AppID=3, FE)
+- Step 17: workato_service/send_reply (status=PAYMENTS_PROCESSED)
+- Step 18: catch (outer) → log system error (step 19)
+
+**Remaining manual GUI steps:**
+1. Create 3 HTTP connections and wire to all HTTP steps:
+   - `GLDFundingEngine_CheckWriter_Connection` → steps 5, 7, 8 (CheckWriter URL from SME)
+   - `GLDFundingEngine_ACH_Connection` → step 11 (ACH URL from SME)
+   - `GLDFundingEngine_MessageLog_Connection` → steps 2, 15, 16, 19 (MessageLog URL from SME)
+2. Steps 15 and 19 (error logs): wire `error.message` and `error.error_type` Workato pills in GUI
+3. Obtain real base URLs from SME to replace placeholders (see push script header)
+4. `processACHBatch` recipe: not built — NACHA generation requires custom JS (see WMToWorkato.md Prompt 26)
+
 ---
 
 ### webMethods IS → Workato: GLD Compliance Migration (COMPLETE — 2026-06-19)

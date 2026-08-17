@@ -56,11 +56,3 @@ Find the best connector — for every step, identify the most accurate and purpo
 Complete connections and operations before moving on — for every connector, fully configure the connection and its operation, including all fields, parameters, and logic around it, before moving on to the next. Do not leave a connection or operation partially configured
 Use realistic dummy values for auth — if authentication credentials or connection values are not available (API keys, passwords, URLs, client IDs, secrets, etc.), use dummy but realistic-looking placeholder values (e.g. https://api.mycompany.com, client_id_abc123, sk_live_xxxxxxxxxxxx). Do not leave auth fields blank or use placeholder text like YOUR_API_KEY
 Stay true to the analysis — do not deviate from the approved Package Analysis Document without flagging it. If something cannot be built as documented, raise it before proceeding
-
-Follow following instructions to create a new Workato recipe using the Webmethods packages
-1. WebMethods Packages are located in /WebMethods folder. We will migrate package from WebMethods\GLDFundingEngine20080714 folder
-2. Use initiate_migration\Instruction_Workato.md to generate the Webmethods PackageAnalysis.md file.
-3. Please create a new WMToWorkato.md file.
-4. We want to create prompts which claude can use to create Workato recipe. Use ipaas-migration/webMethods/Analysis/MD/PackageAnalysis.md file to generate these prompts. For now only look at section 5 of PackageAnalysis.md file and the points underneath 5. The prompts should clearly state the connection to be created, app to be used, the actions to be used and details of the setup to be done on that Action.
-5. There could be Action where there is a need for field mapping or creating JSON profiles. Please also state it accordingly. Idea is it should provide all the details of Trigger, Actions, Steps, configuration, profiles, connections in form of sequential prompts so that Workato recipe can be built step by step. Record all these prompts in WMToWorkato.md file.
-6. Create a new workato recipe using instructions in WMToWorkato.md file. The new Workato recipe name should be FundingEngine. Create it under migrAIte_Training/webMethodsMigration folder. Please use the files under ipaas-migration/Workato/RecipeComponents as a reference to create the workato recipe components.

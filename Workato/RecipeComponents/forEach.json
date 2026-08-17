@@ -1,14 +1,14 @@
 {
-  "name": "For Each",
-  "description": "",
-  "version": 2,
-  "private": false,
+  "name": "Copy of Migrate Google Sheet contacts to Salesforce by industry - Foreach Framework",
+  "description": "Foreach framework only - all child steps stripped",
+  "version": 1,
+  "private": true,
   "concurrency": 1,
   "code": {
     "number": 0,
     "provider": "clock",
     "name": "scheduled_event",
-    "as": "3069152f",
+    "as": "7626d6c0",
     "keyword": "trigger",
     "input": {
       "time_unit": "minutes",
@@ -20,7 +20,7 @@
         "default": "5",
         "enforce_template_mode": true,
         "extends_schema": true,
-        "hint": "Define repeating schedule. Enter whole numbers only.This field can be set to a minimum of 5 minutes.",
+        "hint": "Define repeating schedule. Enter whole numbers only.\n                        This field can be set to a minimum of 5 minutes.",
         "label": "Trigger every",
         "name": "trigger_every",
         "optional": false,
@@ -57,26 +57,19 @@
     "block": [
       {
         "number": 1,
-        "as": "70abf4c7",
+        "as": "07568046",
         "keyword": "foreach",
         "repeat_mode": "simple",
         "clear_scope": "false",
-        "input": {
-        },
-        "block": [
-          {
-            "number": 2,
-            "keyword": "action",
-            "input": {
-            },
-            "uuid": "a3eaa552-7185-4256-8817-c8a13df39873"
-          }
-        ],
-        "uuid": "84062281-5321-4a58-8f21-f6b5890d968c"
+        "input": {},
+        "block": [],
+        "source": "",
+        "uuid": "48711e2e-ad38-4855-90bd-14c0972a9992"
       }
     ],
-    "uuid": "89ac369a-9b98-4127-a4bd-1db3517de3c7",
-    "unfinished": false
+    "uuid": "ecb36d54-5e2c-49ec-b695-0b2c3f01cbd0",
+    "unfinished": false,
+    "format_version": 2
   },
   "config": [
     {
