@@ -482,6 +482,30 @@ Built via: `initiate_migration/start.md` + `WebMethods/start.md` 6-step workflow
 
 ---
 
+### webMethods IS → Workato: GLDFundingEngine20080714 "Funding Engine Test2" (COMPLETE — 2026-08-18)
+Source: `GLDFundingEngine20080714` (webMethods IS 6.5, keybank.com).
+Folder: `FundingEngineTest2` (folderId `32367278`, parent: migrAIte_Training `31835141`, account `manish@techstonellc.com`)
+Built via: `Workato/Companion/SKILL.md` (workato-integration skill) — all 15 rules applied.
+Source analysis: `WebMethods/Analysis/MD/PackageAnalysis.md` (Section 8, Recipe 1).
+
+| Component | ID / Details | Status |
+|---|---|---|
+| Funding Engine Test2 | `74824702` — callable recipe (workato_service/receive_request "Funding Engine Test2") | Pushed (2026-08-18) |
+
+**Recipe structure (all RecipeComponent JSONs used as canonical references):**
+- Trigger: 7 flat fields (id, customerName, customerID, sourceName, sourceSubCategory, salesRepName, payments JSON string)
+- `try` → `foreach` (payment_loop, parse_json) → `if` Check (steps 4-7) / `elsif` ACH (step 9 Oracle) / `else` Default (logger) → `rescue` (step 13, last) → `send_reply` → `catch` (step 15, last in try)
+- **Key fix vs Test1:** `forEach.json` canonical: `"source"` at TOP LEVEL (not inside `"input"`); `"input": {}` empty
+- Push script: `scripts/push_funding_engine_test2.py`
+- URL: https://app.workato.com/recipes/74824702
+
+**Remaining GUI steps:**
+1. Create `GLDFundingEngine_CheckWriter_Connection` (HTTP) → wire to steps 4, 6, 7 (CheckWriter URL from SME)
+2. Wire `MIG_WM_GLD_Oracle_Connection` (ID 19657520) → step 9 (confirm SP name GLD_ACH.INSERTPAYMENT)
+3. Wire `error.message` datapills in step 13 (rescue logger) and step 16 (catch logger) in GUI
+
+---
+
 ### webMethods IS → Workato: GLDFundingEngine20080714 "Funding Engine using Companion" (COMPLETE — 2026-08-09)
 Source: `GLDFundingEngine20080714` (webMethods IS 6.5, keybank.com).
 Folder: `migrAIte_Training` (folderId `31835141`, account `manish@techstonellc.com`)
