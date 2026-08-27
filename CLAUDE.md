@@ -626,6 +626,27 @@ Folder: `WebMethodsMigration` (folderId `31661117`, account `manish@techstonellc
 4. Wire all oracle/run_sql steps with proper SP parameter bindings in Workato GUI
 5. Test end-to-end with sample compliance check request
 
+### webMethods IS → Workato: GLD Compliance Check — built via AIRO recipe builder (COMPLETE — 2026-08-27)
+Source: `GLDComplianceAdapterServices` (webMethods IS 6.5, Oracle JDBC adapter, keybank.com) — `WebMethods/Analysis/GLDComplianceAdapterServices_Analysis.md`.
+Workspace: separate/fresh Workato workspace reached via the **AIRO MCP server** (`workato-airo-mcp-server`) — NOT the `manish@techstonellc.com` workspace used by prior GLD Compliance recipes. Only folder available: `AIRO_Test` (folderId `33854532`, project `AIRO_Test` id `17438325`).
+Built entirely through AIRO's live recipe-builder MCP tools (`recipe_builder_init`/`add_step`/`set_input_field`/`set_condition`/`push`) rather than a hand-crafted JSON push script — first migration built this way.
+
+| Component | ID / Details | Status |
+|---|---|---|
+| GLD Compliance Check | `78515291` — callable Recipe Function (`workato_recipe_function.execute`, 25-param trigger matching logCheckRequest) | Pushed to platform (2026-08-27) |
+
+**Recipe structure:** trigger (execute) → error_handling(try) → oracle.execute_procedure ACCLOGCHECKREQUEST [placeholder] → oracle.execute_procedure LOGXMLREQUEST [placeholder] → rest.make_request_v2 POST to CIU (fully configured: url/method/headers/body/response_schema) → oracle.execute_procedure ACCUPDATECIUREFNBR [placeholder] → if CheckResult=="TRUE": oracle.execute_procedure ACCLOGCHECKREPLY [placeholder] / else: oracle.execute_procedure ACCLOGCHECKREPLYERROR [placeholder] → oracle.search_rows_sql 28-col JOIN (selectCustomerAndRequest, fully configured SQL) → return_result (success) → catch: oracle.execute_procedure ACCLOGCHECKREPLYERROR [placeholder] → return_result (error). `purgeData` intentionally excluded (separate maintenance operation, not part of the request/reply flow — consistent with prior GLD Compliance recipes).
+
+**Key AIRO platform finding:** the `oracle` connector's action schema (incl. `procedure_name` and every SP parameter) is 100% connection-gated — `recipe_builder_get_input_schema`/`set_input_field` hard-error with "Missing connection for oracle" with zero live connection, even for just naming the procedure. Unlike the raw-JSON push-script approach used for prior GLD Compliance recipes, there is no way to pre-fill Oracle SP parameters through AIRO without an authorized connection first. The `rest` (HTTP) connector's action schema is NOT connection-gated and was fully configured.
+
+**Remaining manual steps:**
+1. Create + authorize an Oracle connection in this AIRO workspace (host `CSC06DSHORA1S:1522`, SID `ILMSUM`, schema `GLD_SCHEMA`) — then reconfigure the 6 placeholder `oracle.execute_procedure`/`search_rows_sql` steps (3, 4, 6, 8, 10, 14) with `procedure_name` + params per the comment on each step (full param lists documented in [GLDComplianceAdapterServices_Analysis.md](WebMethods/Analysis/GLDComplianceAdapterServices_Analysis.md))
+2. Step 5 (HTTP CIU call): replace `[CIU_ENDPOINT_URL — obtain from SME]` placeholder with the real CIU endpoint URL, then create + select an HTTP connection if the endpoint requires auth
+3. Step 3 output (`accCheckRequestID`) needs to be threaded into steps 6/11 once configured — Oracle SP OUT params may need a follow-up SELECT (same workaround as `NewRecipe2` below) if `execute_procedure` doesn't surface OUT params directly
+4. `recipe_builder_show()` reported all 6 Oracle placeholders as the only remaining inconsistencies — everything else validated clean
+
+---
+
 ### webMethods IS → Workato: NewRecipe2 — GLD Compliance (COMPLETE — 2026-07-21)
 Source: `GLDComplianceAdapterServices` (webMethods IS 6.5, Oracle JDBC adapter, keybank.com).
 Folder: `migrAIte_Training/webMethodsMigration` (folderId `32050036`, account `manish@techstonellc.com`)
