@@ -1,0 +1,297 @@
+<title>MigrAIte Target Architecture</title>
+<style>
+  :root {
+    --bg: #FAFBFC;
+    --surface: #FFFFFF;
+    --ink: #1B2733;
+    --muted: #5C6B7A;
+    --line: #D9E0E7;
+    --src: #2B5FB8;
+    --src-soft: #E8EFFA;
+    --tgt: #0E7C6B;
+    --tgt-soft: #E4F3F0;
+    --gate: #B7791F;
+    --gate-soft: #FBF3E2;
+    --code-bg: #F0F3F6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #10161C; --surface: #171F27; --ink: #E4EAF0; --muted: #93A1B0;
+      --line: #2A3540; --src: #6FA1E8; --src-soft: #1B2A42; --tgt: #3FBFA4;
+      --tgt-soft: #12302B; --gate: #E0A94E; --gate-soft: #332812; --code-bg: #1D2733;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #10161C; --surface: #171F27; --ink: #E4EAF0; --muted: #93A1B0;
+    --line: #2A3540; --src: #6FA1E8; --src-soft: #1B2A42; --tgt: #3FBFA4;
+    --tgt-soft: #12302B; --gate: #E0A94E; --gate-soft: #332812; --code-bg: #1D2733;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    line-height: 1.6; margin: 0; font-size: 16px;
+  }
+  main { max-width: 880px; margin: 0 auto; padding: 2.5rem 1.5rem 6rem; }
+
+  header.hero { padding: 2.5rem 0 1.8rem; border-bottom: 1px solid var(--line); margin-bottom: 2rem; }
+  .eyebrow {
+    font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--muted); font-weight: 600; margin-bottom: 0.75rem;
+  }
+  h1 { font-size: 2.1rem; line-height: 1.15; margin: 0 0 0.75rem; font-weight: 750; letter-spacing: -0.02em; text-wrap: balance; }
+  .hero p.lede { font-size: 1.05rem; color: var(--muted); max-width: 64ch; margin: 0; }
+
+  h2 { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.01em; margin: 2.8rem 0 0.4rem; text-wrap: balance; }
+  h3 { font-size: 1.05rem; font-weight: 650; margin: 1.8rem 0 0.4rem; }
+  p { max-width: 70ch; }
+  code {
+    font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.86em; background: var(--code-bg); padding: 0.1em 0.35em;
+    border-radius: 4px; word-break: break-word;
+  }
+
+  .tablewrap { overflow-x: auto; margin: 1.2rem 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.88rem; }
+  th {
+    text-align: left; font-size: 0.7rem; letter-spacing: 0.09em; text-transform: uppercase;
+    color: var(--muted); font-weight: 650; padding: 0.5rem 0.8rem;
+    border-bottom: 2px solid var(--line); white-space: nowrap;
+  }
+  td { padding: 0.55rem 0.8rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  td:first-child { white-space: nowrap; }
+
+  figure { margin: 1.6rem 0; }
+  figure svg { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+  figcaption { font-size: 0.82rem; color: var(--muted); margin-top: 0.7rem; max-width: 66ch; }
+  .figscroll { overflow-x: auto; }
+
+  .callout {
+    border-left: 3px solid var(--gate); background: var(--gate-soft);
+    border-radius: 0 8px 8px 0; padding: 0.8rem 1.1rem; margin: 1.3rem 0; font-size: 0.92rem;
+  }
+  .callout.src-note { border-left-color: var(--src); background: var(--src-soft); }
+  .callout.tgt-note { border-left-color: var(--tgt); background: var(--tgt-soft); }
+  .callout strong.tag { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; display: block; margin-bottom: 0.2rem; }
+
+  .legend { display: flex; gap: 1.2rem; flex-wrap: wrap; font-size: 0.8rem; color: var(--muted); margin: 0.8rem 0 0; }
+  .chip { display: inline-flex; align-items: center; gap: 0.4rem; }
+  .swatch { width: 18px; height: 0; border-top: 2px dashed; display: inline-block; }
+  strong { font-weight: 650; }
+</style>
+
+<main>
+<header class="hero">
+  <div class="eyebrow">TechStone · iPaaS Migration · Proposal</div>
+  <h1>MigrAIte Target Architecture</h1>
+  <p class="lede">The proposed workflow for webMethods → Workato migrations: verification at every stage, format knowledge moved out of the AI agent's hands, and two interchangeable build paths — our own builder library, or Workato AIRO.</p>
+</header>
+
+<p>Three design principles drive everything below:</p>
+<ol>
+  <li><strong>Every stage's output is checked against an artifact from the stage before</strong> — so every failure has an address.</li>
+  <li><strong>The agent only ever touches intent</strong> — analysis, tests, definition — while format, coverage, and verification live in deterministic code.</li>
+  <li><strong>The recipe JSON is a build artifact, never a source file</strong> — all fixes happen upstream and recompile down.</li>
+</ol>
+
+<div class="legend">
+  <span class="chip"><span class="swatch" style="border-color: var(--gate)"></span> iteration loops (repeat until check passes)</span>
+  <span class="chip"><span class="swatch" style="border-color: var(--src)"></span> learning loops (report updates the skills)</span>
+</div>
+
+<figure class="figscroll">
+  <svg viewBox="0 0 880 1090" role="img" aria-label="Proposed target workflow. A shared front: one analyze pass produces two artifacts — the analysis document and the test cases — iterating against a deterministic coverage check, then a human gate. The flow splits into two build paths, each loaded from its own skill file: our definition-file-plus-library path with programmatic lint, or the AIRO blueprint path. The paths re-merge into a shared verification tail: mock test loop, push with pull-back diff, report, and human finishing steps. The report feeds learnings back into both skill files.">
+    <defs>
+      <marker id="arrT" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+      </marker>
+      <marker id="arrLoop" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="var(--gate)"/>
+      </marker>
+      <marker id="arrLearn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="var(--src)"/>
+      </marker>
+    </defs>
+    <g font-size="12" fill="currentColor">
+
+      <!-- source -->
+      <rect x="290" y="10" width="300" height="44" rx="8" fill="none" stroke="var(--src)" stroke-width="2"/>
+      <text x="440" y="29" text-anchor="middle" font-weight="600">webMethods package</text>
+      <text x="440" y="45" text-anchor="middle" font-size="10.5" opacity="0.7">flow.xml · node.ndf · manifest.v3</text>
+      <line x1="440" y1="54" x2="440" y2="76" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrT)"/>
+
+      <!-- [1] analyze: container with two artifact boxes -->
+      <rect x="220" y="78" width="440" height="96" rx="8" fill="none" stroke="currentColor" stroke-width="2"/>
+      <text x="440" y="98" text-anchor="middle" font-weight="600">1 · ANALYZE — one agent pass, two artifacts</text>
+      <rect x="238" y="106" width="190" height="58" rx="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <text x="333" y="125" text-anchor="middle" font-weight="600" font-size="11">Analysis doc</text>
+      <text x="333" y="141" text-anchor="middle" font-size="10" opacity="0.7">flows · mappings ·</text>
+      <text x="333" y="155" text-anchor="middle" font-size="10" opacity="0.7">architecture (§1–§10)</text>
+      <text x="440" y="140" text-anchor="middle" font-weight="700" font-size="14" opacity="0.6">+</text>
+      <rect x="452" y="106" width="190" height="58" rx="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <text x="547" y="125" text-anchor="middle" font-weight="600" font-size="11">Test cases</text>
+      <text x="547" y="141" text-anchor="middle" font-size="10" opacity="0.7">input → expected call</text>
+      <text x="547" y="155" text-anchor="middle" font-size="10" opacity="0.7">trace → reply · edge cases</text>
+      <line x1="440" y1="174" x2="440" y2="194" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrT)"/>
+
+      <!-- [2] coverage check -->
+      <rect x="260" y="196" width="360" height="58" rx="8" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <text x="440" y="217" text-anchor="middle" font-weight="600">2 · COVERAGE CHECK — deterministic script</text>
+      <text x="440" y="233" text-anchor="middle" font-size="10.5" opacity="0.7">parse flow.xml → branch inventory →</text>
+      <text x="440" y="247" text-anchor="middle" font-size="10.5" opacity="0.7">every path has a test · every shape analyzed</text>
+
+      <!-- loop: coverage → analyze -->
+      <path d="M 260 225 L 190 225 L 190 130 L 212 130" fill="none" stroke="var(--gate)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arrLoop)"/>
+      <text x="186" y="176" text-anchor="end" font-size="10" fill="var(--gate)">gaps found:</text>
+      <text x="186" y="189" text-anchor="end" font-size="10" fill="var(--gate)">extend &amp; re-check</text>
+
+      <line x1="440" y1="254" x2="440" y2="276" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrT)"/>
+      <text x="452" y="270" font-size="10" opacity="0.7">all paths covered</text>
+
+      <!-- human gate -->
+      <rect x="320" y="278" width="240" height="34" rx="17" fill="var(--gate-soft)" stroke="var(--gate)" stroke-width="2"/>
+      <text x="440" y="300" text-anchor="middle" font-size="11" font-weight="700" fill="var(--gate)">HUMAN GATE — one packet</text>
+      <text x="440" y="328" text-anchor="middle" font-size="10" opacity="0.7">SME validates via the concrete test cases; discrepancy list on top</text>
+
+      <!-- split -->
+      <line x1="400" y1="312" x2="218" y2="360" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrT)"/>
+      <line x1="480" y1="312" x2="662" y2="360" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrT)"/>
+
+      <!-- column headers -->
+      <text x="215" y="382" text-anchor="middle" font-weight="700" font-size="13" fill="var(--tgt)">PATH A · OUR BUILD</text>
+      <text x="665" y="382" text-anchor="middle" font-weight="700" font-size="13">PATH B · AIRO BUILD</text>
+      <text x="215" y="397" text-anchor="middle" font-size="10" opacity="0.7">format owned by our library</text>
+      <text x="665" y="397" text-anchor="middle" font-size="10" opacity="0.7">format owned by Workato</text>
+
+      <!-- skill boxes -->
+      <rect x="65" y="406" width="300" height="46" rx="8" fill="var(--src-soft)" stroke="var(--src)" stroke-width="1.5" stroke-dasharray="6 4"/>
+      <text x="215" y="424" text-anchor="middle" font-weight="600" font-size="11" fill="var(--src)">SKILL: build-with-library</text>
+      <text x="215" y="440" text-anchor="middle" font-size="9.5" opacity="0.8">library API guide · known pitfalls · grows each run</text>
+      <line x1="215" y1="452" x2="215" y2="474" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrT)"/>
+
+      <rect x="515" y="406" width="300" height="46" rx="8" fill="var(--src-soft)" stroke="var(--src)" stroke-width="1.5" stroke-dasharray="6 4"/>
+      <text x="665" y="424" text-anchor="middle" font-weight="600" font-size="11" fill="var(--src)">SKILL: drive-AIRO</text>
+      <text x="665" y="440" text-anchor="middle" font-size="9.5" opacity="0.8">blueprint patterns · AIRO quirks · grows each run</text>
+      <line x1="665" y1="452" x2="665" y2="474" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrT)"/>
+
+      <!-- Path A -->
+      <rect x="65" y="476" width="300" height="58" rx="8" fill="none" stroke="var(--tgt)" stroke-width="1.5"/>
+      <text x="215" y="497" text-anchor="middle" font-weight="600" font-size="11.5">3a · Write definition file</text>
+      <text x="215" y="512" text-anchor="middle" font-size="10.5" opacity="0.7">~100 lines of library calls, full context,</text>
+      <text x="215" y="526" text-anchor="middle" font-size="10.5" opacity="0.7">comments cite analysis rows</text>
+      <line x1="215" y1="534" x2="215" y2="556" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrT)"/>
+
+      <rect x="65" y="558" width="300" height="58" rx="8" fill="var(--tgt-soft)" stroke="var(--tgt)" stroke-width="2"/>
+      <text x="215" y="579" text-anchor="middle" font-weight="600" font-size="11.5">4a · COMPILE + LINT ★ Path A only</text>
+      <text x="215" y="594" text-anchor="middle" font-size="10.5" opacity="0.75">library expands JSON by construction ·</text>
+      <text x="215" y="608" text-anchor="middle" font-size="10.5" opacity="0.75">dangling-pill / alias check · dry-run</text>
+
+      <!-- loop: lint fail (between the columns) -->
+      <path d="M 365 587 L 400 587 L 400 505 L 373 505" fill="none" stroke="var(--gate)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arrLoop)"/>
+      <text x="408" y="545" font-size="10" fill="var(--gate)">lint</text>
+      <text x="408" y="557" font-size="10" fill="var(--gate)">fails</text>
+
+      <!-- Path B -->
+      <rect x="515" y="476" width="300" height="58" rx="8" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <text x="665" y="497" text-anchor="middle" font-weight="600" font-size="11.5">3b · Feed blueprint to AIRO (MCP)</text>
+      <text x="665" y="512" text-anchor="middle" font-size="10.5" opacity="0.7">§8 step tree + §5 mappings as the</text>
+      <text x="665" y="526" text-anchor="middle" font-size="10.5" opacity="0.7">precise build description</text>
+      <line x1="665" y1="534" x2="665" y2="556" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrT)"/>
+
+      <rect x="515" y="558" width="300" height="58" rx="8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="6 4"/>
+      <text x="665" y="579" text-anchor="middle" font-weight="600" font-size="11.5">4b · AIRO builds the recipe</text>
+      <text x="665" y="594" text-anchor="middle" font-size="10.5" opacity="0.7">no pre-push lint — we never see the JSON;</text>
+      <text x="665" y="608" text-anchor="middle" font-size="10.5" opacity="0.7">AIRO's errors surface in the shared checks below</text>
+
+      <!-- merge -->
+      <line x1="215" y1="616" x2="400" y2="672" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrT)"/>
+      <line x1="665" y1="616" x2="480" y2="672" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrT)"/>
+      <text x="440" y="654" text-anchor="middle" font-size="10" opacity="0.7">paths re-merge — everything below is identical for both</text>
+
+      <!-- [5] mock test loop -->
+      <rect x="260" y="674" width="360" height="72" rx="8" fill="none" stroke="currentColor" stroke-width="2"/>
+      <text x="440" y="695" text-anchor="middle" font-weight="600">5 · MOCK TEST LOOP</text>
+      <text x="440" y="711" text-anchor="middle" font-size="10.5" opacity="0.7">push to test folder → run every test case against</text>
+      <text x="440" y="725" text-anchor="middle" font-size="10.5" opacity="0.7">mock endpoints → compare captured call-traces</text>
+      <text x="440" y="739" text-anchor="middle" font-size="10.5" opacity="0.7">vs expected (bounded retries)</text>
+
+      <!-- loops: test fail back to 3a / 3b -->
+      <path d="M 260 700 L 96 700 L 96 622" fill="none" stroke="var(--gate)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arrLoop)"/>
+      <text x="104" y="660" font-size="10" fill="var(--gate)">A fails: edit the</text>
+      <text x="104" y="672" font-size="10" fill="var(--gate)">definition, recompile</text>
+      <path d="M 620 700 L 784 700 L 784 622" fill="none" stroke="var(--gate)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arrLoop)"/>
+      <text x="776" y="660" text-anchor="end" font-size="10" fill="var(--gate)">B fails: revise blueprint,</text>
+      <text x="776" y="672" text-anchor="end" font-size="10" fill="var(--gate)">re-prompt AIRO</text>
+
+      <line x1="440" y1="746" x2="440" y2="768" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrT)"/>
+      <text x="452" y="762" font-size="10" opacity="0.7">all tests pass</text>
+
+      <!-- [6] push + verify -->
+      <rect x="260" y="770" width="360" height="58" rx="8" fill="none" stroke="var(--tgt)" stroke-width="2"/>
+      <text x="440" y="791" text-anchor="middle" font-weight="600">6 · PUSH + PULL-BACK VERIFY</text>
+      <text x="440" y="807" text-anchor="middle" font-size="10.5" opacity="0.7">POST to real folder → GET it back → projected-tree</text>
+      <text x="440" y="821" text-anchor="middle" font-size="10.5" opacity="0.7">diff vs §8 — catches silent platform mangling</text>
+      <line x1="440" y1="828" x2="440" y2="848" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrT)"/>
+
+      <!-- [7] report -->
+      <rect x="260" y="850" width="360" height="72" rx="8" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <text x="440" y="871" text-anchor="middle" font-weight="600">7 · REPORT — auto-assembled</text>
+      <text x="440" y="887" text-anchor="middle" font-size="10.5" opacity="0.7">✓ passed tests · ✗ can't-fix (gaps G-list, SME inputs</text>
+      <text x="440" y="901" text-anchor="middle" font-size="10.5" opacity="0.7">S-list, platform limits) · architecture suggestions —</text>
+      <text x="440" y="915" text-anchor="middle" font-size="10.5" opacity="0.7">opt-in · new pitfalls &amp; quirks flagged for the skills</text>
+
+      <!-- learning feedback loops: report → skills -->
+      <path d="M 260 878 L 30 878 L 30 429 L 57 429" fill="none" stroke="var(--src)" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#arrLearn)"/>
+      <text x="145" y="870" text-anchor="middle" font-size="9.5" fill="var(--src)">learnings → build skill</text>
+      <path d="M 620 878 L 850 878 L 850 429 L 823 429" fill="none" stroke="var(--src)" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#arrLearn)"/>
+      <text x="735" y="870" text-anchor="middle" font-size="9.5" fill="var(--src)">learnings → AIRO skill</text>
+
+      <line x1="440" y1="922" x2="440" y2="942" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrT)"/>
+
+      <!-- human finish -->
+      <rect x="310" y="944" width="260" height="34" rx="17" fill="var(--gate-soft)" stroke="var(--gate)" stroke-width="2"/>
+      <text x="440" y="966" text-anchor="middle" font-size="11" font-weight="700" fill="var(--gate)">HUMAN FINISH</text>
+      <text x="440" y="994" text-anchor="middle" font-size="10" opacity="0.7">wire connections + error pills in GUI (SME inputs S1–S8)</text>
+      <line x1="440" y1="1002" x2="440" y2="1020" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrT)"/>
+
+      <!-- promotion -->
+      <rect x="260" y="1022" width="360" height="52" rx="8" fill="none" stroke="var(--tgt)" stroke-width="1.5"/>
+      <text x="440" y="1043" text-anchor="middle" font-weight="600" font-size="11.5">Re-run the SAME test suite on real endpoints</text>
+      <text x="440" y="1059" text-anchor="middle" font-size="10.5" opacity="0.7">promotion of the existing tests — not new ones</text>
+    </g>
+  </svg>
+  <figcaption>The proposed workflow. <span style="color: var(--gate)">Amber dashed arrows</span> are iteration loops: analysis extends until the coverage check passes; build output iterates until the mock tests pass — Path A by editing the definition file (never the JSON), Path B by revising the AIRO blueprint. <span style="color: var(--src)">Blue dashed arrows</span> are the learning loops: each run's report writes newly discovered pitfalls and quirks back into the build-path skills, so migration N+1 starts smarter than N. The two build paths differ only between the gate and the merge; every check below the merge applies to both.</figcaption>
+</figure>
+
+<h2>Same vs. different across the two build paths</h2>
+<div class="tablewrap"><table>
+  <tr><th>Stage</th><th>Path A — our build</th><th>Path B — AIRO</th></tr>
+  <tr><td>Analyze + test cases</td><td colspan="2"><strong>Identical</strong> — one agent pass; ours in both worlds</td></tr>
+  <tr><td>Coverage check</td><td colspan="2"><strong>Identical</strong> — deterministic flow.xml parse, iterate until covered</td></tr>
+  <tr><td>Human gate</td><td colspan="2"><strong>Identical</strong> — one packet: analysis + tests + discrepancies</td></tr>
+  <tr><td>Companion skill</td><td><code>build-with-library</code> — library API guide + known pitfalls</td><td><code>drive-AIRO</code> — blueprint patterns + AIRO quirks</td></tr>
+  <tr><td>Build</td><td>Agent writes a definition file calling the shared builder library</td><td>Agent feeds the §8/§5 blueprint to AIRO over its MCP server</td></tr>
+  <tr><td>Format correctness</td><td>By construction (library) + <strong>programmatic lint before push</strong></td><td>AIRO's responsibility — no pre-push lint possible; its mistakes surface in the shared verification below</td></tr>
+  <tr><td>Iteration target on test failure</td><td>Edit the definition file, recompile</td><td>Revise the blueprint, re-prompt AIRO</td></tr>
+  <tr><td>Mock test loop</td><td colspan="2"><strong>Identical</strong> — call-trace comparison against the approved test cases</td></tr>
+  <tr><td>Pull-back diff vs §8</td><td colspan="2"><strong>Identical</strong> — and it is the primary format check for Path B</td></tr>
+  <tr><td>Report + human finish + promotion</td><td colspan="2"><strong>Identical</strong></td></tr>
+</table></div>
+
+<div class="callout src-note">
+  <strong class="tag">Skills as the learning ledger</strong>
+  Each build path carries its own skill file, loaded into the agent's context at build time and <em>updated from the report at the end of every run</em>: a pitfall the lint or pull-back diff caught goes into <code>build-with-library</code>; a quirk in how AIRO interpreted a blueprint goes into <code>drive-AIRO</code>. This formalizes how the current 15 push rules were actually born — push failures hand-transcribed into the skill doc — into a closing loop the workflow performs on itself. Two disciplines keep it healthy: entries are <em>curated, not appended raw</em> (dedup against existing entries; a human approves skill edits like any other artifact), and anything that can become a library default or lint check should graduate out of the skill into code — the skill holds only what still requires judgment.
+</div>
+
+<div class="callout tgt-note">
+  <strong class="tag">Why the verification tail never changes</strong>
+  Both builders are LLMs — ours and Workato's. The tail (tests, pull-back diff, report) was designed to trust no builder, so swapping the builder swaps nothing downstream. The open question between the paths is empirical, not architectural: can AIRO follow a step-level blueprint precisely and deterministically? A one-day spike — feed it a known package's §8 step tree + §5 mappings, pull the result, diff against §8 — answers it before any library-building investment.
+</div>
+
+<div class="callout">
+  <strong class="tag">What this retires from the current workflow</strong>
+  The sequential-prompts file (<code>WMToWorkato.md</code>) disappears — it was scaffolding for hand-assembling brittle JSON step by step; the definition file (or AIRO blueprint) replaces it, with traceability moving into inline comments citing analysis rows. Per-script helper code disappears into the central library. The hardcoded per-recipe assertions generalize into the tree-walking lint. The manual "open the GUI and look for grey boxes" check becomes the pull-back diff. The analysis, the human gate, and the canonical-specimen discipline all survive unchanged.
+</div>
+
+</main>
