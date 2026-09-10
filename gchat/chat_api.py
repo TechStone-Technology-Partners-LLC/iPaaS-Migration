@@ -5,13 +5,18 @@ in spaces it has been added to. No domain-wide delegation.
 """
 
 import io
+import logging
 import os
+import socket
+import ssl
 
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 
 from . import env
+
+log = logging.getLogger("gchat.chat_api")
 
 SCOPES = ["https://www.googleapis.com/auth/chat.bot"]
 
@@ -27,8 +32,25 @@ class ChatAPI:
                 "GOOGLE_APPLICATION_CREDENTIALS is not set or the key file does not "
                 "exist. See docs/gchat-setup.md."
             )
-        creds = service_account.Credentials.from_service_account_file(path, scopes=SCOPES)
-        self._svc = build("chat", "v1", credentials=creds, cache_discovery=False)
+        self._creds = service_account.Credentials.from_service_account_file(path, scopes=SCOPES)
+        self._svc = self._build()
+
+    def _build(self):
+        return build("chat", "v1", credentials=self._creds, cache_discovery=False)
+
+    def _execute(self, make_request):
+        """Run make_request(service).execute() with reconnect-and-retry.
+
+        The discovery client keeps a persistent HTTPS socket; after idle
+        periods the far end drops it and the next write raises SSLEOFError /
+        ConnectionError. Rebuild the client once and retry.
+        """
+        try:
+            return make_request(self._svc).execute(num_retries=2)
+        except (ssl.SSLError, ConnectionError, socket.error, OSError) as exc:
+            log.warning("chat api transport error (%s) — rebuilding client and retrying", exc)
+            self._svc = self._build()
+            return make_request(self._svc).execute(num_retries=2)
 
     # ── posting ──────────────────────────────────────────────────────────────
     def post(self, space_name: str, thread_name: str | None, text: str) -> None:
@@ -42,7 +64,7 @@ class ChatAPI:
             if thread_name:
                 body["thread"] = {"name": thread_name}
                 kwargs["messageReplyOption"] = "REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD"
-            self._svc.spaces().messages().create(**kwargs).execute()
+            self._execute(lambda svc: svc.spaces().messages().create(**kwargs))
 
     # ── attachments ──────────────────────────────────────────────────────────
     def download_attachment(self, attachment: dict) -> bytes:
@@ -50,13 +72,21 @@ class ChatAPI:
         resource = attachment.get("attachmentDataRef", {}).get("resourceName")
         if not resource:
             raise RuntimeError("Attachment has no attachmentDataRef.resourceName")
-        request = self._svc.media().download_media(resourceName=resource)
-        buf = io.BytesIO()
-        downloader = MediaIoBaseDownload(buf, request)
-        done = False
-        while not done:
-            _, done = downloader.next_chunk()
-        return buf.getvalue()
+        def _download(svc):
+            request = svc.media().download_media(resourceName=resource)
+            buf = io.BytesIO()
+            downloader = MediaIoBaseDownload(buf, request)
+            done = False
+            while not done:
+                _, done = downloader.next_chunk(num_retries=2)
+            return buf.getvalue()
+
+        try:
+            return _download(self._svc)
+        except (ssl.SSLError, ConnectionError, socket.error, OSError) as exc:
+            log.warning("chat media transport error (%s) — rebuilding client and retrying", exc)
+            self._svc = self._build()
+            return _download(self._svc)
 
 
 def _chunks(text: str) -> list[str]:

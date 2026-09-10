@@ -1,8 +1,7 @@
 """Prompt builders for the Google Chat migration agent session.
 
-v1 scope: ANALYZE + approval loop only. The recipe build/push phase is a later
-extension of the kickoff prompt (target folder migrAIte_Training/webMethodsMigration,
-Workato/RecipeComponents/*.json references, scripts/push_*_workato.py pattern).
+Flow: ANALYZE the package -> user reviews (Google Doc + chat feedback) ->
+APPROVAL -> ask target folder -> BUILD the recipe via the Workato AIRO MCP.
 """
 
 import os
@@ -32,8 +31,8 @@ def _kickoff_body(pkg_name: str, reused_existing: bool, workato_folder_id: str) 
     return f"""You are MigrAIte, running a webMethods -> Workato migration:
 ANALYZE the package, get the user's APPROVAL, then BUILD the Workato recipe
 via the AIRO MCP tools.
-You are being driven over Google Chat: every text message you produce is relayed
-verbatim to the user as a chat message, and the user's chat replies are fed back
+You are being driven over Google Chat: the final text of each of your turns is
+relayed to the user as a chat message, and the user's chat replies are fed back
 to you as your next user message.
 
 PACKAGE
@@ -97,8 +96,8 @@ approves the analysis. Once they approve, proceed to the BUILD phase:
    connections (e.g. the Oracle connection) and select them; where no
    connection exists, still configure the step fully and note it needs a
    connection wired in the GUI.
-5. Post short progress updates to the user as you complete major blocks
-   (trigger, loops, branches, error handling) — not one message per step.
+5. Do not narrate progress — the user only sees the final message of each
+   turn (the bot posts "still working" heartbeats on its own).
 6. Finish with recipe_builder_push, then post a final message containing the
    full Workato recipe URL (from recipe_builder_save/asset_url_get), what was
    built, and any manual GUI steps remaining (connections to authorize, etc.).
@@ -110,6 +109,9 @@ approves the analysis. Once they approve, proceed to the BUILD phase:
 
 CHAT FORMATTING RULES (Google Chat renders limited markdown and caps messages
 at 4096 characters):
+- Only the FINAL text of each of your turns is delivered to the user; anything
+  you write before a tool call is treated as internal narration and is NOT
+  shown. Put everything the user needs in your closing message.
 - Keep every message under ~3500 characters. No wide markdown tables.
 - Summarize file outputs — never paste whole files into chat.
 - When you need input, end your turn with EXACTLY ONE clearly stated question.

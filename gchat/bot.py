@@ -18,12 +18,14 @@ from google.cloud import pubsub_v1
 
 from . import env, intake, prompts
 from .chat_api import ChatAPI
+from .drive_api import DriveAPI
+from .env import REPO_ROOT
 from .session import AgentSession, Text, Tool, TurnDone
 
 log = logging.getLogger("gchat")
 
 STATE_PATH = Path(__file__).parent / "state.json"
-HEARTBEAT_S = 60
+DEFAULT_HEARTBEAT_S = 180  # "still working" cadence during long turns (GCHAT_HEARTBEAT_S)
 
 # thread states
 IDLE, AGENT_RUNNING, WAITING_FOR_USER, BUDGET_PAUSED, DONE = (
@@ -43,6 +45,9 @@ class Thread:
         self.session: AgentSession | None = None
         self.buffered: str | None = None  # latest mid-turn user message
         self.task: asyncio.Task | None = None  # in-flight agent turn
+        self.docs: dict[str, dict] = {}  # artifact key -> {id, link, path} (Google Docs)
+        self.run_folder: dict | None = None  # per-run Drive subfolder {id, link}
+        self.owner: str = ""  # requester email
 
 
 class Bot:
@@ -54,6 +59,20 @@ class Bot:
         self.queue: asyncio.Queue = asyncio.Queue()
         self.loop: asyncio.AbstractEventLoop | None = None
         self._state = self._load_state()
+        self.drive = self._init_drive()
+        self.heartbeat_s = env.get_int("GCHAT_HEARTBEAT_S", DEFAULT_HEARTBEAT_S)
+
+    def _init_drive(self) -> DriveAPI | None:
+        try:
+            d = DriveAPI()
+        except Exception as exc:
+            log.warning("Drive delivery disabled: %s", exc)
+            return None
+        if not d.enabled:
+            log.warning("Drive delivery disabled: GCHAT_DRIVE_FOLDER_ID not set")
+            return None
+        log.info("Drive delivery enabled (folder %s)", d.folder_id)
+        return d
 
     # ── persisted state (thread → session id) for restart resume ────────────
     def _load_state(self) -> dict:
@@ -65,7 +84,8 @@ class Bot:
     def _save_state(self) -> None:
         data = {
             t.name: {"session_id": t.session.session_id if t.session else None,
-                     "pkg": t.pkg, "state": t.state, "space": t.space}
+                     "pkg": t.pkg, "state": t.state, "space": t.space,
+                     "docs": t.docs, "run_folder": t.run_folder, "owner": t.owner}
             for t in self.threads.values()
         }
         STATE_PATH.write_text(json.dumps(data, indent=2))
@@ -173,13 +193,19 @@ class Bot:
         if thread is None:
             thread = Thread(space, thread_name, reply_thread)
             saved = self._state.get(thread_name)
-            if saved and saved.get("session_id") and saved.get("state") not in (DONE, None):
+            if saved and (saved.get("session_id") or saved.get("docs")) and saved.get("state") not in (DONE, None):
                 # bot restarted mid-migration: resume the session on next reply
                 thread.pkg = saved.get("pkg")
-                thread.session = AgentSession(thread.pkg or "", resume_session_id=saved["session_id"])
-                thread.state = WAITING_FOR_USER
-                self.active_thread = thread_name
+                thread.docs = saved.get("docs") or {}
+                thread.run_folder = saved.get("run_folder")
+                thread.owner = saved.get("owner") or ""
+                if saved.get("session_id"):
+                    thread.session = AgentSession(thread.pkg or "", resume_session_id=saved["session_id"])
+                    thread.state = WAITING_FOR_USER
+                    self.active_thread = thread_name
             self.threads[thread_name] = thread
+        if not thread.owner:
+            thread.owner = sender_email
 
         if text.lower() in ("/new", "/reset"):
             if thread.task:
@@ -195,11 +221,16 @@ class Bot:
                            "🔄 Conversation reset — upload a webMethods package zip to start a new migration.")
             return
 
+        # pull reviewer edits from Google Docs on any non-command reply
+        sync_note = ""
+        if thread.docs and text and not text.startswith("/"):
+            sync_note = self._sync_docs(thread)
+
         zips = [a for a in attachments if (a.get("contentName") or "").lower().endswith(".zip")]
         if zips and thread.state == IDLE:
             await self._start_migration(thread, zips[0], text)
         elif thread.state == WAITING_FOR_USER:
-            await self._user_reply(thread, text)
+            await self._user_reply(thread, text, sync_note)
         elif thread.state == BUDGET_PAUSED:
             await self._budget_reply(thread, text)
         elif thread.state == AGENT_RUNNING:
@@ -236,14 +267,14 @@ class Bot:
                        f"📦 Received *{pkg}*. Starting analysis — I'll post progress here and ask when I need input.")
         self._spawn_turn(thread, prompts.kickoff(pkg, reused, user_text))
 
-    async def _user_reply(self, thread: Thread, text: str) -> None:
+    async def _user_reply(self, thread: Thread, text: str, sync_note: str = "") -> None:
         if not text:
             return
         if text.lower() == "/abort":
             await self._finish(thread, aborted=True)
             return
         assert thread.pkg is not None
-        self._spawn_turn(thread, prompts.reanchor(thread.pkg, "analysis", text))
+        self._spawn_turn(thread, prompts.reanchor(thread.pkg, "analysis", text) + sync_note)
 
     async def _budget_reply(self, thread: Thread, text: str) -> None:
         cmd = text.lower()
@@ -275,29 +306,38 @@ class Bot:
     async def _run_turn(self, thread: Thread, prompt: str) -> None:
         assert thread.session is not None
         thread.state = AGENT_RUNNING
-        last_beat = time.monotonic()
-        last_tool = ""
+        turn_start = time.time()
+        final_texts: list[str] = []  # text after the last tool call = the message for the user
         done: TurnDone | None = None
-        async for event in thread.session.run_turn(prompt):
-            if isinstance(event, Text):
-                self.chat.post(thread.space, thread.reply_thread, event.text)
-            elif isinstance(event, Tool):
-                last_tool = f"{event.name} {event.hint}".strip()
-                if time.monotonic() - last_beat >= HEARTBEAT_S:
-                    self.chat.post(thread.space, thread.reply_thread,
-                                   f"⏳ Still working — last step: {last_tool}")
-                    last_beat = time.monotonic()
-            elif isinstance(event, TurnDone):
-                done = event
+
+        async def _heartbeat() -> None:
+            while True:
+                await asyncio.sleep(self.heartbeat_s)
+                self.chat.post(thread.space, thread.reply_thread, "⏳ Still working…")
+
+        hb = asyncio.create_task(_heartbeat())
+        try:
+            async for event in thread.session.run_turn(prompt):
+                if isinstance(event, Text):
+                    final_texts.append(event.text)
+                    log.info("agent text: %s", event.text[:200].replace("\n", " "))
+                elif isinstance(event, Tool):
+                    final_texts.clear()  # narration before a tool call is not for the user
+                    log.info("agent tool: %s %s", event.name, event.hint)
+                elif isinstance(event, TurnDone):
+                    done = event
+        finally:
+            hb.cancel()
         assert done is not None
         self._save_state()
 
         footer = f"(turn: ${done.cost_turn:.2f} · total: ${done.cost_total:.2f})"
+        body = "\n\n".join(t.strip() for t in final_texts if t.strip())
         if done.timed_out:
-            self.chat.post(thread.space, thread.reply_thread,
-                           f"⏱️ That step hit the time limit. Send a message to continue. {footer}")
-        else:
-            self.chat.post(thread.space, thread.reply_thread, footer)
+            body = (body + "\n\n" if body else "") + "⏱️ That step hit the time limit. Send a message to continue."
+        self.chat.post(thread.space, thread.reply_thread, (body + "\n\n" if body else "") + footer)
+
+        self._deliver_artifacts(thread, turn_start)
 
         breach = thread.session.budget.exceeded
         if breach:
@@ -309,7 +349,76 @@ class Bot:
         thread.state = WAITING_FOR_USER
         if thread.buffered:
             buffered, thread.buffered = thread.buffered, None
-            await self._user_reply(thread, buffered)
+            await self._user_reply(thread, buffered, self._sync_docs(thread))
+
+    # ── artifact delivery via Google Docs ────────────────────────────────────
+    def _artifacts(self, thread: Thread) -> list[tuple[str, str, Path]]:
+        pkg = thread.pkg or "package"
+        return [
+            ("blueprint", "Package Analysis (Workato blueprint)",
+             REPO_ROOT / "WebMethods" / "MD" / "PackageAnalysis.md"),
+            ("detail", "Detailed Source Analysis",
+             REPO_ROOT / "WebMethods" / "Analysis" / f"{pkg}_Analysis.md"),
+        ]
+
+    def _ensure_run_folder(self, thread: Thread) -> str:
+        """One Drive subfolder per migration run: <pkg> — <timestamp> — <requester>."""
+        if thread.run_folder:
+            return thread.run_folder["id"]
+        assert self.drive is not None
+        stamp = time.strftime("%Y-%m-%d %H:%M")
+        who = (thread.owner or "unknown").split("@")[0]
+        name = f"{thread.pkg or 'package'} — {stamp} — {who}"
+        thread.run_folder = self.drive.create_folder(name)
+        return thread.run_folder["id"]
+
+    def _deliver_artifacts(self, thread: Thread, since: float) -> None:
+        """Upload analysis files changed during the turn as Google Docs; post links."""
+        if not self.drive:
+            return
+        lines = []
+        for key, title, path in self._artifacts(thread):
+            try:
+                if not path.exists() or path.stat().st_mtime < since - 1:
+                    continue
+                existing = (thread.docs.get(key) or {}).get("id")
+                folder_id = self._ensure_run_folder(thread)
+                res = self.drive.upload_markdown_as_doc(str(path), title, existing, folder_id)
+                thread.docs[key] = {"id": res["id"], "link": res["link"], "path": str(path),
+                                    "baseline": self.drive.export_fingerprint(res["id"])}
+                verb = "updated" if existing else "created"
+                lines.append(f"• {title} ({verb}): {res['link']}")
+            except Exception:
+                log.exception("artifact delivery failed for %s", path)
+                lines.append(f"• {title}: ⚠️ could not upload to Drive (see bot log)")
+        if lines:
+            self._save_state()
+            folder_link = (thread.run_folder or {}).get("link", "")
+            header = "📄 Analysis documents (edit in place — your edits are picked up when you reply here):"
+            if folder_link:
+                header += f"\n📁 Run folder: {folder_link}"
+            self.chat.post(thread.space, thread.reply_thread, header + "\n" + "\n".join(lines))
+
+    def _sync_docs(self, thread: Thread) -> str:
+        """Pull reviewer edits from Google Docs back to disk before the next turn."""
+        if not self.drive or not thread.docs:
+            return ""
+        changed = []
+        for key, doc in thread.docs.items():
+            try:
+                did, fp = self.drive.sync_doc_to_local(doc["id"], doc["path"], doc.get("baseline"))
+                doc["baseline"] = fp
+                if did:
+                    changed.append(doc["path"])
+            except Exception:
+                log.exception("doc sync failed for %s", doc)
+        if not changed:
+            return ""
+        self.chat.post(thread.space, thread.reply_thread,
+                       "📝 Picked up your edits from Google Docs: " + ", ".join(Path(c).name for c in changed))
+        return ("\n[The user edited these files in Google Docs; the edited versions have been "
+                "written to disk and are authoritative — re-read them before responding: "
+                + ", ".join(changed) + "]")
 
     async def _finish(self, thread: Thread, aborted: bool = False) -> None:
         if thread.session:
