@@ -44,3 +44,15 @@ Note: The `/freshies` logic should replicate anything in your template folder so
 - Prompt claude to build new assets or modify existing ones
 - Workspace cleanup: Use `/tidy-up` to remove all development artifacts, or just `/freshies` spin up a new project workspace for the next project!
 - Profit
+
+## MigrAIte Google Chat bot
+
+Run webMethods → Workato migrations from Google Chat: upload a package zip,
+review the analysis as Google Docs, approve, and the recipe is built in
+Workato via AIRO. Code in `gchat/`.
+
+- [How the migration workflow works](docs/migraite-workflow.md) — analysis → review → approval → AIRO build (internal)
+- [How the Google Chat bot works](docs/migraite-gchat-bot.md) — Pub/Sub, Chat API, service, Agent SDK (internal)
+- [Setting up a Google Chat bot backed by an agent](docs/migraite-bot-setup.md) — generic setup + MigrAIte specifics (internal)
+- [Client onboarding](docs/migraite-client-onboarding.md) — external access, AIRO login, config (internal)
+- [User guide](docs/migraite-user-guide.md) — for people running migrations

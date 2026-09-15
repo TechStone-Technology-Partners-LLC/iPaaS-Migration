@@ -30,7 +30,7 @@ class ChatAPI:
         if not path or not os.path.exists(path):
             raise RuntimeError(
                 "GOOGLE_APPLICATION_CREDENTIALS is not set or the key file does not "
-                "exist. See docs/gchat-setup.md."
+                "exist. See docs/migraite-bot-setup.md."
             )
         self._creds = service_account.Credentials.from_service_account_file(path, scopes=SCOPES)
         self._svc = self._build()

@@ -107,7 +107,7 @@ class Bot:
         project = env.get("GCP_PROJECT_ID")
         sub_name = env.get("GCHAT_SUBSCRIPTION", "gchat-events-sub")
         if not project:
-            raise SystemExit("GCP_PROJECT_ID not set — see docs/gchat-setup.md")
+            raise SystemExit("GCP_PROJECT_ID not set — see docs/migraite-bot-setup.md")
         subscriber = pubsub_v1.SubscriberClient()
         sub_path = subscriber.subscription_path(project, sub_name)
         streaming = subscriber.subscribe(sub_path, callback=self._callback)
