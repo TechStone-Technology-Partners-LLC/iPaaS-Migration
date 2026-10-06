@@ -26,63 +26,51 @@ DEFAULT_TURN_TIMEOUT_S = 20 * 60
 DEFAULT_MODEL = "claude-sonnet-5-5"
 DEFAULT_EFFORT = "medium"  # low | medium | high | xhigh | max
 
-# $ per 1M tokens: (input, output, cache_read, cache_write_5m, cache_write_1h)
-# Cache-write multipliers are the standard 1.25x (5m) / 2x (1h) of input price.
-PRICES: dict[str, tuple[float, float, float, float, float]] = {
-    "claude-sonnet-5-5": (2.0, 10.0, 0.20, 2.50, 4.00),
-    "claude-sonnet-5":   (2.0, 10.0, 0.20, 2.50, 4.00),
-    "claude-opus-5-5":   (4.0, 20.0, 0.20, 5.00, 8.00),
-    "claude-opus-5":     (5.0, 25.0, 0.50, 6.25, 10.00),
-    "claude-fable-5-1":  (10.0, 50.0, 0.25, 12.50, 20.00),
-    "claude-fable-5":    (10.0, 50.0, 1.00, 12.50, 20.00),
-    "claude-haiku-4-5":  (1.0, 5.0, 0.10, 1.25, 2.00),
+# $ per 1M tokens: (input, output, cache_read, cache_write) — published API rates.
+# One cache-write rate is used regardless of the TTL the engine picks.
+PRICES: dict[str, tuple[float, float, float, float]] = {
+    "claude-sonnet-5-5": (2.0, 10.0, 0.20, 2.50),
+    "claude-sonnet-5":   (2.0, 10.0, 0.20, 2.50),
+    "claude-opus-5-5":   (4.0, 20.0, 0.20, 5.00),
+    "claude-opus-5":     (5.0, 25.0, 0.50, 6.25),
+    "claude-fable-5-1":  (10.0, 50.0, 0.25, 12.50),
+    "claude-fable-5":    (10.0, 50.0, 1.00, 12.50),
+    "claude-haiku-4-5":  (1.0, 5.0, 0.10, 1.25),
 }
 
 
 @dataclass
 class Tokens:
     uncached_in: int = 0
-    cache_write_5m: int = 0
-    cache_write_1h: int = 0
+    cache_write: int = 0
     cache_read: int = 0
     out: int = 0
 
     def add(self, other: "Tokens") -> None:
         self.uncached_in += other.uncached_in
-        self.cache_write_5m += other.cache_write_5m
-        self.cache_write_1h += other.cache_write_1h
+        self.cache_write += other.cache_write
         self.cache_read += other.cache_read
         self.out += other.out
-
-    @property
-    def cached_total(self) -> int:
-        return self.cache_read + self.cache_write_5m + self.cache_write_1h
 
 
 def tokens_from_usage(usage: dict | None) -> Tokens:
     u = usage or {}
-    cc = u.get("cache_creation") or {}
-    w5 = int(cc.get("ephemeral_5m_input_tokens") or 0)
-    w1 = int(cc.get("ephemeral_1h_input_tokens") or 0)
-    if not (w5 or w1):  # older shape: only the aggregate is present
-        w5 = int(u.get("cache_creation_input_tokens") or 0)
     return Tokens(
         uncached_in=int(u.get("input_tokens") or 0),
-        cache_write_5m=w5,
-        cache_write_1h=w1,
+        cache_write=int(u.get("cache_creation_input_tokens") or 0),
         cache_read=int(u.get("cache_read_input_tokens") or 0),
         out=int(u.get("output_tokens") or 0),
     )
 
 
 def cost_usd(model: str, t: Tokens) -> float | None:
-    """Exact cost from the token breakdown; None if the model isn't in PRICES."""
+    """Cost from the token breakdown at published rates; None if model unknown."""
     p = PRICES.get(model)
     if not p:
         return None
-    inp, out, read, w5, w1 = p
+    inp, out, read, write = p
     return (t.uncached_in * inp + t.out * out + t.cache_read * read
-            + t.cache_write_5m * w5 + t.cache_write_1h * w1) / 1_000_000
+            + t.cache_write * write) / 1_000_000
 
 
 @dataclass

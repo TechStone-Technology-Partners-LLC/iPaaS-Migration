@@ -438,7 +438,7 @@ def _fmt_k(n: int) -> str:
 def _footer(done: TurnDone) -> str:
     t = done.tokens_turn
     tok = (f"{_fmt_k(t.uncached_in)} in · {_fmt_k(t.out)} out · "
-           f"{_fmt_k(t.cache_read)} cache-read · {_fmt_k(t.cache_write_5m + t.cache_write_1h)} cache-write")
+           f"{_fmt_k(t.cache_read)} cache-read · {_fmt_k(t.cache_write)} cache-write")
     est = "" if done.cost_source == "table" else " (engine estimate)"
     return f"(turn: ${done.cost_turn:.2f}{est} · total: ${done.cost_total:.2f} · tokens: {tok})"
 
