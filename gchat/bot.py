@@ -331,7 +331,7 @@ class Bot:
         assert done is not None
         self._save_state()
 
-        footer = f"(turn: ${done.cost_turn:.2f} · total: ${done.cost_total:.2f})"
+        footer = _footer(done)
         body = "\n\n".join(t.strip() for t in final_texts if t.strip())
         if done.timed_out:
             body = (body + "\n\n" if body else "") + "⏱️ That step hit the time limit. Send a message to continue."
@@ -429,6 +429,18 @@ class Bot:
         self._save_state()
         if aborted:
             self.chat.post(thread.space, thread.reply_thread, "🛑 Migration aborted.")
+
+
+def _fmt_k(n: int) -> str:
+    return f"{n/1000:.1f}k" if n >= 1000 else str(n)
+
+
+def _footer(done: TurnDone) -> str:
+    t = done.tokens_turn
+    tok = (f"{_fmt_k(t.uncached_in)} in · {_fmt_k(t.out)} out · "
+           f"{_fmt_k(t.cache_read)} cache-read · {_fmt_k(t.cache_write_5m + t.cache_write_1h)} cache-write")
+    est = "" if done.cost_source == "table" else " (engine estimate)"
+    return f"(turn: ${done.cost_turn:.2f}{est} · total: ${done.cost_total:.2f} · tokens: {tok})"
 
 
 def main() -> None:

@@ -363,6 +363,8 @@ GCHAT_MAX_COST_USD=20.00             # per conversation; analysis ≈ $5, analys
 GCHAT_MAX_TURNS=100
 GCHAT_TURN_TIMEOUT_S=3600            # builds take 20–30 min
 GCHAT_HEARTBEAT_S=180                # "still working" cadence
+GCHAT_MODEL=claude-sonnet-5-5        # engine model for bot sessions (default)
+GCHAT_EFFORT=medium                  # low | medium | high | xhigh | max (default medium)
 ```
 
 ## B6. Run and operate

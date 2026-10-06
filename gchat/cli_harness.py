@@ -40,7 +40,9 @@ async def _render_turn(session: AgentSession, prompt: str) -> TurnDone:
         elif isinstance(event, TurnDone):
             done = event
     assert done is not None
-    print(f"   (turn: ${done.cost_turn:.2f} · total: ${done.cost_total:.2f} · session {done.session_id[:8]})")
+    t = done.tokens_turn
+    print(f"   (turn: ${done.cost_turn:.2f} [{done.cost_source}] · total: ${done.cost_total:.2f} · "
+          f"in={t.uncached_in} out={t.out} cache_read={t.cache_read} cache_write={t.cache_write_5m + t.cache_write_1h} · session {done.session_id[:8]})")
     if done.timed_out:
         _post("⏱️ That step hit the turn time limit — send a message to continue.")
     return done
