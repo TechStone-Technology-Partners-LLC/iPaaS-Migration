@@ -10,6 +10,8 @@ import hashlib
 import logging
 import os
 import re
+import socket
+import ssl
 
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
@@ -26,20 +28,37 @@ DOC_MIME = "application/vnd.google-apps.document"
 class DriveAPI:
     def __init__(self, credentials_path: str | None = None):
         path = credentials_path or env.get("GOOGLE_APPLICATION_CREDENTIALS")
-        creds = service_account.Credentials.from_service_account_file(path, scopes=SCOPES)
-        self._svc = build("drive", "v3", credentials=creds, cache_discovery=False)
+        self._creds = service_account.Credentials.from_service_account_file(path, scopes=SCOPES)
+        self._svc = self._build()
         self.folder_id = env.get("GCHAT_DRIVE_FOLDER_ID")
+
+    def _build(self):
+        return build("drive", "v3", credentials=self._creds, cache_discovery=False)
+
+    def _execute(self, make_request):
+        """Run make_request(service).execute() with reconnect-and-retry.
+
+        Same failure mode as ChatAPI: the discovery client keeps a persistent
+        HTTPS socket; after an idle period the far end drops it and the next
+        write raises SSLEOFError / ConnectionError. Rebuild once and retry.
+        """
+        try:
+            return make_request(self._svc).execute(num_retries=2)
+        except (ssl.SSLError, ConnectionError, socket.error, OSError) as exc:
+            log.warning("drive api transport error (%s) — rebuilding client and retrying", exc)
+            self._svc = self._build()
+            return make_request(self._svc).execute(num_retries=2)
 
     @property
     def enabled(self) -> bool:
         return bool(self.folder_id)
 
     def create_folder(self, name: str, parent_id: str | None = None) -> dict:
-        f = self._svc.files().create(
+        f = self._execute(lambda svc: svc.files().create(
             body={"name": name, "mimeType": "application/vnd.google-apps.folder",
                   "parents": [parent_id or self.folder_id]},
             fields="id, webViewLink", supportsAllDrives=True,
-        ).execute()
+        ))
         return {"id": f["id"], "link": f.get("webViewLink", "")}
 
     def upload_markdown_as_doc(self, local_path: str, title: str,
@@ -48,19 +67,19 @@ class DriveAPI:
         """Upload/replace a markdown file as a Google Doc. Returns {id, link}."""
         media = MediaFileUpload(local_path, mimetype="text/markdown", resumable=False)
         if existing_file_id:
-            f = self._svc.files().update(
+            f = self._execute(lambda svc: svc.files().update(
                 fileId=existing_file_id, media_body=media,
                 fields="id, webViewLink", supportsAllDrives=True,
-            ).execute()
+            ))
         else:
-            f = self._svc.files().create(
+            f = self._execute(lambda svc: svc.files().create(
                 body={"name": title, "mimeType": DOC_MIME, "parents": [parent_id or self.folder_id]},
                 media_body=media, fields="id, webViewLink", supportsAllDrives=True,
-            ).execute()
+            ))
         return {"id": f["id"], "link": f.get("webViewLink", f"https://docs.google.com/document/d/{f['id']}")}
 
     def export_doc_markdown(self, file_id: str) -> str:
-        data = self._svc.files().export(fileId=file_id, mimeType="text/markdown").execute()
+        data = self._execute(lambda svc: svc.files().export(fileId=file_id, mimeType="text/markdown"))
         return data.decode("utf-8") if isinstance(data, bytes) else str(data)
 
     def export_fingerprint(self, file_id: str) -> str:

@@ -48,6 +48,7 @@ class Thread:
         self.docs: dict[str, dict] = {}  # artifact key -> {id, link, path} (Google Docs)
         self.run_folder: dict | None = None  # per-run Drive subfolder {id, link}
         self.owner: str = ""  # requester email
+        self.pending_delivery: set[str] = set()  # artifact keys whose Drive upload failed; retried next turn
 
 
 class Bot:
@@ -379,18 +380,23 @@ class Bot:
         lines = []
         for key, title, path in self._artifacts(thread):
             try:
-                if not path.exists() or path.stat().st_mtime < since - 1:
+                if not path.exists():
+                    continue
+                if path.stat().st_mtime < since - 1 and key not in thread.pending_delivery:
                     continue
                 existing = (thread.docs.get(key) or {}).get("id")
                 folder_id = self._ensure_run_folder(thread)
                 res = self.drive.upload_markdown_as_doc(str(path), title, existing, folder_id)
                 thread.docs[key] = {"id": res["id"], "link": res["link"], "path": str(path),
                                     "baseline": self.drive.export_fingerprint(res["id"])}
+                thread.pending_delivery.discard(key)
                 verb = "updated" if existing else "created"
                 lines.append(f"• {title} ({verb}): {res['link']}")
             except Exception:
+                thread.pending_delivery.add(key)
                 log.exception("artifact delivery failed for %s", path)
-                lines.append(f"• {title}: ⚠️ could not upload to Drive (see bot log)")
+                lines.append(f"• {title}: ⚠️ Drive delivery failed (network). "
+                             f"The file is on disk at {path} — reply here to retry delivery.")
         if lines:
             self._save_state()
             folder_link = (thread.run_folder or {}).get("link", "")
@@ -431,16 +437,9 @@ class Bot:
             self.chat.post(thread.space, thread.reply_thread, "🛑 Migration aborted.")
 
 
-def _fmt_k(n: int) -> str:
-    return f"{n/1000:.1f}k" if n >= 1000 else str(n)
-
-
 def _footer(done: TurnDone) -> str:
-    t = done.tokens_turn
-    tok = (f"{_fmt_k(t.uncached_in)} in · {_fmt_k(t.out)} out · "
-           f"{_fmt_k(t.cache_read)} cache-read · {_fmt_k(t.cache_write)} cache-write")
     est = "" if done.cost_source == "table" else " (engine estimate)"
-    return f"(turn: ${done.cost_turn:.2f}{est} · total: ${done.cost_total:.2f} · tokens: {tok})"
+    return f"(turn: ${done.cost_turn:.2f}{est} · total: ${done.cost_total:.2f})"
 
 
 def main() -> None:

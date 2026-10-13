@@ -144,6 +144,10 @@ class AgentSession:
             effort=get("GCHAT_EFFORT", DEFAULT_EFFORT),
             permission_mode="bypassPermissions",
             setting_sources=["project"],  # load repo CLAUDE.md + skills
+            # The engine auto-loads the operator's personal memory notes for this
+            # project path (~/.claude/projects/<path>/memory). Those are the
+            # operator's context, not the migration's — keep them out of the agent.
+            env={"CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1"},
             max_turns=self.budget.max_turns,
             resume=self.session_id,
             # Workato AIRO recipe-builder MCP — auth comes from Claude Code's
