@@ -1,0 +1,515 @@
+<title>MigrAIte Bot Flow</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one swimlane figure (phases across, layers down), the prompts it sends, then a per-phase table. */
+:root{
+  --bg:#f6f5f1; --fg:#1d1f22; --muted:#6a6e75; --rule:#cfd2d8; --panel:#ffffff;
+  --code:#e9ebe6; --agent:#c8552b; --agent-soft:#fbe9e1; --ext:#2b6cb0; --ext-soft:#e4edf8; --link:#2b6cb0;
+  --sans:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#17191c; --fg:#e8e7e2; --muted:#9a9ea6; --rule:#3a3e45; --panel:#1f2226;
+  --code:#2a2e33; --agent:#e8794f; --agent-soft:#3a2419; --ext:#6aa3e6; --ext-soft:#1b2a3d; --link:#6aa3e6; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#17191c; --fg:#e8e7e2; --muted:#9a9ea6; --rule:#3a3e45; --panel:#1f2226;
+  --code:#2a2e33; --agent:#e8794f; --agent-soft:#3a2419; --ext:#6aa3e6; --ext-soft:#1b2a3d; --link:#6aa3e6; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);line-height:1.45;padding-block:28px;padding-inline:16px}
+main{max-width:1180px;margin:0 auto;display:grid;gap:26px}
+h1{font-size:1.5rem;font-weight:600;margin:0;text-wrap:balance}
+h2{font-size:1.05rem;font-weight:600;margin:0}
+p.lede{color:var(--muted);margin:4px 0 0;max-width:68ch}
+figure{margin:0;background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:14px;overflow-x:auto}
+.viewport{width:100%;height:min(72vh,640px);overflow:hidden;cursor:grab;border:1px solid var(--rule);border-radius:4px;background:var(--bg);touch-action:pan-y pinch-zoom;user-select:none}
+.viewport.dragging{cursor:grabbing}
+figure svg{display:block;width:100%;height:100%;font-family:var(--sans)}
+.zoombar{display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.zoombar button{font:inherit;font-size:.9rem;min-width:34px;height:30px;padding:0 10px;border:1px solid var(--rule);border-radius:4px;background:var(--panel);color:var(--fg);cursor:pointer}
+.zoombar button:hover{border-color:var(--fg)} .zoombar button:focus-visible{outline:2px solid var(--link);outline-offset:1px}
+.zoombar .hint{color:var(--muted);font-size:.78rem;margin-left:6px}
+figcaption{color:var(--muted);font-size:.85rem;margin-top:10px}
+.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:.82rem;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:14px;height:14px;border-radius:3px;border:1.5px solid var(--fg);display:inline-block}
+.sw.code{background:var(--code)} .sw.agent{background:var(--agent-soft);border-color:var(--agent)} .sw.ext{background:var(--ext-soft);border-color:var(--ext);border-style:dashed}
+svg a{cursor:pointer} svg a:hover rect{stroke-width:2.5} svg a:focus-visible rect{stroke:var(--link);stroke-width:2.5}
+details{border:1px solid var(--rule);border-radius:6px;background:var(--panel)}
+details summary{cursor:pointer;padding:10px 14px;font-weight:600;font-size:.92rem;list-style:none;display:flex;gap:10px;align-items:baseline}
+details summary::before{content:"▸";color:var(--muted);font-size:.8em} details[open] summary::before{content:"▾"}
+details summary small{color:var(--muted);font-weight:400}
+details pre{margin:0;padding:14px 16px 18px;border-top:1px solid var(--rule);font-family:var(--mono);font-size:.78rem;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;max-height:70vh;overflow:auto}
+details pre b{color:var(--agent);font-weight:600}
+details:target{outline:2px solid var(--link);outline-offset:2px}
+table{border-collapse:collapse;width:100%;font-size:.86rem}
+th,td{text-align:left;vertical-align:top;padding:8px 10px;border-top:1px solid var(--rule)}
+th{color:var(--muted);font-weight:500;font-size:.78rem;letter-spacing:.04em;text-transform:uppercase}
+td:first-child{font-weight:600;white-space:nowrap}
+code{font-family:var(--mono);font-size:.82em;background:var(--code);padding:1px 5px;border-radius:3px}
+.wrap{overflow-x:auto}
+.agent-t{color:var(--agent)} .ext-t{color:var(--ext)}
+a{color:var(--link)}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+</style>
+
+<main>
+<header>
+  <h1>MigrAIte Bot Flow</h1>
+  <p class="lede">How one webMethods → Workato migration moves through the Google Chat bot today: what the Python does, what the agent does, what it writes, and what context it reads. Click a box with a <span style="color:var(--link)">link icon ↗</span> to see the exact prompt text.</p>
+</header>
+
+<div class="legend">
+  <span><i class="sw code"></i> Python, deterministic (<code>gchat/</code>)</span>
+  <span><i class="sw agent"></i> Claude agent turn (Agent SDK, judgment)</span>
+  <span><i class="sw ext"></i> External service</span>
+</div>
+
+<figure>
+<div class="zoombar">
+  <button type="button" id="zin" aria-label="Zoom in">+</button>
+  <button type="button" id="zout" aria-label="Zoom out">−</button>
+  <button type="button" id="zfit">Fit</button>
+  <span class="hint">Pinch to zoom · drag to pan · click ↗ boxes for prompts</span>
+</div>
+<div class="viewport" id="viewport">
+<svg id="flow" viewBox="0 0 1160 640" role="img" aria-label="Six phases across the top: Intake, Analyze, Review loop, Approve, Build, Deliver. Five layers down: Chat user, bot.py Python, agent turn, files written and services called, and context the agent reads. Python handles intake, routing, Doc sync and delivery; the agent handles analysis, revision, folder choice and the AIRO build.">
+<defs>
+  <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker>
+  <marker id="arrx" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--ext)"/></marker>
+  <marker id="arra" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--agent)"/></marker>
+</defs>
+<g fill="currentColor" font-size="12">
+
+<!-- phase headers -->
+<g font-weight="600" font-size="13" text-anchor="middle">
+  <text x="225" y="22">1 · INTAKE</text>
+  <text x="400" y="22">2 · ANALYZE</text>
+  <text x="575" y="22">3 · REVIEW LOOP</text>
+  <text x="750" y="22">4 · APPROVE</text>
+  <text x="925" y="22">5 · BUILD</text>
+  <text x="1095" y="22">6 · DELIVER</text>
+</g>
+<g stroke="var(--rule)" stroke-width="1">
+  <line x1="312" y1="34" x2="312" y2="630"/><line x1="487" y1="34" x2="487" y2="630"/>
+  <line x1="662" y1="34" x2="662" y2="630"/><line x1="837" y1="34" x2="837" y2="630"/><line x1="1012" y1="34" x2="1012" y2="630"/>
+</g>
+
+<!-- lane labels -->
+<g font-size="11" fill="var(--muted)" font-weight="500">
+  <text x="12" y="70">USER (Chat)</text>
+  <text x="12" y="170">bot.py</text>
+  <text x="12" y="186" font-size="10">state machine</text>
+  <text x="12" y="300">AGENT TURN</text>
+  <text x="12" y="316" font-size="10">session.py → SDK</text>
+  <text x="12" y="430">WRITES /</text>
+  <text x="12" y="446">SERVICES</text>
+  <text x="12" y="555">CONTEXT READ</text>
+  <text x="12" y="571" font-size="10">by the agent</text>
+</g>
+<g stroke="var(--rule)" stroke-dasharray="2 4"><line x1="130" y1="120" x2="1150" y2="120"/><line x1="130" y1="240" x2="1150" y2="240"/><line x1="130" y1="370" x2="1150" y2="370"/><line x1="130" y1="495" x2="1150" y2="495"/></g>
+
+<!-- ===== USER lane ===== -->
+<g>
+  <rect x="150" y="48" width="150" height="40" rx="4" fill="var(--panel)" stroke="currentColor"/>
+  <text x="225" y="65" text-anchor="middle">@migraite + zip</text>
+  <text x="225" y="80" text-anchor="middle" font-size="10" fill="var(--muted)">optional instructions</text>
+
+  <rect x="500" y="48" width="150" height="40" rx="4" fill="var(--panel)" stroke="currentColor"/>
+  <text x="575" y="65" text-anchor="middle">reads 2 Google Docs</text>
+  <text x="575" y="80" text-anchor="middle" font-size="10" fill="var(--muted)">edits in place or replies</text>
+
+  <rect x="675" y="48" width="150" height="40" rx="4" fill="var(--panel)" stroke="currentColor"/>
+  <text x="750" y="65" text-anchor="middle">"approved"</text>
+  <text x="750" y="80" text-anchor="middle" font-size="10" fill="var(--muted)">then picks folder</text>
+
+  <rect x="1025" y="48" width="130" height="40" rx="4" fill="var(--panel)" stroke="currentColor"/>
+  <text x="1090" y="65" text-anchor="middle">recipe URL +</text>
+  <text x="1090" y="80" text-anchor="middle" font-size="10" fill="var(--muted)">manual GUI steps</text>
+</g>
+
+<!-- ===== bot.py lane ===== -->
+<g>
+  <rect x="150" y="135" width="150" height="80" rx="4" fill="var(--code)" stroke="currentColor"/>
+  <text x="225" y="153" text-anchor="middle" font-weight="600">Pub/Sub pull</text>
+  <text x="225" y="169" text-anchor="middle" font-size="10">dedupe · allowlist · route thread</text>
+  <text x="225" y="186" text-anchor="middle" font-size="10">intake.py: unzip →</text>
+  <text x="225" y="200" text-anchor="middle" font-size="10" font-family="var(--mono)">WebMethods/&lt;pkg&gt;/</text>
+
+  <a href="#kickoff-prompt" aria-label="View the kickoff prompt">
+    <title>Click to view the full kickoff prompt</title>
+    <rect x="325" y="135" width="150" height="60" rx="4" fill="var(--code)" stroke="currentColor"/>
+    <text x="394" y="155" text-anchor="middle" font-weight="600">prompts.kickoff()</text>
+    <text x="462" y="155" font-size="11" fill="var(--link)">↗</text>
+    <text x="400" y="171" text-anchor="middle" font-size="10">136-line prompt: phases,</text>
+    <text x="400" y="185" text-anchor="middle" font-size="10">gates, chat rules, "use AIRO"</text>
+  </a>
+
+  <a href="#reanchor-prompt" aria-label="View the re-anchor header">
+    <title>Click to view the per-reply re-anchor header</title>
+    <rect x="500" y="135" width="150" height="80" rx="4" fill="var(--code)" stroke="currentColor"/>
+    <text x="568" y="153" text-anchor="middle" font-weight="600">WAITING_FOR_USER</text>
+    <text x="637" y="153" font-size="11" fill="var(--link)">↗</text>
+    <text x="575" y="169" text-anchor="middle" font-size="10">_sync_docs: pull Doc edits</text>
+    <text x="575" y="183" text-anchor="middle" font-size="10">back to disk (fingerprint)</text>
+    <text x="575" y="200" text-anchor="middle" font-size="10">reanchor() header + reply</text>
+  </a>
+
+  <rect x="675" y="135" width="150" height="60" rx="4" fill="var(--code)" stroke="currentColor"/>
+  <text x="750" y="155" text-anchor="middle" font-weight="600">same loop</text>
+  <text x="750" y="171" text-anchor="middle" font-size="10">no code change at the gate;</text>
+  <text x="750" y="185" text-anchor="middle" font-size="10">approval is read by the agent</text>
+
+  <rect x="850" y="135" width="150" height="60" rx="4" fill="var(--code)" stroke="currentColor"/>
+  <text x="925" y="155" text-anchor="middle" font-weight="600">AGENT_RUNNING</text>
+  <text x="925" y="171" text-anchor="middle" font-size="10">heartbeat every 180s</text>
+  <text x="925" y="185" text-anchor="middle" font-size="10">20-min turn timeout · $ cap</text>
+
+  <rect x="1025" y="135" width="130" height="80" rx="4" fill="var(--code)" stroke="currentColor"/>
+  <text x="1090" y="153" text-anchor="middle" font-weight="600">_deliver_artifacts</text>
+  <text x="1090" y="169" text-anchor="middle" font-size="10">final text + cost footer</text>
+  <text x="1090" y="183" text-anchor="middle" font-size="10">changed .md → Google Docs</text>
+  <text x="1090" y="200" text-anchor="middle" font-size="10">state.json saved</text>
+</g>
+
+<!-- ===== AGENT lane ===== -->
+<g>
+  <a href="#kickoff-prompt" aria-label="View the kickoff prompt that drives this turn">
+    <title>Driven by the kickoff prompt (TASK section). Click to view.</title>
+    <rect x="325" y="255" width="150" height="100" rx="4" fill="var(--agent-soft)" stroke="var(--agent)" stroke-width="1.5"/>
+    <text x="394" y="274" text-anchor="middle" font-weight="600" fill="var(--agent)">Turn 1: analyze</text>
+    <text x="462" y="274" font-size="11" fill="var(--link)">↗</text>
+    <text x="400" y="291" text-anchor="middle" font-size="10">reads every raw file itself</text>
+    <text x="400" y="305" text-anchor="middle" font-size="10">(no script runs)</text>
+    <text x="400" y="322" text-anchor="middle" font-size="10">writes 2 markdown files</text>
+    <text x="400" y="339" text-anchor="middle" font-size="10">ends with 1 question</text>
+  </a>
+
+  <rect x="500" y="255" width="150" height="100" rx="4" fill="var(--agent-soft)" stroke="var(--agent)" stroke-width="1.5"/>
+  <text x="575" y="274" text-anchor="middle" font-weight="600" fill="var(--agent)">Turn N: revise</text>
+  <text x="575" y="291" text-anchor="middle" font-size="10">re-reads files on disk</text>
+  <text x="575" y="305" text-anchor="middle" font-size="10">(Doc edits already applied)</text>
+  <text x="575" y="322" text-anchor="middle" font-size="10">rewrites, summarizes delta</text>
+  <text x="575" y="339" text-anchor="middle" font-size="10">repeats until "approved"</text>
+
+  <rect x="675" y="255" width="150" height="100" rx="4" fill="var(--agent-soft)" stroke="var(--agent)" stroke-width="1.5"/>
+  <text x="750" y="274" text-anchor="middle" font-weight="600" fill="var(--agent)">Turn: folder</text>
+  <text x="750" y="291" text-anchor="middle" font-size="10">first AIRO call:</text>
+  <text x="750" y="305" text-anchor="middle" font-size="10" font-family="var(--mono)">folder_list</text>
+  <text x="750" y="322" text-anchor="middle" font-size="10">suggests default folder,</text>
+  <text x="750" y="339" text-anchor="middle" font-size="10">asks which to use</text>
+
+  <a href="#kickoff-prompt" aria-label="View the BUILD section of the kickoff prompt">
+    <title>Driven by the BUILD section of the kickoff prompt. Click to view.</title>
+    <rect x="850" y="255" width="150" height="100" rx="4" fill="var(--agent-soft)" stroke="var(--agent)" stroke-width="1.5"/>
+    <text x="919" y="274" text-anchor="middle" font-weight="600" fill="var(--agent)">Turn: build</text>
+    <text x="987" y="274" font-size="11" fill="var(--link)">↗</text>
+    <text x="925" y="291" text-anchor="middle" font-size="10" font-family="var(--mono)">docs_get, init,</text>
+    <text x="925" y="305" text-anchor="middle" font-size="10" font-family="var(--mono)">add_step, get_datapills,</text>
+    <text x="925" y="319" text-anchor="middle" font-size="10" font-family="var(--mono)">list_connections, push</text>
+    <text x="925" y="339" text-anchor="middle" font-size="10">then writes progress.md</text>
+  </a>
+
+  <!-- revise loop -->
+  <path d="M650 300 C 668 300, 668 330, 650 330" fill="none" stroke="var(--agent)" marker-end="url(#arra)"/>
+  <text x="656" y="318" font-size="9" fill="var(--agent)">×N</text>
+</g>
+
+<!-- ===== WRITES / SERVICES lane ===== -->
+<g font-size="10">
+  <rect x="325" y="385" width="150" height="100" rx="4" fill="var(--panel)" stroke="currentColor"/>
+  <text x="400" y="403" text-anchor="middle" font-weight="600" font-size="11">Files written</text>
+  <text x="400" y="424" text-anchor="middle" font-family="var(--mono)">&lt;pkg&gt;_Analysis.md</text>
+  <text x="400" y="438" text-anchor="middle" fill="var(--muted)">source record</text>
+  <text x="400" y="458" text-anchor="middle" font-family="var(--mono)">PackageAnalysis.md</text>
+  <text x="400" y="472" text-anchor="middle" fill="var(--agent)">Workato design, fixed name</text>
+
+  <rect x="500" y="385" width="150" height="60" rx="4" fill="var(--ext-soft)" stroke="var(--ext)" stroke-dasharray="4 3"/>
+  <text x="575" y="404" text-anchor="middle" font-weight="600" font-size="11" fill="var(--ext)">Google Drive</text>
+  <text x="575" y="420" text-anchor="middle">drive_api.py: md → Doc, Doc → md</text>
+  <text x="575" y="434" text-anchor="middle">run folder per migration</text>
+
+  <rect x="850" y="385" width="130" height="60" rx="4" fill="var(--ext-soft)" stroke="var(--ext)" stroke-dasharray="4 3"/>
+  <text x="915" y="404" text-anchor="middle" font-weight="600" font-size="11" fill="var(--ext)">Workato AIRO MCP</text>
+  <text x="915" y="420" text-anchor="middle" font-family="var(--mono)">app.workato.com/airo_mcp</text>
+  <text x="915" y="434" text-anchor="middle">init saves a live recipe</text>
+
+  <rect x="1025" y="385" width="130" height="60" rx="4" fill="var(--panel)" stroke="currentColor"/>
+  <text x="1090" y="404" text-anchor="middle" font-weight="600" font-size="11">Run notes</text>
+  <text x="1090" y="420" text-anchor="middle" font-family="var(--mono)">migration-specs/</text>
+  <text x="1090" y="434" text-anchor="middle" font-family="var(--mono)">&lt;pkg&gt;_progress.md</text>
+</g>
+
+<!-- ===== CONTEXT lane (no arrows except build) ===== -->
+<g font-size="10">
+  <rect x="150" y="510" width="150" height="100" rx="4" fill="var(--panel)" stroke="currentColor"/>
+  <text x="225" y="527" text-anchor="middle" font-weight="600" font-size="11">Raw package</text>
+  <text x="225" y="545" text-anchor="middle" font-family="var(--mono)">manifest.v3</text>
+  <text x="225" y="559" text-anchor="middle" font-family="var(--mono)">ns/**/flow.xml</text>
+  <text x="225" y="573" text-anchor="middle" font-family="var(--mono)">ns/**/node.ndf</text>
+  <text x="225" y="591" text-anchor="middle" fill="var(--muted)">no reading guide exists;</text>
+  <text x="225" y="604" text-anchor="middle" fill="var(--muted)">agent re-derives semantics</text>
+
+  <rect x="325" y="510" width="325" height="100" rx="4" fill="var(--panel)" stroke="currentColor"/>
+  <text x="487" y="527" text-anchor="middle" font-weight="600" font-size="11">Standing context (auto-loaded every turn)</text>
+  <text x="340" y="545" font-family="var(--mono)">CLAUDE.md</text><text x="430" y="545">750 lines · ~11.5k tokens · 58% run history</text>
+  <text x="340" y="561" font-family="var(--mono)">initiate_migration/Instruction_Workato.md</text>
+  <text x="340" y="575">58 lines · design-doc sections + approval + 4 build rules</text>
+  <text x="340" y="591" font-family="var(--mono)">Agent Bridge … Workato Component Mapping.xlsx</text>
+  <text x="340" y="605">22 rows · wM construct → Workato construct</text>
+
+  <rect x="675" y="510" width="325" height="100" rx="4" fill="var(--panel)" stroke="currentColor"/>
+  <text x="837" y="527" text-anchor="middle" font-weight="600" font-size="11">Build-phase context</text>
+  <text x="690" y="545" font-family="var(--mono)">PackageAnalysis.md</text><text x="840" y="545">§8 is the build spec</text>
+  <text x="690" y="561" font-family="var(--mono)">&lt;pkg&gt;_Analysis.md</text><text x="840" y="561">source detail when needed</text>
+  <text x="690" y="577" font-family="var(--mono)" fill="var(--ext)">docs_get("guides:recipe-builder")</text><text x="890" y="577" fill="var(--ext)">AIRO's own guide</text>
+  <text x="690" y="595" fill="var(--muted)">Past-run AIRO lessons sit in migration-specs/*_progress.md;</text>
+  <text x="690" y="607" fill="var(--muted)">nothing tells the agent to read them.</text>
+</g>
+
+<!-- ===== arrows ===== -->
+<g stroke="currentColor" fill="none" marker-end="url(#arr)">
+  <line x1="225" y1="88" x2="225" y2="133"/>
+  <line x1="300" y1="165" x2="323" y2="165"/>
+  <line x1="400" y1="195" x2="400" y2="253"/>
+  <line x1="475" y1="300" x2="498" y2="300"/>
+  <line x1="400" y1="355" x2="400" y2="383"/>
+  <line x1="475" y1="415" x2="498" y2="415"/>
+  <line x1="575" y1="88" x2="575" y2="133"/>
+  <line x1="575" y1="215" x2="575" y2="253"/>
+  <line x1="650" y1="305" x2="673" y2="305"/>
+  <line x1="750" y1="88" x2="750" y2="133"/>
+  <line x1="825" y1="305" x2="848" y2="305"/>
+  <path d="M1000 290 H 1050 V 217"/>
+  <path d="M1000 340 H 1090 V 383"/>
+  <line x1="1090" y1="133" x2="1090" y2="90"/>
+  <path d="M993 510 V 357"/>
+</g>
+<g stroke="var(--ext)" fill="none" marker-end="url(#arrx)" stroke-dasharray="4 3">
+  <path d="M575 383 V 372 H 657 V 175 H 652"/>
+  <path d="M780 355 L 858 390"/>
+  <line x1="900" y1="355" x2="900" y2="383"/>
+</g>
+<g font-size="9" fill="var(--muted)">
+  <text x="305" y="160">zip</text>
+  <text x="405" y="230">kickoff prompt</text>
+  <text x="405" y="372">writes</text>
+  <text x="477" y="410">to Docs</text>
+  <text x="593" y="368">Doc edits synced back before next turn</text>
+  <text x="790" y="384">folder_list</text>
+  <text x="905" y="372">MCP calls</text>
+  <text x="1052" y="282">final text</text>
+  <text x="1035" y="378">progress.md</text>
+  <text x="998" y="440" transform="rotate(90 998 440)">reads spec</text>
+  <text x="1095" y="110" transform="rotate(90 1095 110)">to user</text>
+</g>
+</g>
+</svg>
+</div>
+<figcaption>Python owns transport and state; the agent owns every judgment. The agent's only standing knowledge is a 58-line instruction file, a 22-row spreadsheet and a 750-line CLAUDE.md. Nothing deterministic runs on the package before the agent reads it, and nothing carries AIRO lessons from one run to the next.</figcaption>
+</figure>
+
+<section style="display:grid;gap:12px">
+<h2>The prompts the bot sends</h2>
+
+<details id="kickoff-prompt">
+<summary>prompts.kickoff() <small>· sent once, with the zip, as Turn 1 · gchat/prompts.py:31-126 · {pkg_name} and folder id are filled in</small></summary>
+<pre>You are MigrAIte, running a webMethods -> Workato migration:
+ANALYZE the package, get the user's APPROVAL, then BUILD the Workato recipe
+via the AIRO MCP tools.
+You are being driven over Google Chat: the final text of each of your turns is
+relayed to the user as a chat message, and the user's chat replies are fed back
+to you as your next user message.
+
+<b>PACKAGE</b>
+The webMethods package **{pkg_name}** has already been extracted to
+`WebMethods/{pkg_name}/` at the repo root. Do NOT ask for the package name or
+location. {reuse_note}
+
+<b>TASK — follow Step 1 (Analyze) of `initiate_migration/Instruction_Workato.md`:</b>
+1. Analyze every file in `WebMethods/{pkg_name}/` (manifest, ns/, pub/, flow.xml,
+   node.ndf, etc.).
+2. Produce `WebMethods/Analysis/{pkg_name}_Analysis.md` (detailed component
+   breakdown: connectors, mappings, scripting, triggers, flow logic).
+3. Produce `WebMethods/MD/PackageAnalysis.md` — the extensive Workato-oriented
+   reference, with all the sections required by Instruction_Workato.md
+   (Package Overview, Shapes & Logic Breakdown, Connections, Operations,
+   Data Mappings, Business Rules & Conditions, Error Handling, Equivalent
+   Recipe Structure, Mapping Gaps / Deviations).
+   Consult `WebMethods/Agent Bridge Web Methods to Workato Component Mapping.xlsx`
+   as the primary construct-mapping reference; flag
+   any gaps rather than guessing. Do NOT use any AIRO MCP tools during the
+   analysis phase — the analysis is built from the package files and mapping
+   documents only. AIRO tools come into play only in the BUILD phase, after
+   approval.
+4. Then post a CONCISE summary of the analysis to the user (what the package
+   does, systems involved, proposed recipe structure, and any gaps/deviations
+   that need their attention) and ask for their review. Always list the FULL
+   absolute paths of every file you wrote or updated, so the user can open
+   them directly.
+
+<b>ASKING QUESTIONS WHILE WORKING</b>
+If, during the analysis, you hit a question whose answer would materially
+change what the analysis says (ambiguous business logic, contradictory
+source files, a decision between two interpretations), STOP and ask the
+user that one question, then continue with their answer. Do not silently
+assume. But do NOT pause for questions that only affect the future recipe
+build (endpoint URLs, credentials, SME confirmations) — record those in the
+Mapping Gaps / open questions section and continue; they belong in the
+final summary, not mid-run interruptions.
+
+<b>FEEDBACK LOOP</b>
+If the user gives feedback or corrections, revise the analysis files
+accordingly and check in again with a short summary of what changed. Repeat
+until the user explicitly approves.
+
+<b>APPROVAL GATE, THEN BUILD</b>
+Do NOT create any Workato recipe or component before the user explicitly
+approves the analysis. Once they approve, proceed to the BUILD phase:
+
+1. FIRST ask the user which Workato folder to create the recipe in — call
+   folder_list, present a short list of the most relevant folders (name + id),
+   and suggest folder {workato_folder_id} as the default. This is your one
+   question for that turn; wait for the answer, then start building.
+2. Use the Workato AIRO MCP tools (mcp__workato-airo-mcp-server__*) to build
+   the recipe. FIRST call docs_get(id="guides:recipe-builder") and follow that
+   workflow exactly. Load per-tool docs as it directs. Never hand-author
+   datapill paths — use recipe_builder_get_datapills.
+3. Build from `WebMethods/MD/PackageAnalysis.md` (the approved blueprint —
+   its "Equivalent Recipe Structure" section is the spec). Consult
+   `WebMethods/Analysis/{pkg_name}_Analysis.md` when you need source detail.
+4. Create the recipe in the folder the user chose via
+   recipe_builder_init. Use recipe_builder_list_connections to find existing
+   connections (e.g. the Oracle connection) and select them; where no
+   connection exists, still configure the step fully and note it needs a
+   connection wired in the GUI.
+5. Do not narrate progress — the user only sees the final message of each
+   turn (the bot posts "still working" heartbeats on its own).
+6. Finish with recipe_builder_push, then post a final message containing the
+   full Workato recipe URL (from recipe_builder_save/asset_url_get), what was
+   built, and any manual GUI steps remaining (connections to authorize, etc.).
+7. Stay available afterward: if the user asks for recipe changes, use
+   recipe_builder_pull / update tools on the same recipe and push again.
+8. Record your run notes (recipe ID/URL, structure, remaining manual steps)
+   in `migration-specs/{pkg_name}_progress.md`. Do NOT edit CLAUDE.md —
+   despite what its historical entries suggest, run logs do not belong there.
+
+<b>CHAT FORMATTING RULES</b> (Google Chat renders limited markdown and caps messages
+at 4096 characters):
+- Only the FINAL text of each of your turns is delivered to the user; anything
+  you write before a tool call is treated as internal narration and is NOT
+  shown. Put everything the user needs in your closing message.
+- Keep every message under ~3500 characters. No wide markdown tables.
+- Summarize file outputs — never paste whole files into chat.
+- When you need input, end your turn with EXACTLY ONE clearly stated question.
+  Never ask multiple questions in one turn: the user's single next reply is fed
+  back as the answer, so multiple questions tangle the loop.
+- If the conversation has been compacted, re-read
+  `WebMethods/Analysis/{pkg_name}_Analysis.md` and
+  `WebMethods/MD/PackageAnalysis.md` from disk rather than trusting recall —
+  the files on disk are the source of truth.
+
+Begin the analysis now.
+
+<i style="color:var(--muted)">+ if the user sent text with the zip:</i>
+USER'S INITIAL INSTRUCTIONS (sent with the upload — honor these
+throughout the migration):
+{user_instructions}</pre>
+</details>
+
+<details id="reanchor-prompt">
+<summary>prompts.reanchor() <small>· prepended to every later user reply · gchat/prompts.py:129-136</small></summary>
+<pre>[MigrAIte context: package={pkg_name}, phase=analysis, one question per turn,
+chat messages &lt;3500 chars, build only after explicit approval]
+User reply: {user_text}
+
+<i style="color:var(--muted)">+ if Google Doc edits were synced before this turn:</i>
+[The user edited these files in Google Docs; the edited versions have been
+written to disk and are authoritative — re-read them before responding: {paths}]</pre>
+</details>
+</section>
+
+<div class="wrap">
+<table>
+<thead><tr><th>Phase</th><th>What runs</th><th>Context pulled</th><th>Produces</th></tr></thead>
+<tbody>
+<tr><td>1 Intake</td><td><code>bot.py</code> → <code>intake.py</code> (Python)</td><td>zip attachment</td><td><code>WebMethods/&lt;pkg&gt;/</code>; thread state → <code>AGENT_RUNNING</code></td></tr>
+<tr><td>2 Analyze</td><td class="agent-t">agent turn 1, from <a href="#kickoff-prompt">prompts.kickoff()</a></td><td>raw package files · <code>Instruction_Workato.md</code> Step 1 · mapping xlsx · CLAUDE.md</td><td><code>&lt;pkg&gt;_Analysis.md</code> (source) · <code>PackageAnalysis.md</code> (Workato design) · one question</td></tr>
+<tr><td>3 Review</td><td><code>_deliver_artifacts</code> → Drive; <code>_sync_docs</code> on reply; <span class="agent-t">agent revise turn</span> with <a href="#reanchor-prompt">reanchor()</a></td><td>edited files on disk</td><td>revised files; loop until "approved"</td></tr>
+<tr><td>4 Approve</td><td class="agent-t">agent turn</td><td class="ext-t">AIRO <code>folder_list</code></td><td>folder choice (default from <code>prompts.py:10</code>)</td></tr>
+<tr><td>5 Build</td><td class="agent-t">agent turn, AIRO MCP tools, per the <a href="#kickoff-prompt">BUILD section</a></td><td><code>PackageAnalysis.md</code> §8 · <code>&lt;pkg&gt;_Analysis.md</code> · <span class="ext-t">AIRO <code>docs_get</code></span></td><td>recipe in Workato · <code>migration-specs/&lt;pkg&gt;_progress.md</code></td></tr>
+<tr><td>6 Deliver</td><td><code>bot.py</code> (Python)</td><td>agent's final text</td><td>chat message with URL, cost footer, manual steps; <code>state.json</code></td></tr>
+</tbody>
+</table>
+</div>
+</main>
+
+<script>
+// Open the matching <details> when a diagram box or table link is clicked, then scroll to it.
+function openTarget(){
+  var id = (location.hash || "").slice(1);
+  if(!id) return;
+  var el = document.getElementById(id);
+  if(el && el.tagName === "DETAILS"){ el.open = true; el.scrollIntoView({block:"start"}); }
+}
+window.addEventListener("hashchange", openTarget);
+document.querySelectorAll('a[href^="#"]').forEach(function(a){
+  a.addEventListener("click", function(){ setTimeout(openTarget, 0); });
+});
+openTarget();
+
+// ── Pan / zoom on the flow SVG by editing its viewBox ──────────────────────
+(function(){
+  var svg = document.getElementById("flow"), vp = document.getElementById("viewport");
+  if(!svg || !vp) return;
+  var FULL = {x:0, y:0, w:1160, h:640}, vb = Object.assign({}, FULL);
+  var MIN_W = 180, MAX_W = 1160 * 1.5;
+  function apply(){ svg.setAttribute("viewBox", vb.x+" "+vb.y+" "+vb.w+" "+vb.h); }
+  // client px -> svg user units, respecting preserveAspectRatio="xMidYMid meet"
+  function toSvg(cx, cy){
+    var r = vp.getBoundingClientRect();
+    var scale = Math.min(r.width/vb.w, r.height/vb.h);
+    var offX = (r.width - vb.w*scale)/2, offY = (r.height - vb.h*scale)/2;
+    return { x: vb.x + (cx - r.left - offX)/scale, y: vb.y + (cy - r.top - offY)/scale, scale: scale };
+  }
+  function zoomAt(factor, cx, cy){
+    var p = toSvg(cx, cy);
+    var nw = Math.max(MIN_W, Math.min(MAX_W, vb.w * factor));
+    var nh = nw * (FULL.h / FULL.w);
+    var k = nw / vb.w;
+    vb.x = p.x - (p.x - vb.x) * k; vb.y = p.y - (p.y - vb.y) * k; vb.w = nw; vb.h = nh;
+    apply();
+  }
+  function center(){ var r = vp.getBoundingClientRect(); return [r.left + r.width/2, r.top + r.height/2]; }
+  document.getElementById("zin").addEventListener("click", function(){ var c = center(); zoomAt(1/1.3, c[0], c[1]); });
+  document.getElementById("zout").addEventListener("click", function(){ var c = center(); zoomAt(1.3, c[0], c[1]); });
+  document.getElementById("zfit").addEventListener("click", function(){ vb = Object.assign({}, FULL); apply(); });
+  // Trackpad pinch arrives as a wheel event with ctrlKey set; plain scrolling passes through to the page.
+  vp.addEventListener("wheel", function(e){
+    if(!e.ctrlKey) return;
+    e.preventDefault();
+    zoomAt(Math.exp(e.deltaY * 0.01), e.clientX, e.clientY);
+  }, {passive:false});
+  // Safari reports pinch as gesture events; zoom the diagram instead of the page.
+  var gScale = 1;
+  vp.addEventListener("gesturestart", function(e){ e.preventDefault(); gScale = e.scale; });
+  vp.addEventListener("gesturechange", function(e){ e.preventDefault(); zoomAt(gScale / e.scale, e.clientX, e.clientY); gScale = e.scale; });
+  vp.addEventListener("gestureend", function(e){ e.preventDefault(); });
+  // drag to pan; suppress the link click if the pointer moved
+  var drag = null, moved = 0;
+  vp.addEventListener("pointerdown", function(e){
+    if(e.button !== 0) return;
+    drag = {x:e.clientX, y:e.clientY, vx:vb.x, vy:vb.y, scale: toSvg(e.clientX, e.clientY).scale};
+    moved = 0; vp.classList.add("dragging");
+  });
+  window.addEventListener("pointermove", function(e){
+    if(!drag) return;
+    var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    moved = Math.max(moved, Math.abs(dx), Math.abs(dy));
+    if(moved > 3){ vb.x = drag.vx - dx/drag.scale; vb.y = drag.vy - dy/drag.scale; apply(); }
+  });
+  function endDrag(){ if(!drag) return; drag = null; vp.classList.remove("dragging"); }
+  window.addEventListener("pointerup", endDrag); window.addEventListener("pointercancel", endDrag);
+  // a real drag must not fire the box link; a plain click must
+  svg.addEventListener("click", function(e){ if(moved > 5){ e.preventDefault(); e.stopPropagation(); } moved = 0; }, true);
+  // double-click zooms in on that spot
+  vp.addEventListener("dblclick", function(e){ zoomAt(1/1.6, e.clientX, e.clientY); });
+})();
+</script>
