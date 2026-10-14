@@ -361,7 +361,7 @@ GCHAT_DRIVE_FOLDER_ID=0A…            # Shared Drive id; unset = no Doc deliver
 GCHAT_WORKATO_FOLDER_ID=33882168     # suggested default folder in the folder question
 GCHAT_MAX_COST_USD=20.00             # per conversation; analysis ≈ $5, analysis+build ≈ $10–20
 GCHAT_MAX_TURNS=100
-GCHAT_TURN_TIMEOUT_S=3600            # builds take 20–30 min
+GCHAT_TURN_TIMEOUT_S=3600            # builds take 5–10 min; leave headroom
 GCHAT_HEARTBEAT_S=180                # "still working" cadence
 GCHAT_MODEL=claude-sonnet-5-5        # engine model for bot sessions (default)
 GCHAT_EFFORT=medium                  # low | medium | high | xhigh | max (default medium)

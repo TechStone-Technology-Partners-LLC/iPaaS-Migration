@@ -181,7 +181,7 @@ iterates `receive_response()` until the result message. During the turn:
 - state is saved after every turn.
 
 **Guards** (env-tunable): `GCHAT_MAX_COST_USD` per conversation,
-`GCHAT_MAX_TURNS`, `GCHAT_TURN_TIMEOUT_S` (set ≥ 3600 — builds take 20–30
+`GCHAT_MAX_TURNS`, `GCHAT_TURN_TIMEOUT_S` (set ≥ 3600 — builds take 5–10
 min). Breaching cost/turns pauses until `/continue` (one more allotment) or
 `/abort`; a timeout interrupts the engine and asks for a message to continue.
 

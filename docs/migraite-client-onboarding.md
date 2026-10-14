@@ -195,11 +195,11 @@ restart the bot.
 1. In the client's space, start a thread: `@migrAIte` + upload a package zip
    (use one of theirs, or `GLDFundingEngine20080714` as the demo).
 2. Narrate the phases while it runs: "📦 Received", heartbeats every ~3 min,
-   the summary with one question (~10–15 min), the Doc links.
+   the summary with one question (~3–7 min), the Doc links.
 3. Open the Package Analysis Doc together; make one edit; reply in the
    thread; show the "📝 Picked up your edits" acknowledgment.
 4. Reply "approved"; answer the folder question with *their* folder.
-5. Build (20–30 min): show heartbeats, then the final message with the
+5. Build (5–10 min): show heartbeats, then the final message with the
    recipe URL. Open it in *their* Workato workspace.
 6. Walk through the "remaining manual steps" in that message — typically
    creating/authorizing connections (HTTP, Oracle) in the Workato GUI, since

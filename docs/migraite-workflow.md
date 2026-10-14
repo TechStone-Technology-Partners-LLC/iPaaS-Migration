@@ -235,7 +235,7 @@ time per working directory; per-client working directories remove that limit
 ## 9. Cost, models, timing
 
 Sessions inherit the engine's defaults — observed `claude-opus-5` at `high`
-effort. Analysis ≈ 10–15 minutes and $4–5; build ≈ 20–30 minutes; a full run
+effort. Analysis ≈ 3–7 minutes and $4–5; build ≈ 5–10 minutes; a full run
 ≈ $10–20. Quality of the analysis has been the strongest part of the flow
 (e.g. NACHA field layouts decoded from base64 schemas, source defects
 detected); the build phase is where a project skill capturing our
