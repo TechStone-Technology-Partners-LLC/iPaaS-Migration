@@ -1,0 +1,2473 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<FLOW VERSION="3.0" CLEANUP="true">
+  <COMMENT></COMMENT>
+
+  <!-- nodes -->
+
+<INVOKE TIMEOUT="" SERVICE="pub.flow:savePipelineToFile" VALIDATE-IN="$none" VALIDATE-OUT="$none" DISABLED="true">
+  <COMMENT></COMMENT>
+
+  <!-- nodes -->
+
+<MAP MODE="INPUT">
+  <MAPTARGET>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_name">savePipelineToFileInput</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">fileName</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPTARGET>
+  <MAPSOURCE>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+    </array>
+  </record>
+</Values>
+</MAPSOURCE>
+
+  <!-- nodes -->
+
+<MAPSET NAME="Setter" OVERWRITE="true" VARIABLES="false" FIELD="/fileName;1;0">
+  <DATA ENCODING="XMLValues" I18N="true">
+
+<Values version="2.0">
+  <value name="xml">TEST_RC</value>
+  <record name="type" javaclass="com.wm.util.Values">
+    <value name="node_type">unknown</value>
+    <value name="field_name">fileName</value>
+    <value name="field_type">string</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+  </record>
+</Values>
+</DATA>
+</MAPSET>
+</MAP>
+
+<MAP MODE="OUTPUT">
+</MAP>
+</INVOKE>
+
+<INVOKE TIMEOUT="" SERVICE="pub.flow:restorePipelineFromFile" VALIDATE-IN="$none" VALIDATE-OUT="$none" DISABLED="true">
+  <COMMENT></COMMENT>
+
+  <!-- nodes -->
+
+<MAP MODE="INPUT">
+  <MAPTARGET>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_name">restorePipelineFromFileInput</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">fileName</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">merge</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="field_opt">true</value>
+        <array name="field_options" type="value" depth="1">
+          <value>true</value>
+          <value>false</value>
+        </array>
+        <value name="nillable">true</value>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPTARGET>
+  <MAPSOURCE>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+    </array>
+  </record>
+</Values>
+</MAPSOURCE>
+
+  <!-- nodes -->
+
+<MAPSET NAME="Setter" OVERWRITE="true" VARIABLES="false" FIELD="/fileName;1;0">
+  <DATA ENCODING="XMLValues" I18N="true">
+
+<Values version="2.0">
+  <value name="xml">TEST_RC</value>
+  <record name="type" javaclass="com.wm.util.Values">
+    <value name="node_type">unknown</value>
+    <value name="field_name">fileName</value>
+    <value name="field_type">string</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+  </record>
+</Values>
+</DATA>
+</MAPSET>
+</MAP>
+
+<MAP MODE="OUTPUT">
+</MAP>
+</INVOKE>
+
+<SEQUENCE TIMEOUT="" EXIT-ON="DONE">
+  <COMMENT>Do NOT fail the transaction if the DB log fails</COMMENT>
+
+  <!-- nodes -->
+
+<INVOKE TIMEOUT="" SERVICE="GLDMessageLogAdapterServices:GetOracleSysDate" VALIDATE-IN="$none" VALIDATE-OUT="$none" DISABLED="true">
+  <COMMENT></COMMENT>
+
+  <!-- nodes -->
+
+<MAP MODE="INPUT">
+</MAP>
+
+<MAP MODE="OUTPUT">
+</MAP>
+</INVOKE>
+
+<MAP TIMEOUT="" MODE="STANDALONE" DISABLED="true">
+  <COMMENT>Get System date</COMMENT>
+  <MAPTARGET>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">MessageLogID</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">Response</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseIdentifier4</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseIdentifier5</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseIdentifier6</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseDoc</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+        <array name="rec_fields" type="record" depth="1">
+        </array>
+        <value name="rec_closed">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">SysDate</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">documentTypeName</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="field_opt">true</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="field_name">GetOracleSysDateOutput</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+        <array name="rec_fields" type="record" depth="1">
+        </array>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPTARGET>
+  <MAPSOURCE>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">MessageLogID</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">Response</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseIdentifier4</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseIdentifier5</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseIdentifier6</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseDoc</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+        <array name="rec_fields" type="record" depth="1">
+        </array>
+        <value name="rec_closed">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">documentTypeName</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="field_opt">true</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="field_name">GetOracleSysDateOutput</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+        <array name="rec_fields" type="record" depth="1">
+          <record javaclass="com.wm.util.Values">
+            <value name="node_type">record</value>
+            <value name="field_name">results</value>
+            <value name="field_type">record</value>
+            <value name="field_dim">1</value>
+            <value name="nillable">true</value>
+            <array name="rec_fields" type="record" depth="1">
+              <record javaclass="com.wm.util.Values">
+                <value name="node_type">unknown</value>
+                <value name="field_name">DUMMY</value>
+                <value name="field_type">string</value>
+                <value name="field_dim">0</value>
+                <value name="nillable">true</value>
+              </record>
+            </array>
+          </record>
+        </array>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPSOURCE>
+
+  <!-- nodes -->
+
+<MAPCOPY NAME="Link" FROM="/GetOracleSysDateOutput;2;0/results;2;1/DUMMY;1;0" TO="/SysDate;1;0" DISABLED="true">
+</MAPCOPY>
+</MAP>
+
+<MAP TIMEOUT="" MODE="STANDALONE" DISABLED="true">
+  <COMMENT>Temporary Fix</COMMENT>
+  <MAPTARGET>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">MessageLogID</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">Response</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseIdentifier4</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseIdentifier5</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseIdentifier6</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseDoc</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+        <array name="rec_fields" type="record" depth="1">
+        </array>
+        <value name="rec_closed">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">SysDate</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">documentTypeName</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="field_opt">true</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="field_name">GetOracleSysDateOutput</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+        <array name="rec_fields" type="record" depth="1">
+        </array>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPTARGET>
+  <MAPSOURCE>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">MessageLogID</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">Response</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseIdentifier4</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseIdentifier5</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseIdentifier6</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseDoc</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+        <array name="rec_fields" type="record" depth="1">
+        </array>
+        <value name="rec_closed">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">SysDate</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">documentTypeName</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="field_opt">true</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="field_name">GetOracleSysDateOutput</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+        <array name="rec_fields" type="record" depth="1">
+        </array>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPSOURCE>
+
+  <!-- nodes -->
+
+<MAPINVOKE SERVICE="pub.string:substring" VALIDATE-IN="$none" VALIDATE-OUT="$none" DISABLED="true" INVOKE-ORDER="0">
+
+  <!-- nodes -->
+
+<MAP MODE="INVOKEINPUT">
+
+  <!-- nodes -->
+
+<MAPCOPY NAME="Link" FROM="/SysDate;1;0" TO="/inString;1;0">
+</MAPCOPY>
+
+<MAPSET NAME="Setter" OVERWRITE="true" VARIABLES="false" FIELD="/beginIndex;1;0">
+  <DATA ENCODING="XMLValues" I18N="true">
+
+<Values version="2.0">
+  <value name="xml">0</value>
+  <record name="type" javaclass="com.wm.util.Values">
+    <value name="node_type">unknown</value>
+    <value name="field_name">beginIndex</value>
+    <value name="field_type">string</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+  </record>
+</Values>
+</DATA>
+</MAPSET>
+
+<MAPSET NAME="Setter" OVERWRITE="true" VARIABLES="false" FIELD="/endIndex;1;0">
+  <DATA ENCODING="XMLValues" I18N="true">
+
+<Values version="2.0">
+  <value name="xml">10</value>
+  <record name="type" javaclass="com.wm.util.Values">
+    <value name="node_type">unknown</value>
+    <value name="field_name">endIndex</value>
+    <value name="field_type">string</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+  </record>
+</Values>
+</DATA>
+</MAPSET>
+</MAP>
+
+<MAP MODE="INVOKEOUTPUT">
+
+  <!-- nodes -->
+
+<MAPCOPY NAME="Link" FROM="/value;1;0" TO="/SysDate;1;0">
+</MAPCOPY>
+</MAP>
+</MAPINVOKE>
+</MAP>
+
+<BRANCH TIMEOUT="" SWITCH="/ResponseDoc">
+  <COMMENT>Check whether the ResponseDoc is NULL</COMMENT>
+
+  <!-- nodes -->
+
+<SEQUENCE NAME="$null" TIMEOUT="" EXIT-ON="FAILURE">
+  <COMMENT></COMMENT>
+</SEQUENCE>
+
+<SEQUENCE NAME="$default" TIMEOUT="" EXIT-ON="FAILURE">
+  <COMMENT>If NOT NULL - Convert it to string</COMMENT>
+
+  <!-- nodes -->
+
+<BRANCH TIMEOUT="" SWITCH="/documentTypeName">
+  <COMMENT></COMMENT>
+
+  <!-- nodes -->
+
+<SEQUENCE NAME="$null" TIMEOUT="" EXIT-ON="FAILURE">
+  <COMMENT></COMMENT>
+
+  <!-- nodes -->
+
+<MAP MODE="STANDALONE">
+  <COMMENT>Clean up</COMMENT>
+  <MAPTARGET>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+    </array>
+  </record>
+</Values>
+</MAPTARGET>
+  <MAPSOURCE>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">MessageLogID</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">Response</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseIdentifier4</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseIdentifier5</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseIdentifier6</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseDoc</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+        <array name="rec_fields" type="record" depth="1">
+        </array>
+        <value name="rec_closed">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">SysDate</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">documentTypeName</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="field_opt">true</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="field_name">GetOracleSysDateOutput</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+        <array name="rec_fields" type="record" depth="1">
+        </array>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPSOURCE>
+
+  <!-- nodes -->
+
+<MAPDELETE NAME="Dropper" FIELD="/documentTypeName;1;0">
+</MAPDELETE>
+</MAP>
+
+<INVOKE TIMEOUT="" SERVICE="pub.xml:documentToXMLString" VALIDATE-IN="$none" VALIDATE-OUT="$none">
+  <COMMENT>Convert the Doc to string</COMMENT>
+
+  <!-- nodes -->
+
+<MAP MODE="INPUT">
+  <MAPTARGET>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_name">documentToXMLStringInput</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">attrPrefix</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="field_opt">true</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="field_name">document</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+        <array name="rec_fields" type="record" depth="1">
+        </array>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="field_name">nsDecls</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="field_opt">true</value>
+        <value name="nillable">true</value>
+        <array name="rec_fields" type="record" depth="1">
+        </array>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">addHeader</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="field_opt">true</value>
+        <array name="field_options" type="value" depth="1">
+          <value>true</value>
+          <value>false</value>
+        </array>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">encode</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="field_opt">true</value>
+        <array name="field_options" type="value" depth="1">
+          <value>true</value>
+          <value>false</value>
+        </array>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">documentTypeName</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="field_opt">true</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">generateRequiredTags</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="field_opt">true</value>
+        <array name="field_options" type="value" depth="1">
+          <value>false</value>
+          <value>true</value>
+        </array>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">enforceLegalXML</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="field_opt">true</value>
+        <array name="field_options" type="value" depth="1">
+          <value>true</value>
+          <value>false</value>
+        </array>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="field_name">dtdHeaderInfo</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="field_opt">true</value>
+        <value name="nillable">true</value>
+        <array name="rec_fields" type="record" depth="1">
+        </array>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">bufferSize</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="field_opt">true</value>
+        <value name="nillable">true</value>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPTARGET>
+  <MAPSOURCE>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">MessageLogID</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">Response</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseIdentifier4</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseIdentifier5</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseIdentifier6</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseDoc</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+        <array name="rec_fields" type="record" depth="1">
+        </array>
+        <value name="rec_closed">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">SysDate</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="field_name">GetOracleSysDateOutput</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+        <array name="rec_fields" type="record" depth="1">
+        </array>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPSOURCE>
+
+  <!-- nodes -->
+
+<MAPCOPY NAME="Link" FROM="/ResponseDoc;2;0" TO="/document;2;0">
+</MAPCOPY>
+</MAP>
+
+<MAP MODE="OUTPUT">
+  <MAPTARGET>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">MessageLogID</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="field_name">document</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+        <array name="rec_fields" type="record" depth="1">
+        </array>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">Response</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseIdentifier4</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseIdentifier5</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseIdentifier6</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseDoc</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+        <array name="rec_fields" type="record" depth="1">
+        </array>
+        <value name="rec_closed">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">SysDate</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="field_name">GetOracleSysDateOutput</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+        <array name="rec_fields" type="record" depth="1">
+        </array>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">xmldata</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPTARGET>
+  <MAPSOURCE>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_name">documentToXMLStringOutput</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">xmldata</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPSOURCE>
+
+  <!-- nodes -->
+
+<MAPDELETE NAME="Dropper" FIELD="/xmldata;1;0">
+</MAPDELETE>
+
+<MAPDELETE NAME="Dropper" FIELD="/document;2;0">
+</MAPDELETE>
+
+<MAPCOPY NAME="Link" FROM="/xmldata;1;0" TO="/Response;1;0">
+</MAPCOPY>
+</MAP>
+</INVOKE>
+</SEQUENCE>
+
+<SEQUENCE NAME="$default" TIMEOUT="" EXIT-ON="FAILURE">
+  <COMMENT></COMMENT>
+
+  <!-- nodes -->
+
+<INVOKE TIMEOUT="" SERVICE="pub.xml:documentToXMLString" VALIDATE-IN="$none" VALIDATE-OUT="$none">
+  <COMMENT>Convert the Doc to string</COMMENT>
+
+  <!-- nodes -->
+
+<MAP MODE="INPUT">
+  <MAPTARGET>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_name">documentToXMLStringInput</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">attrPrefix</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="field_opt">true</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="field_name">document</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+        <array name="rec_fields" type="record" depth="1">
+        </array>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="field_name">nsDecls</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="field_opt">true</value>
+        <value name="nillable">true</value>
+        <array name="rec_fields" type="record" depth="1">
+        </array>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">addHeader</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="field_opt">true</value>
+        <array name="field_options" type="value" depth="1">
+          <value>true</value>
+          <value>false</value>
+        </array>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">encode</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="field_opt">true</value>
+        <array name="field_options" type="value" depth="1">
+          <value>true</value>
+          <value>false</value>
+        </array>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">documentTypeName</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="field_opt">true</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">generateRequiredTags</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="field_opt">true</value>
+        <array name="field_options" type="value" depth="1">
+          <value>false</value>
+          <value>true</value>
+        </array>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">enforceLegalXML</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="field_opt">true</value>
+        <array name="field_options" type="value" depth="1">
+          <value>true</value>
+          <value>false</value>
+        </array>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="field_name">dtdHeaderInfo</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="field_opt">true</value>
+        <value name="nillable">true</value>
+        <array name="rec_fields" type="record" depth="1">
+        </array>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">bufferSize</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="field_opt">true</value>
+        <value name="nillable">true</value>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPTARGET>
+  <MAPSOURCE>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">fileName</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">MessageLogID</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">Response</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseIdentifier4</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseIdentifier5</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseIdentifier6</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">SysDate</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseDoc</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+        <array name="rec_fields" type="record" depth="1">
+        </array>
+        <value name="rec_closed">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">documentTypeName</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="field_name">GetOracleSysDateOutput</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+        <array name="rec_fields" type="record" depth="1">
+        </array>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPSOURCE>
+
+  <!-- nodes -->
+
+<MAPCOPY NAME="Link" FROM="/documentTypeName;1;0" TO="/documentTypeName;1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/ResponseDoc;2;0" TO="/document;2;0">
+</MAPCOPY>
+</MAP>
+
+<MAP MODE="OUTPUT">
+  <MAPTARGET>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">fileName</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="field_name">document</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+        <array name="rec_fields" type="record" depth="1">
+        </array>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">MessageLogID</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">Response</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseIdentifier4</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseIdentifier5</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseIdentifier6</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">SysDate</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseDoc</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+        <array name="rec_fields" type="record" depth="1">
+        </array>
+        <value name="rec_closed">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">documentTypeName</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="field_name">GetOracleSysDateOutput</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+        <array name="rec_fields" type="record" depth="1">
+        </array>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">xmldata</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPTARGET>
+  <MAPSOURCE>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_name">documentToXMLStringOutput</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">xmldata</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPSOURCE>
+
+  <!-- nodes -->
+
+<MAPDELETE NAME="Dropper" FIELD="/xmldata;1;0">
+</MAPDELETE>
+
+<MAPDELETE NAME="Dropper" FIELD="/document;2;0">
+</MAPDELETE>
+
+<MAPDELETE NAME="Dropper" FIELD="/documentTypeName;1;0">
+</MAPDELETE>
+
+<MAPCOPY NAME="Link" FROM="/xmldata;1;0" TO="/Response;1;0">
+</MAPCOPY>
+</MAP>
+</INVOKE>
+</SEQUENCE>
+</BRANCH>
+</SEQUENCE>
+</BRANCH>
+
+<MAP MODE="STANDALONE">
+  <COMMENT>Get first 1000 characters of Response string</COMMENT>
+  <MAPTARGET>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">fileName</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">MessageLogID</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">Response</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseIdentifier4</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseIdentifier5</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseIdentifier6</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">SysDate</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseDoc</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+        <array name="rec_fields" type="record" depth="1">
+        </array>
+        <value name="rec_closed">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="field_name">GetOracleSysDateOutput</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+        <array name="rec_fields" type="record" depth="1">
+        </array>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPTARGET>
+  <MAPSOURCE>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">fileName</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">MessageLogID</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">Response</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseIdentifier4</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseIdentifier5</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseIdentifier6</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">SysDate</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseDoc</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+        <array name="rec_fields" type="record" depth="1">
+        </array>
+        <value name="rec_closed">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="field_name">GetOracleSysDateOutput</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+        <array name="rec_fields" type="record" depth="1">
+        </array>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPSOURCE>
+
+  <!-- nodes -->
+
+<MAPINVOKE SERVICE="pub.string:substring" VALIDATE-IN="$none" VALIDATE-OUT="$none" INVOKE-ORDER="0">
+
+  <!-- nodes -->
+
+<MAP MODE="INVOKEINPUT">
+
+  <!-- nodes -->
+
+<MAPCOPY NAME="Link" FROM="/Response;1;0" TO="/inString;1;0">
+</MAPCOPY>
+
+<MAPSET NAME="Setter" OVERWRITE="true" VARIABLES="false" FIELD="/beginIndex;1;0">
+  <DATA ENCODING="XMLValues" I18N="true">
+
+<Values version="2.0">
+  <value name="xml">0</value>
+  <record name="type" javaclass="com.wm.util.Values">
+    <value name="node_type">unknown</value>
+    <value name="field_name">beginIndex</value>
+    <value name="field_type">string</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+  </record>
+</Values>
+</DATA>
+</MAPSET>
+
+<MAPSET NAME="Setter" OVERWRITE="true" VARIABLES="false" FIELD="/endIndex;1;0">
+  <DATA ENCODING="XMLValues" I18N="true">
+
+<Values version="2.0">
+  <value name="xml">1000</value>
+  <record name="type" javaclass="com.wm.util.Values">
+    <value name="node_type">unknown</value>
+    <value name="field_name">endIndex</value>
+    <value name="field_type">string</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+  </record>
+</Values>
+</DATA>
+</MAPSET>
+</MAP>
+
+<MAP MODE="INVOKEOUTPUT">
+
+  <!-- nodes -->
+
+<MAPCOPY NAME="Link" FROM="/value;1;0" TO="/Response;1;0">
+</MAPCOPY>
+</MAP>
+</MAPINVOKE>
+</MAP>
+
+<INVOKE TIMEOUT="" SERVICE="GLDMessageLogAdapterServices:LogXMLResponse" VALIDATE-IN="$none" VALIDATE-OUT="$none">
+  <COMMENT></COMMENT>
+
+  <!-- nodes -->
+
+<MAP MODE="INPUT">
+  <MAPTARGET>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_name">LogXMLResponseInput</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="field_name">LogXMLResponseInput</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+        <array name="rec_fields" type="record" depth="1">
+          <record javaclass="com.wm.util.Values">
+            <value name="node_type">record</value>
+            <value name="field_name">overrideCredentials</value>
+            <value name="field_type">record</value>
+            <value name="field_dim">0</value>
+            <value name="nillable">true</value>
+            <array name="rec_fields" type="record" depth="1">
+            </array>
+          </record>
+          <record javaclass="com.wm.util.Values">
+            <value name="node_type">unknown</value>
+            <value name="field_name">RESPONSE</value>
+            <value name="field_type">string</value>
+            <value name="field_dim">0</value>
+            <value name="nillable">true</value>
+          </record>
+          <record javaclass="com.wm.util.Values">
+            <value name="node_type">unknown</value>
+            <value name="field_name">RESPONSEIDENTIFIER4</value>
+            <value name="field_type">string</value>
+            <value name="field_dim">0</value>
+            <value name="nillable">true</value>
+          </record>
+          <record javaclass="com.wm.util.Values">
+            <value name="node_type">unknown</value>
+            <value name="field_name">RESPONSEIDENTIFIER5</value>
+            <value name="field_type">string</value>
+            <value name="field_dim">0</value>
+            <value name="nillable">true</value>
+          </record>
+          <record javaclass="com.wm.util.Values">
+            <value name="node_type">unknown</value>
+            <value name="field_name">RESPONSEIDENTIFIER6</value>
+            <value name="field_type">string</value>
+            <value name="field_dim">0</value>
+            <value name="nillable">true</value>
+          </record>
+          <record javaclass="com.wm.util.Values">
+            <value name="node_type">record</value>
+            <value name="field_name">DECIMAL	java</value>
+            <value name="field_type">record</value>
+            <value name="field_dim">0</value>
+            <value name="nillable">true</value>
+            <array name="rec_fields" type="record" depth="1">
+            </array>
+          </record>
+          <record javaclass="com.wm.util.Values">
+            <value name="node_type">unknown</value>
+            <value name="field_name">MessageLogID</value>
+            <value name="field_type">string</value>
+            <value name="field_dim">0</value>
+            <value name="nillable">true</value>
+          </record>
+        </array>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="field_name">$connectionName</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="field_opt">true</value>
+        <value name="nillable">false</value>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPTARGET>
+  <MAPSOURCE>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">MessageLogID</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">Response</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseIdentifier4</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseIdentifier5</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseIdentifier6</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseDoc</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+        <array name="rec_fields" type="record" depth="1">
+        </array>
+        <value name="rec_closed">true</value>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPSOURCE>
+
+  <!-- nodes -->
+
+<MAPCOPY NAME="Link" FROM="/ResponseIdentifier4;1;0" TO="/LogXMLResponseInput;2;0/RESPONSEIDENTIFIER4;1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/ResponseIdentifier5;1;0" TO="/LogXMLResponseInput;2;0/RESPONSEIDENTIFIER5;1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/ResponseIdentifier6;1;0" TO="/LogXMLResponseInput;2;0/RESPONSEIDENTIFIER6;1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/MessageLogID;1;0" TO="/LogXMLResponseInput;2;0/MessageLogID(0);1;0">
+</MAPCOPY>
+
+<MAPCOPY NAME="Link" FROM="/Response;1;0" TO="/LogXMLResponseInput;2;0/RESPONSE;1;0">
+</MAPCOPY>
+</MAP>
+
+<MAP MODE="OUTPUT">
+  <MAPTARGET>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="field_name">LogXMLResponseInput</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+        <array name="rec_fields" type="record" depth="1">
+          <record javaclass="com.wm.util.Values">
+            <value name="node_type">unknown</value>
+            <value name="field_name">RESPONSE</value>
+            <value name="field_type">string</value>
+            <value name="field_dim">0</value>
+            <value name="nillable">true</value>
+          </record>
+          <record javaclass="com.wm.util.Values">
+            <value name="node_type">unknown</value>
+            <value name="field_name">RESPONSEIDENTIFIER4</value>
+            <value name="field_type">string</value>
+            <value name="field_dim">0</value>
+            <value name="nillable">true</value>
+          </record>
+          <record javaclass="com.wm.util.Values">
+            <value name="node_type">unknown</value>
+            <value name="field_name">RESPONSEIDENTIFIER5</value>
+            <value name="field_type">string</value>
+            <value name="field_dim">0</value>
+            <value name="nillable">true</value>
+          </record>
+          <record javaclass="com.wm.util.Values">
+            <value name="node_type">unknown</value>
+            <value name="field_name">RESPONSEIDENTIFIER6</value>
+            <value name="field_type">string</value>
+            <value name="field_dim">0</value>
+            <value name="nillable">true</value>
+          </record>
+          <record javaclass="com.wm.util.Values">
+            <value name="node_type">unknown</value>
+            <value name="field_name">MessageLogID</value>
+            <value name="field_type">string</value>
+            <value name="field_dim">0</value>
+            <value name="nillable">true</value>
+          </record>
+        </array>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">MessageLogID</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="field_name">document</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+        <array name="rec_fields" type="record" depth="1">
+        </array>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">Response</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseIdentifier4</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseIdentifier5</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseIdentifier6</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">ResponseDoc</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+        <array name="rec_fields" type="record" depth="1">
+        </array>
+        <value name="rec_closed">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">unknown</value>
+        <value name="field_name">SysDate</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="field_name">GetOracleSysDateOutput</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+        <array name="rec_fields" type="record" depth="1">
+        </array>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="field_name">LogXMLResponseOutput</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+        <array name="rec_fields" type="record" depth="1">
+        </array>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPTARGET>
+  <MAPSOURCE>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_name">LogXMLResponseOutput</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="field_name">LogXMLResponseOutput</value>
+        <value name="field_type">record</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+        <array name="rec_fields" type="record" depth="1">
+        </array>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPSOURCE>
+
+  <!-- nodes -->
+
+<MAPDELETE NAME="Dropper" FIELD="/LogXMLResponseInput;2;0">
+</MAPDELETE>
+
+<MAPDELETE NAME="Dropper" FIELD="/MessageLogID;1;0">
+</MAPDELETE>
+
+<MAPDELETE NAME="Dropper" FIELD="/document;2;0">
+</MAPDELETE>
+
+<MAPDELETE NAME="Dropper" FIELD="/Response;1;0">
+</MAPDELETE>
+
+<MAPDELETE NAME="Dropper" FIELD="/ResponseIdentifier4;1;0">
+</MAPDELETE>
+
+<MAPDELETE NAME="Dropper" FIELD="/ResponseIdentifier5;1;0">
+</MAPDELETE>
+
+<MAPDELETE NAME="Dropper" FIELD="/ResponseIdentifier6;1;0">
+</MAPDELETE>
+
+<MAPDELETE NAME="Dropper" FIELD="/ResponseDoc;2;0">
+</MAPDELETE>
+
+<MAPDELETE NAME="Dropper" FIELD="/SysDate;1;0">
+</MAPDELETE>
+
+<MAPDELETE NAME="Dropper" FIELD="/GetOracleSysDateOutput;2;0">
+</MAPDELETE>
+
+<MAPDELETE NAME="Dropper" FIELD="/LogXMLResponseOutput;2;0">
+</MAPDELETE>
+</MAP>
+</INVOKE>
+</SEQUENCE>
+
+<MAP MODE="STANDALONE">
+  <COMMENT></COMMENT>
+</MAP>
+</FLOW>

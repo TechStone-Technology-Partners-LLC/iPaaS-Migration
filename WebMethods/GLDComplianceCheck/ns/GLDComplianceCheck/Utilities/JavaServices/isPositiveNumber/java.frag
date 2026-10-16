@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<Values version="2.0">
+  <value name="name">isPositiveNumber</value>
+  <value name="encodeutf8">true</value>
+  <value name="body">SURhdGFDdXJzb3IgaWRjID0gcGlwZWxpbmUuZ2V0Q3Vyc29yKCApOwpTdHJpbmcgaW5OdW0gPSIi
+OwoKaWYoaWRjLmZpcnN0KCJpbk51bSIpKQp7CmluTnVtID0gKFN0cmluZylpZGMuZ2V0VmFsdWUo
+KTsKfQoKdHJ5ewoJaWYoaW5OdW0hPW51bGwpewoKCUxvbmcgbnVtID0gbmV3IExvbmcoaW5OdW0p
+OwoKCWlmKG51bS5sb25nVmFsdWUoKSA+MCkKICAgICAgICAgICAgIHsKCSBpZGMuaW5zZXJ0QWZ0
+ZXIoImlzUG9zaXRpdmUiLCAidHJ1ZSIgKTsKICAgICAgICAgICAgIH0KCWVsc2V7CiBpZGMuaW5z
+ZXJ0QWZ0ZXIoImlzUG9zaXRpdmUiLCAiZmFsc2UiICk7CiAgICAgICAgICAgIH0KCX0KfQoKY2F0
+Y2goTnVtYmVyRm9ybWF0RXhjZXB0aW9uIG5mZXgpCgkJewoJCQlpZGMubGFzdCgpOwoJCSBpZGMu
+aW5zZXJ0QWZ0ZXIoImlzUG9zaXRpdmUiLCAiZmFsc2UiICk7CgkJfQoKCmluTnVtPSIiOwppZGMu
+ZGVzdHJveSgpOwoK</value>
+</Values>

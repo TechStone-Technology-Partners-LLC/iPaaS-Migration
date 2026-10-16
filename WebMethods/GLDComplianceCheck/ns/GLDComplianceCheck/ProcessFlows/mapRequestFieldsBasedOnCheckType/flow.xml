@@ -1,0 +1,633 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<FLOW VERSION="3.0" CLEANUP="true">
+
+  <!-- nodes -->
+
+<MAP TIMEOUT="" MODE="STANDALONE">
+  <COMMENT></COMMENT>
+  <MAPTARGET>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">CheckType</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPTARGET>
+  <MAPSOURCE>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">CheckType</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPSOURCE>
+
+  <!-- nodes -->
+
+<MAPINVOKE SERVICE="pub.string:toUpper" INVOKE-ORDER="0">
+
+  <!-- nodes -->
+
+<MAP MODE="INVOKEINPUT">
+
+  <!-- nodes -->
+
+<MAPCOPY NAME="Link" FROM="/CheckType;1;0" TO="/inString;1;0">
+</MAPCOPY>
+</MAP>
+
+<MAP MODE="INVOKEOUTPUT">
+
+  <!-- nodes -->
+
+<MAPCOPY NAME="Link" FROM="/value;1;0" TO="/CheckType;1;0">
+</MAPCOPY>
+</MAP>
+</MAPINVOKE>
+</MAP>
+
+<BRANCH TIMEOUT="" LABELEXPRESSIONS="true">
+  <COMMENT></COMMENT>
+
+  <!-- nodes -->
+
+<MAP NAME="%CheckType% = 'FULL'" TIMEOUT="" MODE="STANDALONE">
+  <COMMENT>FULL</COMMENT>
+  <MAPTARGET>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">FrcVnd</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">OFACall</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">RegOCall</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">RegWCall</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPTARGET>
+  <MAPSOURCE>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">CheckType</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPSOURCE>
+
+  <!-- nodes -->
+
+<MAPDELETE NAME="Dropper" FIELD="/CheckType;1;0">
+</MAPDELETE>
+
+<MAPSET NAME="Setter" OVERWRITE="true" VARIABLES="false" FIELD="/FrcVnd;1;0">
+  <DATA ENCODING="XMLValues" I18N="true">
+
+<Values version="2.0">
+  <value name="xml">N</value>
+  <record name="type" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="node_comment"></value>
+    <record name="node_hints" javaclass="com.wm.util.Values">
+      <null name="field_usereditable"/>
+      <value name="field_largerEditor">false</value>
+      <value name="field_password">false</value>
+    </record>
+    <value name="field_name">FrcVnd</value>
+    <value name="field_type">string</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+  </record>
+</Values>
+</DATA>
+</MAPSET>
+
+<MAPSET NAME="Setter" OVERWRITE="true" VARIABLES="false" FIELD="/OFACall;1;0">
+  <DATA ENCODING="XMLValues" I18N="true">
+
+<Values version="2.0">
+  <value name="xml">N</value>
+  <record name="type" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="node_comment"></value>
+    <record name="node_hints" javaclass="com.wm.util.Values">
+      <null name="field_usereditable"/>
+      <value name="field_largerEditor">false</value>
+      <value name="field_password">false</value>
+    </record>
+    <value name="field_name">OFACall</value>
+    <value name="field_type">string</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+  </record>
+</Values>
+</DATA>
+</MAPSET>
+
+<MAPSET NAME="Setter" OVERWRITE="true" VARIABLES="false" FIELD="/RegOCall;1;0">
+  <DATA ENCODING="XMLValues" I18N="true">
+
+<Values version="2.0">
+  <value name="xml">N</value>
+  <record name="type" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="node_comment"></value>
+    <record name="node_hints" javaclass="com.wm.util.Values">
+      <null name="field_usereditable"/>
+      <value name="field_largerEditor">false</value>
+      <value name="field_password">false</value>
+    </record>
+    <value name="field_name">RegOCall</value>
+    <value name="field_type">string</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+  </record>
+</Values>
+</DATA>
+</MAPSET>
+
+<MAPSET NAME="Setter" OVERWRITE="true" VARIABLES="false" FIELD="/RegWCall;1;0">
+  <DATA ENCODING="XMLValues" I18N="true">
+
+<Values version="2.0">
+  <value name="xml">N</value>
+  <record name="type" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="node_comment"></value>
+    <record name="node_hints" javaclass="com.wm.util.Values">
+      <null name="field_usereditable"/>
+      <value name="field_largerEditor">false</value>
+      <value name="field_password">false</value>
+    </record>
+    <value name="field_name">RegWCall</value>
+    <value name="field_type">string</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+  </record>
+</Values>
+</DATA>
+</MAPSET>
+</MAP>
+
+<MAP NAME="%CheckType% = 'OFAC PLUS'" TIMEOUT="" MODE="STANDALONE">
+  <COMMENT>OFAC PLUS</COMMENT>
+  <MAPTARGET>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">FrcVnd</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">OFACall</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">RegOCall</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">RegWCall</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPTARGET>
+  <MAPSOURCE>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">CheckType</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPSOURCE>
+
+  <!-- nodes -->
+
+<MAPDELETE NAME="Dropper" FIELD="/CheckType;1;0">
+</MAPDELETE>
+
+<MAPSET NAME="Setter" OVERWRITE="true" VARIABLES="false" FIELD="/FrcVnd;1;0">
+  <DATA ENCODING="XMLValues" I18N="true">
+
+<Values version="2.0">
+  <value name="xml"></value>
+  <record name="type" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="node_comment"></value>
+    <record name="node_hints" javaclass="com.wm.util.Values">
+      <null name="field_usereditable"/>
+      <value name="field_largerEditor">false</value>
+      <value name="field_password">false</value>
+    </record>
+    <value name="field_name">FrcVnd</value>
+    <value name="field_type">string</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+  </record>
+</Values>
+</DATA>
+</MAPSET>
+
+<MAPSET NAME="Setter" OVERWRITE="true" VARIABLES="false" FIELD="/OFACall;1;0">
+  <DATA ENCODING="XMLValues" I18N="true">
+
+<Values version="2.0">
+  <value name="xml">Y</value>
+  <record name="type" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="node_comment"></value>
+    <record name="node_hints" javaclass="com.wm.util.Values">
+      <null name="field_usereditable"/>
+      <value name="field_largerEditor">false</value>
+      <value name="field_password">false</value>
+    </record>
+    <value name="field_name">OFACall</value>
+    <value name="field_type">string</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+  </record>
+</Values>
+</DATA>
+</MAPSET>
+
+<MAPSET NAME="Setter" OVERWRITE="true" VARIABLES="false" FIELD="/RegOCall;1;0">
+  <DATA ENCODING="XMLValues" I18N="true">
+
+<Values version="2.0">
+  <value name="xml">Y</value>
+  <record name="type" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="node_comment"></value>
+    <record name="node_hints" javaclass="com.wm.util.Values">
+      <null name="field_usereditable"/>
+      <value name="field_largerEditor">false</value>
+      <value name="field_password">false</value>
+    </record>
+    <value name="field_name">RegOCall</value>
+    <value name="field_type">string</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+  </record>
+</Values>
+</DATA>
+</MAPSET>
+
+<MAPSET NAME="Setter" OVERWRITE="true" VARIABLES="false" FIELD="/RegWCall;1;0">
+  <DATA ENCODING="XMLValues" I18N="true">
+
+<Values version="2.0">
+  <value name="xml">Y</value>
+  <record name="type" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="node_comment"></value>
+    <record name="node_hints" javaclass="com.wm.util.Values">
+      <null name="field_usereditable"/>
+      <value name="field_largerEditor">false</value>
+      <value name="field_password">false</value>
+    </record>
+    <value name="field_name">RegWCall</value>
+    <value name="field_type">string</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+  </record>
+</Values>
+</DATA>
+</MAPSET>
+</MAP>
+
+<MAP NAME="%CheckType% = 'OFAC'" TIMEOUT="" MODE="STANDALONE">
+  <COMMENT>OFAC</COMMENT>
+  <MAPTARGET>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">FrcVnd</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">OFACall</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">RegOCall</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">RegWCall</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPTARGET>
+  <MAPSOURCE>
+
+<Values version="2.0">
+  <record name="xml" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="field_type">record</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+    <array name="rec_fields" type="record" depth="1">
+      <record javaclass="com.wm.util.Values">
+        <value name="node_type">record</value>
+        <value name="node_comment"></value>
+        <record name="node_hints" javaclass="com.wm.util.Values">
+          <null name="field_usereditable"/>
+          <value name="field_largerEditor">false</value>
+          <value name="field_password">false</value>
+        </record>
+        <value name="field_name">CheckType</value>
+        <value name="field_type">string</value>
+        <value name="field_dim">0</value>
+        <value name="nillable">true</value>
+      </record>
+    </array>
+  </record>
+</Values>
+</MAPSOURCE>
+
+  <!-- nodes -->
+
+<MAPDELETE NAME="Dropper" FIELD="/CheckType;1;0">
+</MAPDELETE>
+
+<MAPSET NAME="Setter" OVERWRITE="true" VARIABLES="false" FIELD="/OFACall;1;0">
+  <DATA ENCODING="XMLValues" I18N="true">
+
+<Values version="2.0">
+  <value name="xml">Y</value>
+  <record name="type" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="node_comment"></value>
+    <record name="node_hints" javaclass="com.wm.util.Values">
+      <null name="field_usereditable"/>
+      <value name="field_largerEditor">false</value>
+      <value name="field_password">false</value>
+    </record>
+    <value name="field_name">OFACall</value>
+    <value name="field_type">string</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+  </record>
+</Values>
+</DATA>
+</MAPSET>
+
+<MAPSET NAME="Setter" OVERWRITE="true" VARIABLES="false" FIELD="/RegOCall;1;0">
+  <DATA ENCODING="XMLValues" I18N="true">
+
+<Values version="2.0">
+  <value name="xml">N</value>
+  <record name="type" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="node_comment"></value>
+    <record name="node_hints" javaclass="com.wm.util.Values">
+      <null name="field_usereditable"/>
+      <value name="field_largerEditor">false</value>
+      <value name="field_password">false</value>
+    </record>
+    <value name="field_name">RegOCall</value>
+    <value name="field_type">string</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+  </record>
+</Values>
+</DATA>
+</MAPSET>
+
+<MAPSET NAME="Setter" OVERWRITE="true" VARIABLES="false" FIELD="/RegWCall;1;0">
+  <DATA ENCODING="XMLValues" I18N="true">
+
+<Values version="2.0">
+  <value name="xml">N</value>
+  <record name="type" javaclass="com.wm.util.Values">
+    <value name="node_type">record</value>
+    <value name="node_comment"></value>
+    <record name="node_hints" javaclass="com.wm.util.Values">
+      <null name="field_usereditable"/>
+      <value name="field_largerEditor">false</value>
+      <value name="field_password">false</value>
+    </record>
+    <value name="field_name">RegWCall</value>
+    <value name="field_type">string</value>
+    <value name="field_dim">0</value>
+    <value name="nillable">true</value>
+  </record>
+</Values>
+</DATA>
+</MAPSET>
+</MAP>
+</BRANCH>
+</FLOW>
