@@ -16,7 +16,7 @@ from pathlib import Path
 
 from google.cloud import pubsub_v1
 
-from . import env, intake, prompts
+from . import env, intake, prompts, vm_power
 from .chat_api import ChatAPI
 from .drive_api import DriveAPI
 from .env import REPO_ROOT
@@ -26,6 +26,11 @@ log = logging.getLogger("gchat")
 
 STATE_PATH = Path(__file__).parent / "state.json"
 DEFAULT_HEARTBEAT_S = 180  # "still working" cadence during long turns (GCHAT_HEARTBEAT_S)
+# Idle shutdown: deallocate the Azure VM after this long with nothing to do
+# (GCHAT_IDLE_SHUTDOWN_S). 0 = off — the default, so dev machines never try;
+# the VM's systemd unit sets it. See docs/migraite-wake-on-message.md §3.
+DEFAULT_IDLE_SHUTDOWN_S = 0
+IDLE_CHECK_S = 60
 
 # thread states
 IDLE, AGENT_RUNNING, WAITING_FOR_USER, BUDGET_PAUSED, DONE = (
@@ -62,6 +67,12 @@ class Bot:
         self._state = self._load_state()
         self.drive = self._init_drive()
         self.heartbeat_s = env.get_int("GCHAT_HEARTBEAT_S", DEFAULT_HEARTBEAT_S)
+        self.idle_shutdown_s = env.get_int("GCHAT_IDLE_SHUTDOWN_S", DEFAULT_IDLE_SHUTDOWN_S)
+        self.last_activity = time.time()  # last event handled or agent turn finished
+        self._handling = False  # an event is being handled right now
+        self._subscriber: pubsub_v1.SubscriberClient | None = None
+        self._sub_path = ""
+        self._streaming = None  # streaming-pull future; None while not pulling
 
     def _init_drive(self) -> DriveAPI | None:
         try:
@@ -111,19 +122,86 @@ class Bot:
         sub_name = env.get("GCHAT_SUBSCRIPTION", "gchat-events-sub")
         if not project:
             raise SystemExit("GCP_PROJECT_ID not set — see docs/migraite-bot-setup.md")
-        subscriber = pubsub_v1.SubscriberClient()
-        sub_path = subscriber.subscription_path(project, sub_name)
-        streaming = subscriber.subscribe(sub_path, callback=self._callback)
-        log.info("listening on %s", sub_path)
+        self._subscriber = pubsub_v1.SubscriberClient()
+        self._sub_path = self._subscriber.subscription_path(project, sub_name)
+        self._start_pull()
+        if self.idle_shutdown_s > 0:
+            asyncio.create_task(self._idle_watch())
+            log.info("idle shutdown after %ss", self.idle_shutdown_s)
         try:
             while True:
                 event = await self.queue.get()
+                self._handling = True
                 try:
                     await self._handle(event)
                 except Exception:
                     log.exception("error handling event")
+                finally:
+                    self._handling = False
+                    self.last_activity = time.time()
         finally:
-            streaming.cancel()
+            self._stop_pull()
+
+    def _start_pull(self) -> None:
+        assert self._subscriber is not None
+        self._streaming = self._subscriber.subscribe(self._sub_path, callback=self._callback)
+        log.info("listening on %s", self._sub_path)
+
+    def _stop_pull(self) -> None:
+        if self._streaming is not None:
+            self._streaming.cancel()
+            self._streaming = None
+
+    # ── idle shutdown ────────────────────────────────────────────────────────
+    def _busy(self) -> bool:
+        """Work in flight: an event being handled, events queued, or an agent
+        turn running. Long AIRO builds send no messages, so message time alone
+        can't tell idle from busy."""
+        if self._handling or not self.queue.empty():
+            return True
+        return any(t.task is not None and not t.task.done() for t in self.threads.values())
+
+    async def _idle_watch(self) -> None:
+        while True:
+            await asyncio.sleep(IDLE_CHECK_S)
+            try:
+                if await self._try_idle_shutdown():
+                    return
+            except Exception:
+                log.exception("idle watcher error — staying up")
+                self.last_activity = time.time()
+                if self._streaming is None:
+                    self._start_pull()
+
+    async def _try_idle_shutdown(self) -> bool:
+        """Deallocate the VM if idle long enough. True once Azure accepted it."""
+        if self._busy() or time.time() - self.last_activity < self.idle_shutdown_s:
+            return False
+        log.info("idle for %ss — deallocating VM", int(time.time() - self.last_activity))
+        # Stop pulling first: a message landing from here on stays unacked in
+        # the subscription instead of being acked and dying with the VM.
+        self._stop_pull()
+        await asyncio.sleep(2)  # let callbacks already in flight reach the queue
+        if self._busy():
+            log.info("activity arrived during shutdown — staying up")
+            self._start_pull()
+            return False
+        self._save_state()
+        for t in self.threads.values():
+            if t.session:
+                try:
+                    await t.session.disconnect()  # reconnects + resumes on next turn
+                except Exception:
+                    log.exception("session disconnect failed")
+        try:
+            await asyncio.to_thread(vm_power.deallocate_self)
+        except Exception:
+            log.exception("deallocate failed — staying up, will retry after another idle period")
+            self.last_activity = time.time()
+            self._start_pull()
+            return False
+        log.info("deallocate accepted — VM is shutting down")
+        return True
 
     # ── event handling ───────────────────────────────────────────────────────
     @staticmethod
@@ -306,6 +384,8 @@ class Bot:
                 thread.state = WAITING_FOR_USER
                 self.chat.post(thread.space, thread.reply_thread,
                                "⚠️ Something went wrong during that step — send a message to retry.")
+            finally:
+                self.last_activity = time.time()  # idle clock starts when the turn ends
         thread.task = asyncio.create_task(_run())
 
     async def _run_turn(self, thread: Thread, prompt: str) -> None:
