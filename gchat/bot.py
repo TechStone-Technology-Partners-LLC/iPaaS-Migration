@@ -86,7 +86,9 @@ class Bot:
         data = {
             t.name: {"session_id": t.session.session_id if t.session else None,
                      "pkg": t.pkg, "state": t.state, "space": t.space,
-                     "docs": t.docs, "run_folder": t.run_folder, "owner": t.owner}
+                     "docs": t.docs, "run_folder": t.run_folder, "owner": t.owner,
+                     "pending_delivery": sorted(t.pending_delivery),
+                     "budget": _budget_dump(t.session.budget) if t.session else None}
             for t in self.threads.values()
         }
         STATE_PATH.write_text(json.dumps(data, indent=2))
@@ -200,9 +202,11 @@ class Bot:
                 thread.docs = saved.get("docs") or {}
                 thread.run_folder = saved.get("run_folder")
                 thread.owner = saved.get("owner") or ""
+                thread.pending_delivery = set(saved.get("pending_delivery") or [])
                 if saved.get("session_id"):
                     thread.session = AgentSession(thread.pkg or "", resume_session_id=saved["session_id"])
-                    thread.state = WAITING_FOR_USER
+                    _budget_load(thread.session.budget, saved.get("budget"))
+                    thread.state = BUDGET_PAUSED if saved.get("state") == BUDGET_PAUSED else WAITING_FOR_USER
                     self.active_thread = thread_name
             self.threads[thread_name] = thread
         if not thread.owner:
@@ -343,6 +347,7 @@ class Bot:
         breach = thread.session.budget.exceeded
         if breach:
             thread.state = BUDGET_PAUSED
+            self._save_state()
             self.chat.post(thread.space, thread.reply_thread,
                            f"💰 Budget limit: {breach}. Reply /continue to extend or /abort to stop.")
             return
@@ -435,6 +440,20 @@ class Bot:
         self._save_state()
         if aborted:
             self.chat.post(thread.space, thread.reply_thread, "🛑 Migration aborted.")
+
+
+# Budget fields that must survive a restart (spend so far + any /continue extensions).
+_BUDGET_KEYS = ("spent_usd", "turns", "max_cost_usd", "max_turns")
+
+
+def _budget_dump(budget) -> dict:
+    return {k: getattr(budget, k) for k in _BUDGET_KEYS}
+
+
+def _budget_load(budget, saved: dict | None) -> None:
+    for k in _BUDGET_KEYS:
+        if saved and k in saved:
+            setattr(budget, k, saved[k])
 
 
 def _footer(done: TurnDone) -> str:
