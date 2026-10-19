@@ -2,6 +2,11 @@
 
 Status: design, not built. 2026-10-17.
 
+**v1 scope:** run the current bot flow unchanged on the VM, plus sleep/wake.
+The current flow allows **one migration at a time** across all users
+(`active_thread` guard, one shared checkout). Concurrent users need the
+per-session worktree change (§6a) — later, not v1.
+
 The bot runs on one small Azure VM that **deallocates itself after 60 minutes
 idle** and is **started again by the next Chat message**. Nothing we run is on
 24/7; Google Pub/Sub holds messages while the VM is off.
@@ -22,18 +27,58 @@ Google Chat ──► Pub/Sub topic `gchat-events`
                       VM off?  → start it, post "starting up" in the thread
                       VM on?   → do nothing
 
-Azure VM `migraite-bot` (B2als_v2, 2 vCPU / 4 GB)
+Azure VM `migraite-bot` (B2s, 2 vCPU / 4 GB)
    systemd runs `python -m gchat.bot` at boot
    bot idle watcher: 60 min with no activity → deallocate self
 ```
 
 | Piece | New? | Runs | Cost/mo |
 |---|---|---|---|
-| Pub/Sub topic + pull sub | exists | Google, always | ~$0 |
-| Push sub `gchat-wake-sub` | new | Google, always | ~$0 |
-| Function `migraite-wake` | new | only when a message arrives | ~$0 (free grant) |
-| VM compute | exists in plan | only while awake | ~$0.04/hr awake |
-| VM disk + public IP | exists in plan | always | ~$9 |
+| Pub/Sub topic + pull sub | exists (GCP) | Google, always | ~$0 |
+| Push sub `gchat-wake-sub` | new (GCP) | Google, always | ~$0 |
+| Function `migraite-wake` | new (Azure) | only when a message arrives | ~$0 (free grant) |
+| VM compute | new (Azure) | only while awake | ~$0.04/hr awake |
+| VM disk + public IP | new (Azure) — part of the VM | always, even while VM is off | ~$9 |
+
+## 1a. Azure placement
+
+Checked 2026-10-17 with `az` (read-only). The signed-in account sees one
+subscription, **Techstone-iGlass**. It holds only iGlass resources (resource
+group `iGlass`: 3 Linux web apps on B1/B2 App Service plans, Function App
+`iglasslogs` on a Y1 consumption plan, Key Vault `iglass-dev-kv`, SQL, Service
+Bus, Azure OpenAI). **No VMs, disks or public IPs exist.**
+
+Decision: MigrAIte goes in **its own new resource group `rg-migraite`** in
+Techstone-iGlass, region **East US** (prices above are East US). Everything
+MigrAIte needs is created there; nothing of iGlass is reused:
+
+| Resource | Name | Why not reuse iGlass's |
+|---|---|---|
+| VM + OS disk + public IP | `migraite-bot` | none exist |
+| Function App + its storage account | `migraite-wake` | `iglasslogs` is iGlass code; keep deploys and permissions separate |
+| Key Vault (Chat key for "waking up" notice) | `kv-migraite` | `iglass-dev-kv` is iGlass dev secrets; a separate vault keeps access separate (cost ~$0) |
+
+One resource group means MigrAIte's cost shows up as a single line in Cost
+Management, and deleting the group removes all of it.
+
+**Created 2026-10-18** (VM only; sleep/wake not built yet):
+
+| Item | Value |
+|---|---|
+| Resource group | `rg-migraite` (East US, tag `app=migraite`) |
+| VM | `migraite-bot`, **Standard_B2s** (2 vCPU / 4 GB), Ubuntu 24.04 LTS, admin `azureuser`, SSH key `~/.ssh/id_ed25519_techstone` |
+| Disk | 64 GB Standard SSD |
+| Public IP | `20.115.25.138` (Standard, static) |
+| NSG | `migraite-botNSG`, one inbound rule `AllowSSH-Rithwik`: TCP 22 from `73.189.70.138/32` only |
+| System identity | principal ID `269ab3e9-e9e3-49db-b031-e2e84c74c9f0` (no roles yet) |
+| Providers registered | `Microsoft.Compute`, `Microsoft.Network` (were unregistered; free) |
+
+**Why B2s, not B2als_v2:** the subscription's B-series v2 quota in East US is
+0 cores. B2s (older B-series, quota 10) has the same 2 vCPU / 4 GB at
+$0.0416/hr vs $0.0376/hr (~$0.26/mo more at 66 awake hours). B2s is
+zone-restricted for this subscription, so the VM is regional (no zone).
+To move to B2als_v2 later: request 2 cores of `standardBasv2Family` quota,
+then resize (one reboot).
 
 ## 2. Wake path
 
@@ -71,7 +116,8 @@ external cron.
   - no thread has a running `task` (no agent turn in flight — long AIRO builds
     send no messages, so message time alone is not enough),
   - the event queue is empty,
-  - `now - last_activity >= GCHAT_IDLE_SHUTDOWN_S` (default 3600; `0` disables).
+  - `now - last_activity >= GCHAT_IDLE_SHUTDOWN_S` (default `0` = off, so dev
+    machines never try; the VM's systemd unit sets `3600`).
 - Shutdown order (closes the race with a message arriving at the last second):
   1. Cancel the streaming pull. New messages now stay unacked in the pull sub.
   2. Re-check the queue and running tasks. If anything appeared, resubscribe and abort.
@@ -151,10 +197,10 @@ compute.virtual_machines.begin_deallocate(meta["resourceGroupName"], meta["name"
 ## 5. Setup (one time)
 
 **Azure**
-1. VM `migraite-bot`: B2als_v2, Ubuntu LTS, Standard SSD OS disk, Standard
+1. ~~VM `migraite-bot`~~ — done 2026-10-18 (§1a): B2s, Ubuntu LTS, Standard SSD OS disk, Standard
    public IP. Turn on **system-assigned managed identity**.
-2. Give the VM's identity **Virtual Machine Contributor** scoped to the VM itself
-   (so it can deallocate itself and nothing else).
+2. ~~Give the VM's identity **Virtual Machine Contributor** scoped to the VM itself~~
+   — done 2026-10-18 (so it can deallocate itself and nothing else).
 3. Function App `migraite-wake` (Python, Flex Consumption). Turn on
    system-assigned managed identity; give it **Virtual Machine Contributor**
    scoped to the VM.
@@ -196,6 +242,36 @@ Old `state.json` files without the new keys still load (fresh budget, nothing pe
 Also: the first message after sleep takes 1–3 min to answer. The "starting up"
 notice is what keeps users from thinking the bot is broken.
 
+## 6a. Worktree cleanup
+
+Applies once per-session worktrees land (one worktree per Chat thread).
+
+**RAM vs disk.** RAM leaks come from Claude CLI processes; every deallocate
+kills them, so RAM resets on each sleep. Worktrees are disk and survive sleep,
+so they need their own cleanup. Growth is slow (~8 MB repo + package each).
+
+**No "finished" signal.** A successful migration never reaches `DONE`: every
+`_finish` call is `aborted=True`, and the prompt tells the agent to stay
+available for recipe changes after the push. So cleanup keys off inactivity,
+not completion.
+
+| Trigger | When | Notes |
+|---|---|---|
+| `/abort` or `/new` | immediately | user explicitly ended the thread |
+| **No message in the thread for N days** (default 7, `GCHAT_WORKTREE_TTL_DAYS`) | checked on boot and before each sleep | main trigger; post "archived — start a new thread", mark `DONE` |
+| `/done` command (optional) | immediately | lets users close a thread early |
+| Orphans on boot | every boot | delete worktree dirs no active thread in `state.json` points to (crash leftovers), then `git worktree prune` |
+
+**Before deleting a worktree:**
+1. *(Later, optional)* `migration-specs/<pkg>_progress.md` exists only in the
+   worktree (only the two analysis docs go to Drive). Its content is mostly in
+   the agent's final Chat message, so losing it is acceptable for now; adding
+   it to the Drive deliveries is a later flow change.
+2. Skip the delete if `pending_delivery` is non-empty; retry next check.
+3. Mark the thread `DONE` and remove its transcript dir under
+   `~/.claude/projects/` (keyed by the worktree path), so a later message never
+   tries to resume a session whose `cwd` is gone.
+
 ## 7. Failure modes
 
 | Failure | Result | Covered by |
@@ -230,8 +306,60 @@ Reviewed 2026-10-17 and deliberately left for later.
 
 ## 10. Build order
 
-1. VM + systemd + managed identity (bot runs always-on first — proves the host).
+**Phase 1 — one migration at a time on the VM (current flow)**
+1. VM + systemd + managed identity; bot runs always-on. Run one full
+   migration from Chat end to end — proves the host before anything else.
+   *2026-10-18:* VM, swap, venv, Claude login, AIRO login (tunnel on port
+   8765, headless check OK), `migraite-bot.service` (enabled, survives reboot),
+   Chat "hi" round trip — all done. **Full migration: done 2026-10-18**
+   (STKErrorHandler → 2 recipes pushed to "migrAIte Bot Demo", folder
+   35793543; 0 errors in the journal; ~0.8 GB RAM used, swap untouched).
 2. Bot idle watcher + self-deallocate (`GCHAT_IDLE_SHUTDOWN_S`).
+   *2026-10-18:* code in `gchat/bot.py` (`_idle_watch`) + `gchat/vm_power.py`
+   (IMDS token + ARM deallocate, no new deps); VM role granted. **Live test
+   passed 2026-10-18** with `GCHAT_IDLE_SHUTDOWN_S=300` (systemd drop-in
+   `/etc/systemd/system/migraite-bot.service.d/idle.conf`): the VM's own
+   identity deallocated it, ~19 s from request to deallocated. Kept at `0`
+   (off) until the wake function (step 4) exists.
 3. ~~Persist `pending_delivery` and budget state~~ — done (§6).
 4. Wake function + push subscription.
+   *2026-10-18:* code in `azure/wake_function/` (`wake_logic.py` = decisions,
+   15 local cases pass; `function_app.py` = Azure/Chat calls). Created
+   Function App `migraite-wake` (Flex Consumption, Python 3.12, 512 MB,
+   East US) + storage `stmigraitewake1665` + App Insights `migraite-wake`;
+   system identity has Virtual Machine Contributor on the VM; app settings
+   `AZ_SUBSCRIPTION_ID` / `AZ_RESOURCE_GROUP` / `AZ_VM_NAME`. Registered
+   `Microsoft.Storage`. Chat key app setting `GCHAT_SA_JSON` and the push
+   subscription are set by Rithwik (secrets; local gcloud is a different org).
 5. End-to-end: let it sleep, send a message, confirm reply and notice.
+   *Passed 2026-10-18/19:* with a 300 s timeout the VM's identity deallocated
+   it; a Chat DM then made the wake function's identity start it (activity
+   log), and the bot replied. Push sub `gchat-wake-sub` created by Rithwik in
+   the TechStone GCP project. Production timeout: 3600 s.
+
+**Phase 2 — multiple migrations at once**
+6. Per-session worktrees: package extracted into the thread's worktree, `cwd`
+   per session, worktree path saved per thread in `state.json`.
+7. Remove the `active_thread` one-migration guard.
+8. Cleanup triggers and pre-delete steps (§6a).
+9. Owed test: two builds at once under one AIRO login — confirm each gets its
+   own recipe.
+
+## 11. Productionize later
+
+Shortcuts taken to get v1 running; revisit before wider use.
+
+| # | Shortcut now | Production version | Why |
+|---|---|---|---|
+| 1 | VM uses Rithwik's own GitHub login to clone/pull | Read-only **fine-grained token** (Contents: read, this repo only) or a read-only **deploy key** | The agent runs with `bypassPermissions` and reads untrusted client packages; a personal login gives it push access to every repo the account can reach, and its actions show as Rithwik |
+| 2 | SSH open only to Rithwik's current IP | Per-user IPs or Azure Bastion / `az ssh` | Breaks when connecting from another network |
+| 3 | VM size B2s (B-series v2 quota is 0) | Request `standardBasv2Family` quota, resize to B2als_v2 | ~10% cheaper per hour |
+| 4 | `<pkg>_progress.md` stays only on disk | Add to Drive deliveries | Lost on worktree cleanup (§6a) |
+| 5 | Missed-wake race at shutdown accepted | VM-tag handshake (§3) | Rare delayed reply |
+| 6 | VM uses Rithwik's personal Claude login (`/login`) | `ANTHROPIC_API_KEY` in the VM `.env` | A personal plan's usage limits and terms don't fit a shared service; with the key set the engine ignores the login |
+| 7 | `requirements.txt` unpinned (VM got claude-agent-sdk 0.2.168, Mac 0.2.148) | Pin versions | VM and dev machines run different engine versions |
+| 8 | Chat service account key stored as a plain Function App setting (`GCHAT_SA_JSON`) | Key Vault reference (`@Microsoft.KeyVault(...)`) with the function identity as Secrets User | App settings are readable by anyone with contributor on the app |
+| 9 | Push subscription authenticates with the function key in the URL | Pub/Sub OIDC token, verified in the function | A leaked URL lets anyone start the VM (low impact) |
+
+Token expiry note for #1: fine-grained tokens expire; when one does, pulls fail
+but the running bot keeps working. Renew on a calendar reminder.
