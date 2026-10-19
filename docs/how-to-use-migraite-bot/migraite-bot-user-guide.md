@@ -42,6 +42,8 @@ There is nothing to download or install. MigrAIte is a Google Chat app.
 2. Click **New chat** and search for **migrAIte**.
 3. Start a chat with it.
 
+![Searching "migr" in New chat shows the migrAIte app](images/find-the-app.png)
+
 If the app does not show up in search, ask your admin to add you to its
 visibility list.
 
@@ -93,6 +95,8 @@ Do not resend. Your message is kept and handled once the bot is up.
 > Google Chat may also say the **zip was removed for a policy violation**.
 > The bot still received and read it. As long as you got the "📦 Received"
 > message, everything is working.
+
+![Google Chat shows "Policy violation - file removed" on the zip, but the bot still replies "📦 Received"](images/policy-violation-quirk.png)
 
 ### 3. Wait for the analysis
 
