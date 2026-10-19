@@ -51,8 +51,9 @@ Run webMethods → Workato migrations from Google Chat: upload a package zip,
 review the analysis as Google Docs, approve, and the recipe is built in
 Workato via AIRO. Code in `gchat/`.
 
-- [How the migration workflow works](docs/migraite-workflow.md) — analysis → review → approval → AIRO build (internal)
-- [How the Google Chat bot works](docs/migraite-gchat-bot.md) — Pub/Sub, Chat API, service, Agent SDK (internal)
-- [Setting up a Google Chat bot backed by an agent](docs/migraite-bot-setup.md) — generic setup + MigrAIte specifics (internal)
-- [Client onboarding](docs/migraite-client-onboarding.md) — external access, AIRO login, config (internal)
-- [User guide](docs/migraite-user-guide.md) — for people running migrations
+- [How the migration workflow works](docs/how-migraite-bot-works/migraite-workflow.md) — analysis → review → approval → AIRO build (internal)
+- [How the Google Chat bot works](docs/how-migraite-bot-works/migraite-gchat-bot.md) — Pub/Sub, Chat API, service, Agent SDK (internal)
+- [Setting up a Google Chat bot backed by an agent](docs/how-migraite-bot-works/migraite-bot-setup.md) — generic setup + MigrAIte specifics (internal)
+- [Wake-on-message hosting (Azure VM)](docs/how-migraite-bot-works/migraite-wake-on-message.md) — idle shutdown + wake function (internal)
+- [Client onboarding](docs/how-to-use-migraite/migraite-client-onboarding.md) — external access, AIRO login, config (internal)
+- [User guide](docs/how-to-use-migraite/migraite-user-guide.md) — for people running migrations

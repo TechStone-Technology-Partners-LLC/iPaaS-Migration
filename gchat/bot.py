@@ -28,7 +28,7 @@ STATE_PATH = Path(__file__).parent / "state.json"
 DEFAULT_HEARTBEAT_S = 180  # "still working" cadence during long turns (GCHAT_HEARTBEAT_S)
 # Idle shutdown: deallocate the Azure VM after this long with nothing to do
 # (GCHAT_IDLE_SHUTDOWN_S). 0 = off — the default, so dev machines never try;
-# the VM's systemd unit sets it. See docs/migraite-wake-on-message.md §3.
+# the VM's systemd unit sets it. See docs/how-migraite-bot-works/migraite-wake-on-message.md §3.
 DEFAULT_IDLE_SHUTDOWN_S = 0
 IDLE_CHECK_S = 60
 
@@ -121,7 +121,7 @@ class Bot:
         project = env.get("GCP_PROJECT_ID")
         sub_name = env.get("GCHAT_SUBSCRIPTION", "gchat-events-sub")
         if not project:
-            raise SystemExit("GCP_PROJECT_ID not set — see docs/migraite-bot-setup.md")
+            raise SystemExit("GCP_PROJECT_ID not set — see docs/how-migraite-bot-works/migraite-bot-setup.md")
         self._subscriber = pubsub_v1.SubscriberClient()
         self._sub_path = self._subscriber.subscription_path(project, sub_name)
         self._start_pull()

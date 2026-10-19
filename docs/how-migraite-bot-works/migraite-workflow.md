@@ -5,7 +5,7 @@ independent of how it is triggered (Claude Code session, CLI harness, or the
 Google Chat bot). What the agent is given, what it produces at each step,
 where the human is in the loop, and what rules govern the build.
 
-Related: [Google Chat bot](migraite-gchat-bot.md) · [setup](migraite-bot-setup.md) · [client onboarding](migraite-client-onboarding.md) · [user guide](migraite-user-guide.md)
+Related: [Google Chat bot](migraite-gchat-bot.md) · [setup](migraite-bot-setup.md) · [client onboarding](../how-to-use-migraite/migraite-client-onboarding.md) · [user guide](../how-to-use-migraite/migraite-user-guide.md)
 
 ---
 
@@ -201,7 +201,7 @@ hand-authored recipe-JSON push scripts.
 
 **Where it runs.** The recipe is created in the workspace of the Workato user
 whose AIRO login the session carries — the client's, in the target model
-(see [client onboarding](migraite-client-onboarding.md)).
+(see [client onboarding](../how-to-use-migraite/migraite-client-onboarding.md)).
 
 ---
 

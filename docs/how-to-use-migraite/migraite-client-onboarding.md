@@ -2,9 +2,9 @@
 
 What to do, per client, so their people can run migrations through the bot
 and receive recipes in their own Workato workspace. Assumes the service is
-already provisioned per [migraite-bot-setup.md](migraite-bot-setup.md).
+already provisioned per [migraite-bot-setup.md](../how-migraite-bot-works/migraite-bot-setup.md).
 
-Related: [workflow](migraite-workflow.md) · [gchat bot](migraite-gchat-bot.md) · [user guide](migraite-user-guide.md)
+Related: [workflow](../how-migraite-bot-works/migraite-workflow.md) · [gchat bot](../how-migraite-bot-works/migraite-gchat-bot.md) · [user guide](migraite-user-guide.md)
 
 ---
 

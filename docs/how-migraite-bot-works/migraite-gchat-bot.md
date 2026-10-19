@@ -6,7 +6,7 @@ gets in, how the agent is invoked, how its answers get back out, and how
 artifacts and state are handled. The workflow the agent runs is in
 [migraite-workflow.md](migraite-workflow.md).
 
-Related: [setup](migraite-bot-setup.md) · [client onboarding](migraite-client-onboarding.md) · [user guide](migraite-user-guide.md)
+Related: [setup](migraite-bot-setup.md) · [client onboarding](../how-to-use-migraite/migraite-client-onboarding.md) · [user guide](../how-to-use-migraite/migraite-user-guide.md)
 
 ---
 

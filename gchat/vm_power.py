@@ -3,7 +3,7 @@
 Uses the VM's own managed identity through the instance metadata endpoint —
 no credentials on disk. The identity needs a role on the VM that allows
 Microsoft.Compute/virtualMachines/deallocate/action (Virtual Machine
-Contributor scoped to the VM). See docs/migraite-wake-on-message.md §3.
+Contributor scoped to the VM). See docs/how-migraite-bot-works/migraite-wake-on-message.md §3.
 
 Deallocate (not an OS shutdown) is what stops compute billing.
 """

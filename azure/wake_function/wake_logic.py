@@ -1,7 +1,7 @@
 """Decide what to do with one Pub/Sub push of a Chat event.
 
 Kept free of Azure/Google SDK imports so it can be tested anywhere; the
-VM and Chat calls are passed in. See docs/migraite-wake-on-message.md §2.
+VM and Chat calls are passed in. See docs/how-migraite-bot-works/migraite-wake-on-message.md §2.
 
 Return value is the HTTP status for Pub/Sub: 2xx = delivered (done),
 503 = retry later (Pub/Sub backs off 10 s -> 600 s).
