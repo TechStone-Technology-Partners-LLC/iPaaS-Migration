@@ -1,6 +1,9 @@
 # MigrAIte bot — wake-on-message hosting (Azure VM)
 
-Status: design, not built. 2026-10-17.
+Status: **Phase 1 built and verified 2026-10-19** (VM, idle shutdown, wake
+function, push subscription; idle timeout 3600 s in production). Phase 2
+(per-session worktrees, concurrent migrations) not started. Designed
+2026-10-17; build log in §10.
 
 **v1 scope:** run the current bot flow unchanged on the VM, plus sleep/wake.
 The current flow allows **one migration at a time** across all users
@@ -61,7 +64,7 @@ MigrAIte needs is created there; nothing of iGlass is reused:
 One resource group means MigrAIte's cost shows up as a single line in Cost
 Management, and deleting the group removes all of it.
 
-**Created 2026-10-18** (VM only; sleep/wake not built yet):
+**Created 2026-10-18:**
 
 | Item | Value |
 |---|---|
@@ -201,11 +204,11 @@ compute.virtual_machines.begin_deallocate(meta["resourceGroupName"], meta["name"
    public IP. Turn on **system-assigned managed identity**.
 2. ~~Give the VM's identity **Virtual Machine Contributor** scoped to the VM itself~~
    — done 2026-10-18 (so it can deallocate itself and nothing else).
-3. Function App `migraite-wake` (Python, Flex Consumption). Turn on
+3. ~~Function App `migraite-wake` (Python, Flex Consumption). Turn on
    system-assigned managed identity; give it **Virtual Machine Contributor**
-   scoped to the VM.
-4. Function app settings: `AZ_SUB`, `AZ_RG`, `AZ_VM`, and the Chat service
-   account key (`gchat-bot.json` contents) as a Key Vault reference.
+   scoped to the VM.~~ — done 2026-10-18 (§10 step 4).
+4. ~~Function app settings and the Chat service account key.~~ — done
+   2026-10-18; key is a plain app setting `GCHAT_SA_JSON` for now (§11 #8).
 
 **VM**
 5. systemd unit for the bot: `After=network-online.target`, `Restart=always`,
@@ -219,7 +222,7 @@ compute.virtual_machines.begin_deallocate(meta["resourceGroupName"], meta["name"
    transcripts by working directory, so a different `cwd` can't find them.
 
 **GCP**
-8. On topic `gchat-events`, create push subscription `gchat-wake-sub`:
+8. ~~Create push subscription `gchat-wake-sub`~~ — done 2026-10-19. Settings used:
    - endpoint: function URL with `?code=<function key>`
    - ack deadline: 60 s (covers function cold start)
    - retry policy: exponential backoff, min 10 s, max 600 s

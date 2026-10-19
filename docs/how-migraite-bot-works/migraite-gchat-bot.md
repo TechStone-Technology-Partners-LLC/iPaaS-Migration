@@ -36,12 +36,15 @@ flowchart LR
 ```
 
 Nothing calls the service. It pulls events from Google, pushes replies to
-Google. That is why it can run on a laptop today and on a server tomorrow
-with no networking change.
+Google. That is why the same process runs unchanged on a laptop or a server.
 
-Today the service is a foreground process on a developer machine with a
-single identity. Sections marked *(target)* describe the hosted, multi-client
-design that is agreed but not yet built.
+Since 2026-10-19 the service runs as a systemd unit on the Azure VM
+`migraite-bot`. The VM deallocates itself after 60 minutes idle and is
+started again by the next Chat message; the first reply after a sleep takes
+1 to 3 minutes and is preceded by a "waking up" notice. Details in
+[migraite-wake-on-message.md](migraite-wake-on-message.md). The service still
+has a single identity and runs one migration at a time. Sections marked
+*(target)* describe the multi-client design that is agreed but not yet built.
 
 ---
 
@@ -187,8 +190,8 @@ min). Breaching cost/turns pauses until `/continue` (one more allotment) or
 
 **Identity today.** The engine authenticates with `ANTHROPIC_API_KEY` if
 set, otherwise with the Claude login stored in the config directory it runs
-with — which, on the developer machine, is the developer's personal login.
-For a service, set the API key.
+with. On the VM that is currently Rithwik's personal login, a v1 shortcut;
+the production version is the API key (wake doc §11 #6).
 
 ### 5.1 Per-client identity *(target)*
 
@@ -266,15 +269,15 @@ Shared Drive, files belong to the organization.
 | Limit | Why | Path |
 |---|---|---|
 | One process per subscription | Pub/Sub load-balances subscribers | Inherent — run exactly one |
-| One migration at a time | Fixed analysis paths in one checkout | Per-client `workdir` |
+| One migration at a time | Fixed analysis paths in one checkout | Per-session git worktree (wake doc Phase 2) |
 | Single Workato identity | One AIRO login today | Per-client config directory (§5.1) |
 | Single Drive destination | One Shared Drive id today | Registry `drive_folder_id` |
 | "Isn't responding" banner | Pull transport has no synchronous reply | HTTPS endpoint transport when hosted |
 | Failed MCP never retried in-session | Engine behavior | Restart + resume, or `/new` |
-| Dies with its terminal | Foreground process today | systemd / launchd service |
+| First reply after an idle hour takes 1–3 min | VM deallocates itself when idle | Accepted; wake notice posted (wake doc §2) |
 
-Hosting changes none of the code paths above; it moves the process, sets the
-API key, and adds the registry.
+Multi-client hosting changes none of the code paths above; it sets the API
+key and adds the registry.
 
 ---
 

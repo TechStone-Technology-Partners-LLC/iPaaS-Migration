@@ -79,6 +79,14 @@ Within a few seconds you should see:
 
 > 📦 Received *PackageName*. Starting analysis — I'll post progress here and ask when I need input.
 
+**If the bot has been quiet for an hour, it is asleep.** Your first message
+wakes it. You will see this instead, and then the "📦 Received" message
+about 2 to 3 minutes later:
+
+> ⏰ MigrAIte was asleep — starting up now (about 2 minutes). Your message is queued and will be answered.
+
+Do not resend. Your message is kept and handled once the bot is up.
+
 > **Side note: two Google Chat quirks to ignore.**
 > Google Chat briefly flashes **"migrAIte isn't responding"** every time you
 > post. It clears on its own.
@@ -94,8 +102,8 @@ While it works, the bot posts **⏳ Still working…** roughly **every 3
 minutes**. That is your sign it is alive. Nothing else is posted until it
 has a result.
 
-**If you see no message at all for more than 5 minutes**, the bot is
-probably hung. Do not re-upload the zip. Contact your admin with the package
+**If you see no message at all for more than 5 minutes** (counting from the
+"waking up" notice if you got one), the bot is probably hung. Do not re-upload the zip. Contact your admin with the package
 name and the time you sent it.
 
 When analysis finishes you get one summary message: what the package does,
