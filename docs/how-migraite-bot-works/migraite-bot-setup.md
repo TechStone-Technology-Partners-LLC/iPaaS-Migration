@@ -7,7 +7,7 @@ that simply chats with Claude, and the same skeleton can front any harness
 or LLM call. Part B adds what MigrAIte specifically needs (Drive delivery,
 the Workato AIRO login, its environment variables).
 
-Related: [how the MigrAIte bot works](migraite-gchat-bot.md) · [workflow](migraite-workflow.md) · [client onboarding](../how-to-use-migraite/migraite-client-onboarding.md)
+Related: [how the MigrAIte bot works](migraite-gchat-bot.md) · [workflow](migraite-workflow.md) · [client onboarding](../how-to-use-migraite-bot/migraite-bot-client-onboarding.md)
 
 ---
 
@@ -345,7 +345,7 @@ EOF
 ```
 
 Per-client logins go into per-client config directories — see
-[client onboarding](../how-to-use-migraite/migraite-client-onboarding.md).
+[client onboarding](../how-to-use-migraite-bot/migraite-bot-client-onboarding.md).
 
 ## B5. Environment file
 

@@ -55,5 +55,5 @@ Workato via AIRO. Code in `gchat/`.
 - [How the Google Chat bot works](docs/how-migraite-bot-works/migraite-gchat-bot.md) — Pub/Sub, Chat API, service, Agent SDK (internal)
 - [Setting up a Google Chat bot backed by an agent](docs/how-migraite-bot-works/migraite-bot-setup.md) — generic setup + MigrAIte specifics (internal)
 - [Wake-on-message hosting (Azure VM)](docs/how-migraite-bot-works/migraite-wake-on-message.md) — idle shutdown + wake function (internal)
-- [Client onboarding](docs/how-to-use-migraite/migraite-client-onboarding.md) — external access, AIRO login, config (internal)
-- [User guide](docs/how-to-use-migraite/migraite-user-guide.md) — for people running migrations
+- [Client onboarding](docs/how-to-use-migraite-bot/migraite-bot-client-onboarding.md) — external access, AIRO login, config (internal)
+- [User guide](docs/how-to-use-migraite-bot/migraite-bot-user-guide.md) — for people running migrations

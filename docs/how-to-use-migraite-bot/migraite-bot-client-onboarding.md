@@ -4,7 +4,7 @@ What to do, per client, so their people can run migrations through the bot
 and receive recipes in their own Workato workspace. Assumes the service is
 already provisioned per [migraite-bot-setup.md](../how-migraite-bot-works/migraite-bot-setup.md).
 
-Related: [workflow](../how-migraite-bot-works/migraite-workflow.md) · [gchat bot](../how-migraite-bot-works/migraite-gchat-bot.md) · [user guide](migraite-user-guide.md)
+Related: [workflow](../how-migraite-bot-works/migraite-workflow.md) · [gchat bot](../how-migraite-bot-works/migraite-gchat-bot.md) · [user guide](migraite-bot-user-guide.md)
 
 ---
 
@@ -204,7 +204,7 @@ restart the bot.
 6. Walk through the "remaining manual steps" in that message — typically
    creating/authorizing connections (HTTP, Oracle) in the Workato GUI, since
    AIRO cannot configure connector fields without a live connection.
-7. Hand over the [user guide](migraite-user-guide.md).
+7. Hand over the [user guide](migraite-bot-user-guide.md).
 
 Expect the "isn't responding" banner to flash on each message; say up front
 that it is cosmetic.
