@@ -112,8 +112,6 @@ class WmioFlowBuilder:
             })
 
         name = self.flow.get("name", "workflow")
-        if not name.upper().startswith("MIG_"):
-            name = f"MIG_{name}"
 
         workflow = {
             "name": name,

@@ -17,10 +17,16 @@ Usage:
     python enrichers/enrich_spec.py migration-specs/my-project.json --dry-run
     python enrichers/enrich_spec.py migration-specs/my-project.json --step-limit 10
 
-Required env var: ANTHROPIC_API_KEY
+No API key required — rides on Claude Code's own login via claude_agent_sdk,
+same mechanism as generate_workato_airo.py and gchat/. Setting ANTHROPIC_API_KEY
+is no longer needed for this script (and, per generate_workato_airo.py's own
+notes, actually causes the Agent SDK to prefer that key over your OAuth login
+elsewhere in this project -- best left unset unless you specifically want
+enrichment billed against a separate Anthropic Console account).
 """
 
 import argparse
+import asyncio
 import json
 import os
 import re
@@ -28,33 +34,75 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-
-# ─── Anthropic client ─────────────────────────────────────────────────────────
-
-def _get_client():
+# Windows cp1252 default encoding breaks on non-ASCII output. The literals in
+# this file are ASCII-only, but step labels/data printed here come from
+# arbitrary source systems (Boomi, MuleSoft, etc.) and could still contain
+# real unicode -- reconfigure so that content never crashes a print.
+if hasattr(sys.stdout, "reconfigure"):
     try:
-        import anthropic
-    except ImportError:
-        print("ERROR: pip install anthropic", file=sys.stderr)
-        sys.exit(1)
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
 
-    api_key = os.environ.get("ANTHROPIC_API_KEY") or _read_env_var("ANTHROPIC_API_KEY")
-    if not api_key:
-        print("ERROR: ANTHROPIC_API_KEY not set in environment or .env", file=sys.stderr)
-        sys.exit(1)
+try:
+    from claude_agent_sdk import (
+        AssistantMessage,
+        ClaudeAgentOptions,
+        ClaudeSDKClient,
+        TextBlock,
+    )
+except ImportError:
+    print("ERROR: claude_agent_sdk not installed. Run: pip install claude-agent-sdk", file=sys.stderr)
+    sys.exit(1)
 
-    return anthropic.Anthropic(api_key=api_key)
+REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
-def _read_env_var(key):
-    env_path = Path(__file__).parent.parent / ".env"
-    if not env_path.exists():
-        return None
-    for line in env_path.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if line.startswith(f"{key}="):
-            return line.split("=", 1)[1].strip().strip('"').strip("'")
-    return None
+# ─── Claude Agent SDK session ──────────────────────────────────────────────────
+
+class ClaudeAgentSession:
+    """
+    Reusable one-shot Q&A session over the Claude Agent SDK. Kept connected
+    across many calls (one per enrichment step) rather than reconnecting each
+    time. No filesystem/project context or MCP tools -- each prompt is fully
+    self-contained, so there's nothing for the model to need tools for.
+    """
+
+    def __init__(self, system_prompt: str, model: str | None = None):
+        self._options = ClaudeAgentOptions(
+            cwd=str(REPO_ROOT),
+            system_prompt=system_prompt,
+            model=model,
+        )
+        self._client: ClaudeSDKClient | None = None
+
+    async def connect(self) -> None:
+        # If ANTHROPIC_API_KEY is set in the environment (e.g. loaded from
+        # .env for something else entirely), the spawned Claude Code CLI
+        # subprocess inherits the full parent environment and will prefer
+        # that key over this machine's own OAuth login -- silently switching
+        # which account gets billed, and failing outright if that key's
+        # account has no credit. Strip it so this always rides on OAuth.
+        os.environ.pop("ANTHROPIC_API_KEY", None)
+        self._client = ClaudeSDKClient(options=self._options)
+        await self._client.connect()
+
+    async def disconnect(self) -> None:
+        if self._client:
+            await self._client.disconnect()
+            self._client = None
+
+    async def ask(self, prompt: str) -> str:
+        assert self._client is not None
+        await self._client.query(prompt)
+        parts: list[str] = []
+        async for message in self._client.receive_response():
+            if isinstance(message, AssistantMessage):
+                for block in message.content:
+                    if isinstance(block, TextBlock):
+                        parts.append(block.text)
+        return "".join(parts)
 
 
 # ─── Prompt templates ─────────────────────────────────────────────────────────
@@ -263,16 +311,6 @@ def build_prompt(flow_name, step, source_system):
     )
 
 
-# ─── Claude call ──────────────────────────────────────────────────────────────
-
-def call_claude(client, prompt, model="claude-opus-4-7"):
-    message = client.messages.create(
-        model=model,
-        max_tokens=4096,
-        system=SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    return message.content[0].text
 
 
 def parse_json_response(text):
@@ -349,7 +387,7 @@ def merge_enrichment(step, enrichment, step_type):
 
 # ─── Enrichment orchestrator ───────────────────────────────────────────────────
 
-def enrich_spec(spec_path, dry_run=False, step_limit=None, model="claude-opus-4-7"):
+async def enrich_spec(spec_path, dry_run=False, step_limit=None, model=None):
     with open(spec_path, encoding="utf-8") as f:
         spec = json.load(f)
 
@@ -357,7 +395,7 @@ def enrich_spec(spec_path, dry_run=False, step_limit=None, model="claude-opus-4-
     review_steps = collect_review_steps(spec)
 
     if not review_steps:
-        print("No requires_review steps found — spec is already fully mapped.")
+        print("No requires_review steps found - spec is already fully mapped.")
         return spec
 
     print(f"Found {len(review_steps)} step(s) requiring enrichment.")
@@ -369,29 +407,36 @@ def enrich_spec(spec_path, dry_run=False, step_limit=None, model="claude-opus-4-
     if dry_run:
         print("\n[DRY RUN] Would enrich:")
         for flow_name, step in review_steps:
-            print(f"  [{flow_name}] {step.get('type')} — {step.get('label', '')}")
+            print(f"  [{flow_name}] {step.get('type')} - {step.get('label', '')}")
         return spec
 
-    client = _get_client()
+    session = ClaudeAgentSession(SYSTEM_PROMPT, model=model)
+    await session.connect()
     enriched_count = 0
     failed_count = 0
 
-    for i, (flow_name, step) in enumerate(review_steps, 1):
-        step_type = step.get("type", "custom")
-        label = step.get("label", step_type)
-        print(f"  [{i}/{len(review_steps)}] Enriching: [{flow_name}] {step_type} — {label}")
+    try:
+        for i, (flow_name, step) in enumerate(review_steps, 1):
+            step_type = step.get("type", "custom")
+            label = step.get("label", step_type)
+            print(f"  [{i}/{len(review_steps)}] Enriching: [{flow_name}] {step_type} - {label}")
 
-        try:
-            prompt = build_prompt(flow_name, step, source_system)
-            raw_response = call_claude(client, prompt, model=model)
-            enrichment = parse_json_response(raw_response)
-            merge_enrichment(step, enrichment, step_type)
-            enriched_count += 1
-            print(f"    ✓ enriched ({', '.join(k for k in enrichment if not k.startswith('_'))})")
-        except Exception as e:
-            print(f"    ✗ failed: {e}", file=sys.stderr)
-            step["_enrichment_error"] = str(e)
-            failed_count += 1
+            try:
+                prompt = build_prompt(flow_name, step, source_system)
+                raw_response = await session.ask(prompt)
+                enrichment = parse_json_response(raw_response)
+                merge_enrichment(step, enrichment, step_type)
+                enriched_count += 1
+                # Plain ASCII -- a Windows console (cp1252) raises UnicodeEncodeError
+                # on ✓/✗, which previously got caught by the except below and
+                # miscounted a successful enrichment as a failure.
+                print(f"    [ok] enriched ({', '.join(k for k in enrichment if not k.startswith('_'))})")
+            except Exception as e:
+                print(f"    [FAILED] {e}", file=sys.stderr)
+                step["_enrichment_error"] = str(e)
+                failed_count += 1
+    finally:
+        await session.disconnect()
 
     # Update spec metadata
     spec["enrichment_metadata"] = {
@@ -429,8 +474,8 @@ def main():
                         help="Show what would be enriched without calling the API")
     parser.add_argument("--step-limit", type=int, default=None,
                         help="Limit number of steps to enrich (useful for testing)")
-    parser.add_argument("--model", default="claude-opus-4-7",
-                        help="Claude model to use (default: claude-opus-4-7)")
+    parser.add_argument("--model", default=None,
+                        help="Claude model override (default: whatever Claude Code is configured to use)")
     args = parser.parse_args()
 
     if not os.path.isfile(args.spec_path):
@@ -438,8 +483,8 @@ def main():
         sys.exit(1)
 
     _load_dotenv()
-    enrich_spec(args.spec_path, dry_run=args.dry_run,
-                step_limit=args.step_limit, model=args.model)
+    asyncio.run(enrich_spec(args.spec_path, dry_run=args.dry_run,
+                            step_limit=args.step_limit, model=args.model))
 
 
 def _load_dotenv():

@@ -291,8 +291,9 @@ Full 22-row mapping: see `WebMethods/Agent Bridge Web Methods to Workato Compone
 
 | Step | Workato Type | Label | Notes |
 |---|---|---|---|
+Create a new recipe using NewRecipe.json as a reference
 | Trigger | callable_recipe | HTTP POST — Compliance Check | Receives 25-field JSON |
-Put Workato Handle error block
+
 | 1 | Oracle SP | Log Check Request | SP ACCLOGCHECKREQUEST, 25 IN params |
 Configure the Workato Action as Execute Stored Procedure and give all the details for input
 | 2 | Oracle SP | Log Check Request XML | SP LOGXMLREQUEST, 5 IN params |

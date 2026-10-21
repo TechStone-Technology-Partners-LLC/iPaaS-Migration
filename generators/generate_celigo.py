@@ -213,7 +213,7 @@ def main():
         for flow in flows:
             builder = CeligoFlowBuilder(flow, spec)
             pg, pps, notes = builder.build()
-            fname = flow["name"] if flow["name"].upper().startswith("MIG_") else f"MIG_{flow['name']}"
+            fname = flow["name"]
             print(f"Flow: {fname}")
             print(f"  Page generators: {json.dumps(pg, indent=4)}")
             print(f"  Page processors: {json.dumps(pps, indent=4)}")
@@ -239,7 +239,7 @@ def main():
     all_notes = []
     for flow in flows:
         flow_name = flow["name"]
-        fname = flow_name if flow_name.upper().startswith("MIG_") else f"MIG_{flow_name}"
+        fname = flow_name
         print(f"  Creating flow '{fname}'...")
 
         builder = CeligoFlowBuilder(flow, spec)

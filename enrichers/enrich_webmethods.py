@@ -15,27 +15,44 @@ Usage:
     python enrichers/enrich_webmethods.py migration-specs/proj.json --source-dir active-development/wm_upload/extracted
     python enrichers/enrich_webmethods.py migration-specs/proj.json --source-dir ... --dry-run
 
-Required env var: ANTHROPIC_API_KEY
+No API key required — rides on Claude Code's own login via claude_agent_sdk,
+same mechanism as generate_workato_airo.py and gchat/. See ClaudeAgentSession
+below for why ANTHROPIC_API_KEY is actively stripped rather than just unused.
 """
 
 import argparse
+import asyncio
 import json
 import os
 import re
 import sys
 from pathlib import Path
 
-# Windows cp1252 default encoding breaks on non-ASCII output (e.g. → arrows).
+try:
+    from claude_agent_sdk import (
+        AssistantMessage,
+        ClaudeAgentOptions,
+        ClaudeSDKClient,
+        TextBlock,
+    )
+except ImportError:
+    print("ERROR: claude_agent_sdk not installed. Run: pip install claude-agent-sdk", file=sys.stderr)
+    sys.exit(1)
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
+# Windows cp1252 default encoding breaks on non-ASCII output (e.g. → arrows,
+# or unicode in source-system labels/text this script prints verbatim).
 # Reconfigure stdout/stderr to UTF-8 if the current codec can't handle it.
 if hasattr(sys.stdout, "reconfigure"):
     try:
-        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
         sys.stderr.reconfigure(encoding="utf-8", errors="replace")
     except Exception:
         pass
 
 
-# ─── Environment / client ─────────────────────────────────────────────────────
+# ─── Environment / Claude Agent SDK session ────────────────────────────────────
 
 def _load_dotenv():
     env_path = Path(__file__).parent.parent / ".env"
@@ -49,18 +66,49 @@ def _load_dotenv():
         os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
 
 
-def _get_client():
-    _load_dotenv()
-    try:
-        import anthropic
-    except ImportError:
-        print("ERROR: pip install anthropic", file=sys.stderr)
-        sys.exit(1)
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        print("ERROR: ANTHROPIC_API_KEY not set in environment or .env", file=sys.stderr)
-        sys.exit(1)
-    return anthropic.Anthropic(api_key=api_key)
+class ClaudeAgentSession:
+    """
+    Reusable one-shot Q&A session over the Claude Agent SDK. Kept connected
+    across the whole enrichment call (there's normally just one big prompt
+    per run here, unlike enrich_spec.py's per-step loop) rather than
+    reconnecting. No filesystem/project context or MCP tools -- the prompt
+    is fully self-contained.
+    """
+
+    def __init__(self, system_prompt: str, model: str | None = None):
+        self._options = ClaudeAgentOptions(
+            cwd=str(REPO_ROOT),
+            system_prompt=system_prompt,
+            model=model,
+        )
+        self._client: ClaudeSDKClient | None = None
+
+    async def connect(self) -> None:
+        # If ANTHROPIC_API_KEY is set (e.g. for some other script's benefit),
+        # the spawned Claude Code CLI subprocess inherits the full parent
+        # environment and will prefer that key over this machine's own OAuth
+        # login -- silently switching which account gets billed, and failing
+        # outright if that key's account has no credit. Strip it so this
+        # always rides on OAuth.
+        os.environ.pop("ANTHROPIC_API_KEY", None)
+        self._client = ClaudeSDKClient(options=self._options)
+        await self._client.connect()
+
+    async def disconnect(self) -> None:
+        if self._client:
+            await self._client.disconnect()
+            self._client = None
+
+    async def ask(self, prompt: str) -> str:
+        assert self._client is not None
+        await self._client.query(prompt)
+        parts: list[str] = []
+        async for message in self._client.receive_response():
+            if isinstance(message, AssistantMessage):
+                for block in message.content:
+                    if isinstance(block, TextBlock):
+                        parts.append(block.text)
+        return "".join(parts)
 
 
 # ─── Flow XML discovery ────────────────────────────────────────────────────────
@@ -241,14 +289,8 @@ Return a JSON object: {{ "integrations": [ ... ] }}
 
 # ─── Claude call ──────────────────────────────────────────────────────────────
 
-def call_claude(client, prompt: str, model: str) -> dict:
-    msg = client.messages.create(
-        model=model,
-        max_tokens=8096,
-        system=SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    raw = msg.content[0].text.strip()
+async def call_claude(session: "ClaudeAgentSession", prompt: str) -> dict:
+    raw = (await session.ask(prompt)).strip()
     # Strip markdown fences
     raw = re.sub(r"^```(?:json)?\s*", "", raw, flags=re.MULTILINE)
     raw = re.sub(r"\s*```$", "", raw, flags=re.MULTILINE)
@@ -267,8 +309,8 @@ def call_claude(client, prompt: str, model: str) -> dict:
 
 # ─── Main enrichment ──────────────────────────────────────────────────────────
 
-def enrich(spec_path: str, source_dir: str, dry_run: bool = False,
-           model: str = "claude-sonnet-4-6") -> None:
+async def enrich(spec_path: str, source_dir: str, dry_run: bool = False,
+           model: str | None = None) -> None:
 
     spec_path = Path(spec_path)
     source_dir = Path(source_dir)
@@ -326,11 +368,15 @@ def enrich(spec_path: str, source_dir: str, dry_run: bool = False,
         return
 
     # Call Claude
-    client = _get_client()
     prompt = build_enrichment_prompt(package_name, service_chain, spec)
 
-    print(f"\n  Calling Claude ({model}) for deep flow analysis…")
-    result = call_claude(client, prompt, model)
+    print(f"\n  Calling Claude ({model or 'default'}) for deep flow analysis…")
+    session = ClaudeAgentSession(SYSTEM_PROMPT, model=model)
+    await session.connect()
+    try:
+        result = await call_claude(session, prompt)
+    finally:
+        await session.disconnect()
 
     enriched_integrations = result.get("integrations")
     if not enriched_integrations:
@@ -374,8 +420,8 @@ def main():
                         help="Directory of extracted webMethods package")
     parser.add_argument("--dry-run", action="store_true",
                         help="Print what would be sent to Claude without calling the API")
-    parser.add_argument("--model", default="claude-sonnet-4-6",
-                        help="Claude model to use (default: claude-sonnet-4-6)")
+    parser.add_argument("--model", default=None,
+                        help="Claude model override (default: whatever Claude Code is configured to use)")
     args = parser.parse_args()
 
     if not os.path.isfile(args.spec_path):
@@ -385,8 +431,9 @@ def main():
         print(f"ERROR: Source dir not found: {args.source_dir}", file=sys.stderr)
         sys.exit(1)
 
+    _load_dotenv()
     print(f"\n[ENRICH] Deep webMethods analysis…")
-    enrich(args.spec_path, args.source_dir, dry_run=args.dry_run, model=args.model)
+    asyncio.run(enrich(args.spec_path, args.source_dir, dry_run=args.dry_run, model=args.model))
 
 
 if __name__ == "__main__":

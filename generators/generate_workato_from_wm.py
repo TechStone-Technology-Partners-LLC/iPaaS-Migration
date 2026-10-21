@@ -14,21 +14,34 @@ Why per-entry-point?
 Usage:
     python generators/generate_workato_from_wm.py <source_dir> \\
         --output-dir migration-specs/ \\
-        [--project <name>] [--dry-run] [--model claude-sonnet-4-6]
+        [--project <name>] [--dry-run] [--model <override>]
 
 Output:
     migration-specs/<project>_<service>_workato_recipe.json  (one per entry point)
 
-Required env: ANTHROPIC_API_KEY
+No API key required — rides on Claude Code's own login via claude_agent_sdk
+(ClaudeAgentSession, imported from enrich_webmethods.py), same mechanism as
+generate_workato_airo.py and gchat/.
 """
 
 import argparse
+import asyncio
 import json
 import os
 import re
 import sys
-import time
 from pathlib import Path
+
+# Windows cp1252 default encoding breaks on non-ASCII output -- this script
+# prints Claude-generated recipe names/descriptions verbatim, which can
+# contain anything. Reconfigure stdout/stderr to UTF-8 so that content never
+# crashes the print instead of just showing.
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from enrichers.enrich_webmethods import (
@@ -36,7 +49,7 @@ from enrichers.enrich_webmethods import (
     find_entry_points,
     find_ns_root,
     resolve_service_chain,
-    _get_client,
+    ClaudeAgentSession,
 )
 
 
@@ -59,7 +72,12 @@ Build a Workato recipe for: "{entry_point}" (package: "{package_name}")
 
 == REQUIRED OUTPUT FORMAT ==
 Return a JSON object with exactly these 4 top-level keys:
-  "name"        — "MIG_WM_{safe_name}"
+  "name"        — a clean, human-readable name describing what this recipe actually DOES
+                  (its business function), not a mechanical tag. Do NOT prefix it with
+                  "MIG_", "MIG_WM_", the package name, or any migration-tooling artifact.
+                  Base it on the integration's real purpose (e.g. "GLD Compliance Check",
+                  "Sync Funding Requests to Payment Processor") — reuse the source service
+                  name only if it is already clear and descriptive as-is.
   "description" — paragraph describing what the recipe does, external systems called, and any gaps
   "code"        — trigger JSON object (see exact format below — NOT a string)
   "config"      — array of connection config entries (see format below — NOT a string)
@@ -254,12 +272,12 @@ def _build_spec_block(spec_integration: dict) -> str:
     return "\n".join(lines)
 
 
-def generate_one(client, entry_point: str, service_chain: dict,
-                 package_name: str, model: str,
+async def generate_one(session: "ClaudeAgentSession", entry_point: str, service_chain: dict,
+                 package_name: str,
                  spec_integration: dict = None) -> dict:
     """Call Claude to generate a Workato recipe for one entry-point service.
 
-    Retries up to 3 times on 429 rate-limit errors with exponential backoff.
+    Retries up to 3 times on rate-limit errors with exponential backoff.
     spec_integration: matching integration dict from the enriched spec (optional but strongly recommended).
     """
     xml_block = ""
@@ -267,7 +285,6 @@ def generate_one(client, entry_point: str, service_chain: dict,
         trimmed = _trim_xml(xml)
         xml_block += f"\n\n### Service: {svc_key}\n```xml\n{trimmed}\n```"
 
-    safe = _safe_name(entry_point).upper()
     spec_block = _build_spec_block(spec_integration)
 
     prompt = PROMPT.format(
@@ -276,7 +293,6 @@ def generate_one(client, entry_point: str, service_chain: dict,
         service_count=len(service_chain),
         xml_block=xml_block,
         spec_block=spec_block,
-        safe_name=f"{package_name.upper()}_{safe}",
     )
 
     # Estimate token count (rough: 4 chars/token)
@@ -284,14 +300,10 @@ def generate_one(client, entry_point: str, service_chain: dict,
     print(f"    Estimated input tokens: ~{est_tokens:,}")
 
     last_exc = None
+    raw = None
     for attempt in range(1, 4):
         try:
-            msg = client.messages.create(
-                model=model,
-                max_tokens=8192,
-                system=SYSTEM,
-                messages=[{"role": "user", "content": prompt}],
-            )
+            raw = (await session.ask(prompt)).strip()
             break
         except Exception as exc:
             last_exc = exc
@@ -299,13 +311,12 @@ def generate_one(client, entry_point: str, service_chain: dict,
             if "429" in err_str or "rate_limit" in err_str.lower():
                 wait = 30 * attempt   # 30s, 60s, 90s
                 print(f"    Rate limit hit (attempt {attempt}/3) -- waiting {wait}s...", file=sys.stderr)
-                time.sleep(wait)
+                await asyncio.sleep(wait)
             else:
                 raise
     else:
         raise last_exc
 
-    raw = msg.content[0].text.strip()
     raw = re.sub(r"^```(?:json)?\s*", "", raw, flags=re.MULTILINE)
     raw = re.sub(r"\s*```$",           "", raw, flags=re.MULTILINE)
 
@@ -362,8 +373,8 @@ def _find_spec_integration(spec: dict, entry_point: str) -> dict:
     return {}
 
 
-def generate(source_dir: str, output_dir: str, project_name: str = "",
-             dry_run: bool = False, model: str = "claude-sonnet-4-6",
+async def generate(source_dir: str, output_dir: str, project_name: str = "",
+             dry_run: bool = False, model: str | None = None,
              spec_path: str = "") -> list[str]:
     """
     Generate one Workato recipe JSON per entry-point service.
@@ -402,7 +413,7 @@ def generate(source_dir: str, output_dir: str, project_name: str = "",
         print(f"\n  Skipped (registration/lifecycle): {', '.join(skipped)}")
 
     if dry_run:
-        print(f"\n[DRY RUN] Would generate {len(entries)} recipe(s) via {model}")
+        print(f"\n[DRY RUN] Would generate {len(entries)} recipe(s) via {model or 'default model'}")
         for ep in entries:
             chain = resolve_service_chain(ep, flows)
             kb = sum(len(v) for v in chain.values()) // 1024
@@ -434,61 +445,65 @@ def generate(source_dir: str, output_dir: str, project_name: str = "",
             except Exception:
                 pass
 
-    client = _get_client()
+    session = ClaudeAgentSession(SYSTEM, model=model)
+    await session.connect()
     saved_paths = []
 
-    for idx, entry_point in enumerate(entries, 1):
-        print(f"\n  [{idx}/{len(entries)}] Generating recipe for: {entry_point}")
+    try:
+        for idx, entry_point in enumerate(entries, 1):
+            print(f"\n  [{idx}/{len(entries)}] Generating recipe for: {entry_point}")
 
-        if idx > 1:
-            print(f"    (pausing 8s between recipes to respect rate limits...)")
-            time.sleep(8)
+            if idx > 1:
+                print(f"    (pausing 8s between recipes to respect rate limits...)")
+                await asyncio.sleep(8)
 
-        # Build the full service chain for this entry point
-        chain = resolve_service_chain(entry_point, flows)
+            # Build the full service chain for this entry point
+            chain = resolve_service_chain(entry_point, flows)
 
-        # Cap at 4 services: entry point + 3 most-complex direct invocations.
-        # Each flow.xml is trimmed to 6KB, so 4 services = ~24KB = ~6,000 tokens —
-        # safely under the 10k input token limit with room for the prompt template.
-        MAX_CHAIN = 4
-        if len(chain) > MAX_CHAIN:
-            prioritised = {k: v for k, v in chain.items() if k == entry_point}
-            rest = sorted(
-                [(k, v) for k, v in chain.items() if k != entry_point],
-                key=lambda kv: len(kv[1]), reverse=True,
-            )
-            for k, v in rest[: MAX_CHAIN - len(prioritised)]:
-                prioritised[k] = v
-            chain = prioritised
+            # Cap at 4 services: entry point + 3 most-complex direct invocations.
+            # Each flow.xml is trimmed to 6KB, so 4 services = ~24KB = ~6,000 tokens —
+            # safely under the 10k input token limit with room for the prompt template.
+            MAX_CHAIN = 4
+            if len(chain) > MAX_CHAIN:
+                prioritised = {k: v for k, v in chain.items() if k == entry_point}
+                rest = sorted(
+                    [(k, v) for k, v in chain.items() if k != entry_point],
+                    key=lambda kv: len(kv[1]), reverse=True,
+                )
+                for k, v in rest[: MAX_CHAIN - len(prioritised)]:
+                    prioritised[k] = v
+                chain = prioritised
 
-        kb = sum(len(v) for v in chain.values()) // 1024
-        print(f"    Services in chain: {len(chain)}  ({kb} KB of XML)")
+            kb = sum(len(v) for v in chain.values()) // 1024
+            print(f"    Services in chain: {len(chain)}  ({kb} KB of XML)")
 
-        # Find matching spec integration for this entry point
-        spec_intg = _find_spec_integration(enriched_spec, entry_point)
-        if spec_intg:
-            print(f"    Blueprint: spec integration '{spec_intg.get('name', '?')}' matched")
-        else:
-            print(f"    Blueprint: no spec match — using XML only")
+            # Find matching spec integration for this entry point
+            spec_intg = _find_spec_integration(enriched_spec, entry_point)
+            if spec_intg:
+                print(f"    Blueprint: spec integration '{spec_intg.get('name', '?')}' matched")
+            else:
+                print(f"    Blueprint: no spec match — using XML only")
 
-        try:
-            recipe = generate_one(client, entry_point, chain, pkg_name, model,
-                                  spec_integration=spec_intg)
-        except Exception as exc:
-            print(f"    ERROR generating recipe: {exc}", file=sys.stderr)
-            continue
+            try:
+                recipe = await generate_one(session, entry_point, chain, pkg_name,
+                                            spec_integration=spec_intg)
+            except Exception as exc:
+                print(f"    ERROR generating recipe: {exc}", file=sys.stderr)
+                continue
 
-        # Save recipe JSON
-        safe = _safe_name(entry_point).lower()
-        recipe_file = out / f"{pkg_name.lower()}_{safe}_workato_recipe.json"
-        with open(recipe_file, "w", encoding="utf-8") as f:
-            json.dump(recipe, f, indent=2, ensure_ascii=False)
+            # Save recipe JSON
+            safe = _safe_name(entry_point).lower()
+            recipe_file = out / f"{pkg_name.lower()}_{safe}_workato_recipe.json"
+            with open(recipe_file, "w", encoding="utf-8") as f:
+                json.dump(recipe, f, indent=2, ensure_ascii=False)
 
-        step_count = len(recipe.get("code", {}).get("block", []))
-        print(f"    Recipe: {recipe.get('name', '-')}")
-        print(f"    Steps : {step_count} top-level")
-        print(f"    Saved : {recipe_file}")
-        saved_paths.append(str(recipe_file))
+            step_count = len(recipe.get("code", {}).get("block", []))
+            print(f"    Recipe: {recipe.get('name', '-')}")
+            print(f"    Steps : {step_count} top-level")
+            print(f"    Saved : {recipe_file}")
+            saved_paths.append(str(recipe_file))
+    finally:
+        await session.disconnect()
 
     print(f"\n  Generated {len(saved_paths)}/{len(entries)} recipe(s)")
     return saved_paths
@@ -508,7 +523,8 @@ def main():
     parser.add_argument("--project", default="",
                         help="Package name (defaults to source_dir name)")
     parser.add_argument("--dry-run", action="store_true")
-    parser.add_argument("--model", default="claude-sonnet-4-6")
+    parser.add_argument("--model", default=None,
+                        help="Claude model override (default: whatever Claude Code is configured to use)")
     parser.add_argument("--spec", default="",
                         help="Path to enriched migration spec JSON (auto-discovered if omitted)")
     args = parser.parse_args()
@@ -522,14 +538,14 @@ def main():
     # If --output is given, use its parent dir and rename the first recipe
     out_dir = Path(args.output).parent if args.output else Path(args.output_dir)
 
-    paths = generate(
+    paths = asyncio.run(generate(
         source_dir=args.source_dir,
         output_dir=str(out_dir),
         project_name=args.project,
         dry_run=args.dry_run,
         model=args.model,
         spec_path=args.spec,
-    )
+    ))
 
     # If caller expected a single --output path, rename the first recipe to it
     if args.output and paths:

@@ -844,7 +844,7 @@ def main():
             builder = RecipeBuilder(flow, spec)
             code, config, notes = builder.build()
             flow_name = flow['name']
-            recipe_name = flow_name if flow_name.upper().startswith("MIG_") else f"MIG_{flow_name}"
+            recipe_name = flow_name
             print(f"Recipe: {recipe_name}")
             print(json.dumps(code, indent=2))
             if notes:
@@ -897,11 +897,7 @@ def main():
 
     for flow in flows:
         flow_name = flow['name']
-        # Avoid double MIG_ prefix if the source name already starts with MIG_
-        if flow_name.upper().startswith("MIG_"):
-            recipe_name = flow_name
-        else:
-            recipe_name = f"MIG_{flow_name}"
+        recipe_name = flow_name
         print(f"  Creating '{recipe_name}'...")
 
         builder = RecipeBuilder(flow, spec)

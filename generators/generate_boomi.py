@@ -1096,8 +1096,6 @@ class BoomiFlowGenerator:
         steps   = self.flow.get("steps", [])
 
         flow_name = self.flow.get("name", "Flow")
-        if not flow_name.upper().startswith("MIG_"):
-            flow_name = f"MIG_{flow_name}"
 
         # Flatten all nested steps for connection detection
         all_steps = list(self._iter_steps(steps))
@@ -1293,7 +1291,7 @@ def main():
     # Ensure stdout handles Unicode on Windows (cp1252 by default).
     if hasattr(sys.stdout, "reconfigure"):
         try:
-            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+            sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
         except Exception:
             pass
 

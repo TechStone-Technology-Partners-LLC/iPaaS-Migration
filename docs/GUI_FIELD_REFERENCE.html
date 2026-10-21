@@ -1,0 +1,351 @@
+<title>MigrAIte GUI Field Reference</title>
+<style>
+  :root {
+    --bg: #FAFBFC;
+    --surface: #FFFFFF;
+    --ink: #1B2733;
+    --muted: #5C6B7A;
+    --line: #D9E0E7;
+    --src: #2B5FB8;
+    --src-soft: #E8EFFA;
+    --tgt: #0E7C6B;
+    --tgt-soft: #E4F3F0;
+    --gate: #B7791F;
+    --gate-soft: #FBF3E2;
+    --bad: #B83B4B;
+    --bad-soft: #FBEAEC;
+    --code-bg: #F0F3F6;
+    --brand: #0023F8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0F1419; --surface: #161B22; --ink: #E4EAF0; --muted: #8B98A5;
+      --line: #27313C; --src: #6FA1E8; --src-soft: #17233A; --tgt: #45C4A6;
+      --tgt-soft: #102B26; --gate: #E0A94E; --gate-soft: #2E2311; --bad: #E8828F;
+      --bad-soft: #351B20; --code-bg: #1C232C; --brand: #5B74FF;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0F1419; --surface: #161B22; --ink: #E4EAF0; --muted: #8B98A5;
+    --line: #27313C; --src: #6FA1E8; --src-soft: #17233A; --tgt: #45C4A6;
+    --tgt-soft: #102B26; --gate: #E0A94E; --gate-soft: #2E2311; --bad: #E8828F;
+    --bad-soft: #351B20; --code-bg: #1C232C; --brand: #5B74FF;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    line-height: 1.6; margin: 0; font-size: 16px;
+  }
+  .layout { display: flex; max-width: 1180px; margin: 0 auto; }
+  nav.toc {
+    width: 230px; flex-shrink: 0; padding: 2.5rem 1rem 3rem 1.5rem;
+    position: sticky; top: 0; align-self: flex-start; max-height: 100vh; overflow-y: auto;
+  }
+  nav.toc a {
+    display: block; color: var(--muted); text-decoration: none; font-size: 0.82rem;
+    padding: 0.28rem 0; border-left: 2px solid transparent; padding-left: 0.7rem;
+  }
+  nav.toc a:hover { color: var(--ink); }
+  nav.toc a.indent { padding-left: 1.4rem; font-size: 0.78rem; }
+  nav.toc .toc-h { font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); font-weight: 650; margin: 1.1rem 0 0.3rem; padding-left: 0.7rem; }
+  nav.toc .toc-h:first-child { margin-top: 0; }
+
+  main { max-width: 880px; margin: 0; padding: 2.5rem 1.5rem 6rem; min-width: 0; }
+
+  header.hero { padding: 0.5rem 0 1.8rem; border-bottom: 1px solid var(--line); margin-bottom: 2rem; }
+  .eyebrow {
+    font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--muted); font-weight: 600; margin-bottom: 0.75rem;
+  }
+  h1 { font-size: 2rem; line-height: 1.15; margin: 0 0 0.75rem; font-weight: 750; letter-spacing: -0.02em; text-wrap: balance; }
+  .hero p.lede { font-size: 1.02rem; color: var(--muted); max-width: 64ch; margin: 0; }
+
+  h2 {
+    font-size: 1.3rem; font-weight: 700; letter-spacing: -0.01em; margin: 3rem 0 0.4rem;
+    text-wrap: balance; scroll-margin-top: 1.5rem; padding-top: 0.5rem; border-top: 1px solid var(--line);
+  }
+  h2:first-of-type { border-top: none; margin-top: 1rem; }
+  h2 .mode-tag { font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 650; padding: 0.15em 0.6em; border-radius: 99px; vertical-align: middle; margin-left: 0.6rem; }
+  h3 { font-size: 1.05rem; font-weight: 650; margin: 1.9rem 0 0.5rem; scroll-margin-top: 1.5rem; display: flex; align-items: center; gap: 0.5rem; }
+  h3 .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  h3 .dot.src { background: var(--src); }
+  h3 .dot.tgt { background: var(--tgt); }
+  h4 { font-size: 0.88rem; font-weight: 650; margin: 1.3rem 0 0.4rem; color: var(--muted); }
+  p { max-width: 70ch; }
+  code {
+    font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.86em; background: var(--code-bg); padding: 0.1em 0.4em;
+    border-radius: 4px; word-break: break-word;
+  }
+
+  .tablewrap { overflow-x: auto; margin: 1rem 0 1.6rem; border: 1px solid var(--line); border-radius: 10px; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.85rem; }
+  th {
+    text-align: left; font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted); font-weight: 650; padding: 0.6rem 0.9rem;
+    border-bottom: 1px solid var(--line); background: var(--surface); white-space: nowrap;
+  }
+  td { padding: 0.65rem 0.9rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td:first-child { white-space: nowrap; font-weight: 600; }
+  td.type { color: var(--muted); white-space: nowrap; font-size: 0.8rem; }
+  td.default { color: var(--muted); font-size: 0.8rem; }
+
+  .callout {
+    border-left: 3px solid var(--gate); background: var(--gate-soft);
+    border-radius: 0 8px 8px 0; padding: 0.8rem 1.1rem; margin: 1.1rem 0; font-size: 0.9rem;
+  }
+  .callout.src-note { border-left-color: var(--src); background: var(--src-soft); }
+  .callout.tgt-note { border-left-color: var(--tgt); background: var(--tgt-soft); }
+  .callout.bad-note { border-left-color: var(--bad); background: var(--bad-soft); }
+  .callout strong.tag { font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; display: block; margin-bottom: 0.25rem; }
+
+  .pill-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.9rem 0 1.3rem; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; font-weight: 600;
+    padding: 0.35rem 0.8rem; border-radius: 8px; background: var(--surface); border: 1px solid var(--line);
+  }
+  .pill .sw { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+  .field-flow { font-size: 0.82rem; color: var(--muted); margin: 0.3rem 0 1rem; }
+  .field-flow code { margin: 0 0.1rem; }
+
+  strong { font-weight: 650; }
+  footer.page-end { margin-top: 3.5rem; padding-top: 1.5rem; border-top: 1px solid var(--line); font-size: 0.8rem; color: var(--muted); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; }
+
+  @media (max-width: 820px) {
+    nav.toc { display: none; }
+  }
+</style>
+
+<div class="layout">
+<nav class="toc">
+  <div class="toc-h">Overview</div>
+  <a href="#global">Global controls</a>
+  <div class="toc-h">Migrate Package</div>
+  <a href="#mp-source">Source Platform</a>
+  <a href="#mp-source" class="indent">Boomi</a>
+  <a href="#mp-source" class="indent">MuleSoft</a>
+  <a href="#mp-source" class="indent">Workato</a>
+  <a href="#mp-source" class="indent">Celigo</a>
+  <a href="#mp-source" class="indent">webMethods</a>
+  <a href="#mp-target">Target Platform</a>
+  <a href="#mp-options">Migration Options</a>
+  <a href="#mp-progress">Run &amp; Progress</a>
+  <a href="#mp-artifacts">Artifacts &amp; Results</a>
+  <div class="toc-h">Generate from Analysis</div>
+  <a href="#gen-mode">Fields</a>
+  <div class="toc-h">Push Recipe JSON</div>
+  <a href="#push-mode">Fields</a>
+</nav>
+
+<main>
+<header class="hero">
+  <div class="eyebrow">TechStone · A KeyStone AI Solution · User Guide</div>
+  <h1>MigrAIte GUI Field Reference</h1>
+  <p class="lede">What every field, button, and toggle in the MigrAIte Streamlit app does, grouped by the screen it appears on. Written against the current build of <code>app.py</code> — if a label or default moves, this is the file to update.</p>
+</header>
+
+<h2 id="global">Global controls</h2>
+<p>Two controls sit above the three mode tabs and apply no matter which mode you're in.</p>
+<div class="tablewrap">
+<table>
+<tr><th>Control</th><th>Type</th><th>Description</th></tr>
+<tr><td>Theme</td><td class="type">Dark / Light toggle</td><td>Switches the whole app's palette. Dark is the default. Every color in the UI routes through one shared token set, so this is a full re-theme, not a partial one — including the platform tiles, inputs, badges, and the terminal log panel (which stays black in both themes, like a code editor's console).</td></tr>
+<tr><td>Mode selector</td><td class="type">3-way segmented control</td><td><strong>Migrate Package</strong> runs the full pull → analyze → enrich → document → generate pipeline. <strong>Generate from Analysis</strong> skips straight to recipe generation from an existing analysis document. <strong>Push Recipe JSON</strong> skips generation entirely and just pushes an already-built recipe file. Switching modes resets the fields below it.</td></tr>
+</table>
+</div>
+
+<h2 id="mp-source">Migrate Package <span class="mode-tag" style="background:var(--src-soft);color:var(--src)">Mode 1</span></h2>
+<p>The default mode: a full pipeline run from a source platform to a target platform. The screen is built as two side-by-side cards — <strong>Source Platform</strong> on the left, <strong>Target Platform</strong> on the right — followed by a shared Migration Options bar and a Run button.</p>
+
+<h3><span class="dot src"></span>Source Platform</h3>
+<p>Pick one of five platforms as tiles (logo + name). The fields that appear below the tiles change completely depending on which one is selected — each platform has its own intake flow, shown as sub-sections below. Whichever tile is highlighted in brand blue is the active selection.</p>
+<div class="pill-row">
+  <span class="pill">Boomi</span><span class="pill">MuleSoft</span><span class="pill">Workato</span><span class="pill">Celigo</span><span class="pill">webMethods</span>
+</div>
+
+<h4>Boomi</h4>
+<p>A second-level toggle chooses between a live pull from the Boomi platform API, or an already-pulled local directory.</p>
+<div class="tablewrap">
+<table>
+<tr><th>Field</th><th>Type</th><th>Default / placeholder</th><th>Description</th></tr>
+<tr><td colspan="4" style="background:var(--surface);font-weight:650;">Live pull from Boomi</td></tr>
+<tr><td>Boomi folder name or ID</td><td class="type">text</td><td class="default">e.g. MIG_CustomerAPI</td><td>The Boomi folder to pull components from.</td></tr>
+<tr><td>Process name(s) — optional</td><td class="type">text</td><td class="default">(blank = whole folder)</td><td>Leave blank to migrate every component in the folder. Otherwise migrates only the named process(es) plus their actual dependencies (connections, maps, profiles) — not everything else sitting in the folder. Comma-separate multiple names; <code>%</code> wildcards allowed (e.g. <code>Sync %</code>).</td></tr>
+<tr><td>API URL</td><td class="type">text</td><td class="default">https://api.boomi.com/api/rest/v1</td><td>Boomi REST API base URL.</td></tr>
+<tr><td>Account ID</td><td class="type">text</td><td class="default">—</td><td>Boomi account ID.</td></tr>
+<tr><td>Username (email)</td><td class="type">text</td><td class="default">—</td><td>Boomi login email.</td></tr>
+<tr><td>API Token</td><td class="type">password</td><td class="default">—</td><td>Boomi API token. Session-only — merged into the migration subprocess's environment for this run and never written to disk.</td></tr>
+<tr><td colspan="4" style="background:var(--surface);font-weight:650;">Local directory (already pulled)</td></tr>
+<tr><td>Local directory path</td><td class="type">text</td><td class="default">active-development/</td><td>Path to a directory of already-pulled Boomi component XML.</td></tr>
+</table>
+</div>
+
+<h4>MuleSoft</h4>
+<p>No live pull exists for MuleSoft today — it's local-file-only.</p>
+<div class="tablewrap">
+<table>
+<tr><th>Field</th><th>Type</th><th>Default / placeholder</th><th>Description</th></tr>
+<tr><td>MuleSoft project directory</td><td class="type">text</td><td class="default">e.g. samples/mulesoft/customer-api/</td><td>Path to a local MuleSoft project folder or export.</td></tr>
+</table>
+</div>
+
+<h4>Workato</h4>
+<p>A second-level toggle chooses between a live pull from Workato, or a local export directory.</p>
+<div class="tablewrap">
+<table>
+<tr><th>Field</th><th>Type</th><th>Default / placeholder</th><th>Description</th></tr>
+<tr><td colspan="4" style="background:var(--surface);font-weight:650;">Live pull from Workato</td></tr>
+<tr><td>Workato folder name or ID</td><td class="type">text</td><td class="default">e.g. WebMethodsMigration</td><td>The Workato folder to pull recipes from.</td></tr>
+<tr><td>API Token</td><td class="type">password</td><td class="default">—</td><td>Workato API token for this pull.</td></tr>
+<tr><td>Account email</td><td class="type">text</td><td class="default">—</td><td>Workato account email.</td></tr>
+<tr><td colspan="4" style="background:var(--surface);font-weight:650;">Local export directory</td></tr>
+<tr><td>Local export directory</td><td class="type">text</td><td class="default">e.g. exports/workato/</td><td>Path to a previously-exported Workato directory.</td></tr>
+</table>
+</div>
+
+<h4>Celigo</h4>
+<p>A second-level toggle chooses between a live pull from Celigo, or a local export directory.</p>
+<div class="tablewrap">
+<table>
+<tr><th>Field</th><th>Type</th><th>Default / placeholder</th><th>Description</th></tr>
+<tr><td colspan="4" style="background:var(--surface);font-weight:650;">Live pull from Celigo</td></tr>
+<tr><td>Celigo integration name</td><td class="type">text</td><td class="default">e.g. Order Sync</td><td>The Celigo integration to pull.</td></tr>
+<tr><td>API Token</td><td class="type">password</td><td class="default">—</td><td>Celigo API token for this pull.</td></tr>
+<tr><td colspan="4" style="background:var(--surface);font-weight:650;">Local export directory</td></tr>
+<tr><td>Local export directory</td><td class="type">text</td><td class="default">e.g. exports/celigo/</td><td>Path to a previously-exported Celigo directory.</td></tr>
+</table>
+</div>
+
+<h4>webMethods</h4>
+<p>A three-way toggle: upload a package zip directly, paste a Google Drive link, or live-pull from webMethods.io.</p>
+<div class="tablewrap">
+<table>
+<tr><th>Field</th><th>Type</th><th>Default / placeholder</th><th>Description</th></tr>
+<tr><td colspan="4" style="background:var(--surface);font-weight:650;">Upload from computer</td></tr>
+<tr><td>Upload webMethods package (.zip)</td><td class="type">file upload</td><td class="default">.zip only</td><td>Extracted into a fresh, uniquely-named working directory on each run — nothing is overwritten between runs.</td></tr>
+<tr><td colspan="4" style="background:var(--surface);font-weight:650;">Google Drive</td></tr>
+<tr><td>Google Drive share URL or File ID</td><td class="type">text</td><td class="default">https://drive.google.com/file/d/…</td><td>A shareable Drive link (or bare file ID) to a package zip. Downloaded server-side when you click Run.</td></tr>
+<tr><td colspan="4" style="background:var(--surface);font-weight:650;">Live pull (webMethods.io)</td></tr>
+<tr><td>webMethods.io project name</td><td class="type">text</td><td class="default">e.g. GLD Compliance</td><td>The webMethods.io project to pull.</td></tr>
+<tr><td>Tenant URL</td><td class="type">text</td><td class="default">https://mycompany.int-aws-us.webmethods.io</td><td>Your webMethods.io tenant URL.</td></tr>
+<tr><td>Username</td><td class="type">text</td><td class="default">—</td><td>webMethods.io username.</td></tr>
+<tr><td>Password</td><td class="type">password</td><td class="default">—</td><td>webMethods.io password.</td></tr>
+</table>
+</div>
+
+<div class="callout src-note">
+  <strong class="tag">Note</strong>
+  All source credential fields are session-only. They're merged into the migration subprocess's environment for that one run and are never written to <code>.env</code> or any file on disk.
+</div>
+
+<h3 id="mp-target"><span class="dot tgt"></span>Target Platform</h3>
+<p>Four platforms, same tile pattern as the source side. The credential fields underneath change based on which target is selected.</p>
+<div class="pill-row">
+  <span class="pill">Boomi</span><span class="pill">Workato</span><span class="pill">Celigo</span><span class="pill">webMethods</span>
+</div>
+<div class="tablewrap">
+<table>
+<tr><th>Field</th><th>Type</th><th>Default</th><th>Description</th></tr>
+<tr><td colspan="4" style="background:var(--surface);font-weight:650;">Boomi</td></tr>
+<tr><td>API URL</td><td class="type">text</td><td class="default">https://api.boomi.com/api/rest/v1</td><td>Boomi REST API base URL.</td></tr>
+<tr><td>Account ID</td><td class="type">text</td><td class="default">—</td><td>Boomi account to push into.</td></tr>
+<tr><td>Username (email)</td><td class="type">text</td><td class="default">—</td><td>Boomi login email.</td></tr>
+<tr><td>API Token</td><td class="type">password</td><td class="default">—</td><td>Boomi API token with write access.</td></tr>
+<tr><td>Environment ID</td><td class="type">text</td><td class="default">—</td><td>Boomi environment to deploy into.</td></tr>
+<tr><td>Target Folder ID</td><td class="type">text</td><td class="default">—</td><td>Destination folder ID for generated components.</td></tr>
+<tr><td colspan="4" style="background:var(--surface);font-weight:650;">Workato</td></tr>
+<tr><td>API Token</td><td class="type">password</td><td class="default">—</td><td>Workato API token. Needs write/create scope on recipes and folders — a token that only passes <code>GET /users/me</code> is not sufficient (Workato returns 404, not 401/403, for missing-scope writes).</td></tr>
+<tr><td>Account email</td><td class="type">text</td><td class="default">—</td><td>Workato account email.</td></tr>
+<tr><td colspan="4" style="background:var(--surface);font-weight:650;">Celigo</td></tr>
+<tr><td>API Token</td><td class="type">password</td><td class="default">—</td><td>Celigo API token.</td></tr>
+<tr><td colspan="4" style="background:var(--surface);font-weight:650;">webMethods</td></tr>
+<tr><td>Tenant URL</td><td class="type">text</td><td class="default">https://mycompany.int-aws-us.webmethods.io</td><td>Target webMethods.io tenant.</td></tr>
+<tr><td>Username</td><td class="type">text</td><td class="default">—</td><td>webMethods.io username.</td></tr>
+<tr><td>Password</td><td class="type">password</td><td class="default">—</td><td>webMethods.io password.</td></tr>
+</table>
+</div>
+
+<h3 id="mp-options">Migration Options</h3>
+<p>A shared options bar below both platform cards, applying to the run regardless of source/target choice.</p>
+<div class="tablewrap">
+<table>
+<tr><th>Field</th><th>Type</th><th>Default</th><th>Description</th></tr>
+<tr><td>Package / project name ✱</td><td class="type">text</td><td class="default">(derived if blank)</td><td>Used to name the spec file and destination folder. Defaults to the zip filename, directory name, or live-pull folder/integration name if left blank.</td></tr>
+<tr><td>Destination folder / project</td><td class="type">text</td><td class="default">MIG_&lt;project&gt;</td><td>The container the migrated asset(s) get pushed into on the target platform.</td></tr>
+<tr><td>Markdown dir for doc appendix</td><td class="type">text</td><td class="default">e.g. WebMethods/MD/</td><td>Optional — attaches markdown files from this directory as an appendix to the generated Word design document.</td></tr>
+<tr><td>Dry run</td><td class="type">checkbox</td><td class="default">off</td><td>Generate artifacts without pushing to the target. Note: this does not apply to AIRO builds below — see its own warning.</td></tr>
+<tr><td>Skip analyze</td><td class="type">checkbox</td><td class="default">off</td><td>Re-use an existing spec already in <code>migration-specs/</code> instead of re-analyzing the source.</td></tr>
+<tr><td>Skip enrich</td><td class="type">checkbox</td><td class="default">off</td><td>Skip the AI enrichment pass. Faster, but lower-quality output for nested/complex service logic.</td></tr>
+<tr><td>Skip document</td><td class="type">checkbox</td><td class="default"><strong>on</strong></td><td>Skip Word design-document generation. On by default — that step makes no LLM calls itself (it's local <code>.docx</code> assembly from the already-generated spec), but it's the phase you're least likely to need on every run. Uncheck to also get the branded <code>.docx</code> this run.</td></tr>
+<tr><td>Build via AIRO (live-validated)</td><td class="type">checkbox</td><td class="default">off</td><td>Only shown when Target is Workato. Resolves and validates every connector/action live against Workato's real schema via the AIRO MCP recipe builder, instead of the static generator's blind JSON assembly (which falls back to "Select an app and action" placeholders it can't map). Slower and uses LLM tokens. Auth rides on Claude Code's own login, not the Workato API token field above.</td></tr>
+</table>
+</div>
+<div class="callout bad-note">
+  <strong class="tag">AIRO + Dry run</strong>
+  AIRO creates each recipe <em>live</em> in Workato as it builds, regardless of the Dry run checkbox — Dry run only skips the final push of its steps. It is not a no-side-effects mode when AIRO is enabled.
+</div>
+
+<h3 id="mp-progress">Run &amp; Progress</h3>
+<p>Clicking <strong>Run Migration</strong> resolves the source into exactly one of: a prepared local directory, or a live-pull reference (credentials riding along separately), then launches <code>migrate.py</code> as a subprocess and streams its output live.</p>
+<div class="tablewrap">
+<table>
+<tr><th>Element</th><th>Description</th></tr>
+<tr><td>Step tracker</td><td>Five pipeline phases shown as connected cards: <strong>Pull</strong> (fetch source files) → <strong>Analyze</strong> (parse flows &amp; services) → <strong>Enrich</strong> (AI deep enrichment) → <strong>Document</strong> (design document) → <strong>Generate</strong> (push to target). Each lights up as the subprocess emits its matching <code>[PHASE]</code> marker, and is marked done once the next phase begins.</td></tr>
+<tr><td>Live log</td><td>A terminal-styled panel showing the last 30 lines of subprocess output, updating as the run progresses.</td></tr>
+<tr><td>Status badge</td><td>"Migration completed successfully" or "Migration failed (exit N)" once the subprocess exits.</td></tr>
+<tr><td>Full migration log</td><td>A collapsible expander with the complete captured output — expanded automatically on failure.</td></tr>
+</table>
+</div>
+
+<h3 id="mp-artifacts">Artifacts &amp; Results</h3>
+<p>After a run, whatever files actually got produced appear as tabs — only tabs with real output show up.</p>
+<div class="tablewrap">
+<table>
+<tr><th>Tab</th><th>Appears when</th><th>Contents</th></tr>
+<tr><td>AIRO Build Summary</td><td>"Build via AIRO" was checked</td><td>Build cost, error/success state, and the agent's own summary of what it built per recipe.</td></tr>
+<tr><td>Recipe: &lt;service&gt;</td><td>The static generator produced one or more recipe JSON files</td><td>The full recipe JSON, a <strong>Workato folder ID</strong> field (accepts a bare ID, a <code>?fid=</code> query string, or a full URL — digits are extracted automatically), a <strong>Download JSON</strong> button, and a <strong>Push to Workato</strong> button that uses the target credentials entered above.</td></tr>
+<tr><td>Migration Spec</td><td>A spec JSON was generated</td><td>The platform-agnostic migration spec produced by the Analyze phase.</td></tr>
+<tr><td>Design Document</td><td>"Skip document" was unchecked</td><td>The generated TechStone-branded Word design document.</td></tr>
+</table>
+</div>
+
+<h2 id="gen-mode">Generate from Analysis <span class="mode-tag" style="background:var(--tgt-soft);color:var(--tgt)">Mode 2</span></h2>
+<p>Skips pull/analyze/enrich entirely: upload an <code>Analysis.md</code> already produced by a previous migration session, and Claude reads it directly to generate a complete Workato recipe JSON, then pushes it.</p>
+<div class="tablewrap">
+<table>
+<tr><th>Field</th><th>Type</th><th>Default / placeholder</th><th>Description</th></tr>
+<tr><td>Analysis file</td><td class="type">file upload</td><td class="default">.md or .txt, 200MB max</td><td>The analysis document to generate a recipe from.</td></tr>
+<tr><td>Folder ID</td><td class="type">text</td><td class="default">e.g. 31661117 — leave blank for root</td><td>Workato folder to push the generated recipe into.</td></tr>
+<tr><td>Recipe name override</td><td class="type">text</td><td class="default">(uses generated name)</td><td>Leave blank to use the name Claude assigns in the generated JSON.</td></tr>
+<tr><td colspan="4" style="background:var(--surface);font-weight:650;">Target Platform (Workato only)</td></tr>
+<tr><td>API Token</td><td class="type">password</td><td class="default">—</td><td>Required before generation can run.</td></tr>
+<tr><td>Account email</td><td class="type">text</td><td class="default">—</td><td>Workato account email.</td></tr>
+</table>
+</div>
+<p><strong>Generate &amp; Push</strong> runs generation, shows a success message with the recipe name and step count, offers a <strong>Review generated recipe JSON before push</strong> expander and a <strong>Download recipe JSON</strong> button, then pushes to Workato and reports the resulting recipe ID and link (or any connections that still need wiring in the GUI).</p>
+
+<h2 id="push-mode">Push Recipe JSON <span class="mode-tag" style="background:var(--gate-soft);color:var(--gate)">Mode 3</span></h2>
+<p>For when you already have a recipe JSON file (from a previous Generate run, or built by hand) and just need to push it.</p>
+<div class="tablewrap">
+<table>
+<tr><th>Field</th><th>Type</th><th>Default / placeholder</th><th>Description</th></tr>
+<tr><td>Recipe file</td><td class="type">file upload</td><td class="default">.json only</td><td>On upload, a preview line shows the detected recipe name and top-level step count (if the JSON doesn't parse, push is still attempted).</td></tr>
+<tr><td>Folder ID</td><td class="type">text</td><td class="default">e.g. 31661117 — leave blank for root</td><td>Workato folder to push into.</td></tr>
+<tr><td>Recipe name override</td><td class="type">text</td><td class="default">(uses name from JSON)</td><td>Leave blank to use the recipe's own <code>name</code> field.</td></tr>
+<tr><td colspan="4" style="background:var(--surface);font-weight:650;">Target Platform (Workato only)</td></tr>
+<tr><td>API Token</td><td class="type">password</td><td class="default">—</td><td>Required before push can run.</td></tr>
+<tr><td>Account email</td><td class="type">text</td><td class="default">—</td><td>Workato account email.</td></tr>
+</table>
+</div>
+<p><strong>Push Recipe</strong> pushes the uploaded JSON as-is and reports the resulting recipe ID and link, or the push error if it failed.</p>
+
+<footer class="page-end">
+  <span>TechStone LLC · MigrAIte</span>
+  <span>Generated from app.py — update here when fields change</span>
+</footer>
+</main>
+</div>

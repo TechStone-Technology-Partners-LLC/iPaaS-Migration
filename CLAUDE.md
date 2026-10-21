@@ -124,9 +124,35 @@ python migrate.py --from webmethods --source-dir ... --to workato --skip-enrich 
 
 # Skip pull (analyze already-downloaded active-development/ files)
 python migrate.py --from boomi --source-dir active-development/ --to workato
+
+# Live pull from Workato / Celigo / webMethods.io sources (not just Boomi)
+python migrate.py --from workato --workato-folder "My Folder" --to boomi
+python migrate.py --from celigo --celigo-integration "My Integration" --to workato
+python migrate.py --from webmethods --wmio-project "My Project" --to boomi
+
+# Build Workato recipes via the live AIRO MCP recipe builder instead of the
+# static JSON generator — avoids "Select an app and action" placeholders by
+# resolving every connector/action live against Workato's real schema.
+# Slower, uses LLM tokens, auth rides on Claude Code's own login (not
+# WORKATO_API_TOKEN). --to workato only.
+python migrate.py --from boomi --boomi-folder "My Folder" --to workato --use-airo
 ```
 
-New flags: `--skip-enrich`, `--skip-document`, `--md-dir <path>` (attach markdown files to Word doc appendix).
+New flags: `--skip-enrich`, `--skip-document`, `--md-dir <path>` (attach markdown files to Word doc appendix), `--workato-folder`/`--celigo-integration`/`--wmio-project` (live pull for those sources, mirroring `--boomi-folder`), `--use-airo` (see below).
+
+**Boomi pull correctness (fixed 2026-09-16):** `active-development/` is now cleared of the known component-type directories before every fresh `--boomi-folder` pull, and a pull that finds 0 components hard-fails instead of silently falling through to ANALYZE. Previously, `active-development/` accumulated every component ever pulled from any Boomi folder across every prior run, so an empty or small pull would get silently padded out with stale files from unrelated past migrations — producing a spec that looked plausible but didn't reflect the requested folder at all.
+
+**Boomi single-process pull (`--boomi-process`, added 2026-09-16):** `--boomi-folder` alone always pulled *every* component in the folder, even when the user only wanted one process — there was no way to scope it narrower. `--boomi-process "<name>[,<name>...]"` (LIKE patterns, `%` wildcards) now searches by name within the folder for just those process(es), then pulls each match's actual dependency closure via `boomi-component-search.sh --related-to <id>` (filtered to `relation == "references"` — what it depends on, not what calls into it) instead of the whole folder. Note: `--related-to` results are a different record shape than `--folder`/`--name` results (`{"references": [{"componentId": ...}], "relation": ...}` vs a flat `{"componentId": ...}`) — `_component_id()` handles both. UI: a "Process name(s) — optional" field appears under the Boomi live-pull folder field.
+
+### Live AIRO recipe builder (`--use-airo`)
+
+`generators/generate_workato_airo.py` builds Workato recipes by driving a real Claude Agent SDK session with the `workato-airo-mcp-server` MCP server wired in (same mechanism as `gchat/session.py`), instead of `generate_workato.py`'s blind JSON assembly. The agent resolves each spec step to a real Workato connector/action live via `recipe_builder_search_connectors`/`recipe_builder_list_connector_operations`, validates the schema as it builds, and only leaves a placeholder (with a descriptive comment) when there's genuinely no live equivalent — the same approach used to hand-build `GLD Compliance Check` (recipe `78515291`).
+
+- `--to workato` only today; `--use-airo` takes precedence over both the static generator and the webMethods→Workato direct-AI path.
+- Budget via `.env`: `AIRO_GEN_MAX_COST_USD` (default 10.00), `AIRO_GEN_MAX_TURNS` (default 200), `AIRO_GEN_TURN_TIMEOUT_S` (default 1800).
+- `--dry-run` does **not** avoid touching Workato — `recipe_builder_init` saves an empty recipe live the moment it's called. Dry-run only tells the agent to skip the final `recipe_builder_push` per recipe.
+- Output: `migration-specs/<project>_workato_airo_output.json` (summary text + cost + error flag) instead of the static generator's `_workato_recipe.json` files. The Streamlit UI's "AIRO Build Summary" tab reads this file directly.
+- UI: a "🔬 Build via AIRO (live-validated)" checkbox appears in Migration Options whenever Target = Workato.
 
 Always read `references/MIGRATION_THINKING.md` before starting any migration task.
 
@@ -156,6 +182,9 @@ python migrate.py --from oracle_soa --source-dir /path/to/sars/ --to boomi --pro
 ```bash
 python generators/generate_workato.py migration-specs/my-project.json --folder "My Folder"
 python generators/generate_workato.py migration-specs/my-project.json --dry-run
+
+# Live AIRO recipe builder (see "Live AIRO recipe builder" section above)
+python generators/generate_workato_airo.py migration-specs/my-project.json --folder "My Folder"
 ```
 
 ## Required Environment Variables
@@ -180,9 +209,10 @@ ORACLE_SOA_PARTITION=default          # composite partition, usually "default"
 ORACLE_SOA_EM_PORT=7001               # optional: EM Console port for SAR export
 ```
 
-**Anthropic (for LLM enrichment):**
+**Anthropic (changed 2026-09-23 — no longer required for the core pipeline):**
+`enrich_spec.py`, `enrich_webmethods.py`, and `generate_workato_from_wm.py` no longer use the classic `anthropic` SDK / `ANTHROPIC_API_KEY` — they now use `claude_agent_sdk` and ride on Claude Code's own OAuth login, same mechanism as `generate_workato_airo.py` and `gchat/`. All four now actively strip `ANTHROPIC_API_KEY` from the environment before connecting: if it's set (e.g. for something else), the Claude Code CLI subprocess these scripts spawn inherits the full parent environment and prefers that key over OAuth -- silently switching which account gets billed, and failing outright if that key's account has no credit (this is exactly what broke a real AIRO build in testing). `ANTHROPIC_API_KEY` is only still needed for two things outside the main pipeline: `app.py`'s "Generate from Analysis" UI mode, and `scripts/wm_migration_agent.py` (the older WebmethodsToBoomi agent) -- both still use the classic SDK and weren't touched by this change.
 ```
-ANTHROPIC_API_KEY=sk-ant-...
+ANTHROPIC_API_KEY=sk-ant-...   # only for the two call sites above
 ```
 
 ## Reference Documentation
@@ -206,16 +236,11 @@ Realistic source system examples for testing:
 
 ## Naming Convention for Migrated Components
 
-```
-MIG_<SourceSystem>_<FlowName>_<ComponentType>
+**Changed 2026-09-23:** every generator (`generate_workato.py`, `generate_boomi.py`, `generate_celigo.py`, `generate_webmethods.py`, `generate_workato_from_wm.py`, `generate_workato_airo.py`) used to force a mechanical `MIG_`/`MIG_WM_` prefix onto every recipe/process/flow name regardless of the source's own naming. That's gone — the generated asset is named after the source flow's own name (already usually descriptive — it's the name a person gave the process/recipe in the source system), or, on the AIRO/direct-AI paths, a name the model derives from what the integration actually does. No prefix is added.
 
-Examples:
-  MIG_MS_GetCustomers_Process
-  MIG_MS_PostgreSQL_Connection
-  MIG_MS_CustomerResponse_JSON_Profile
-```
+This applies to the top-level integration asset only (a Workato recipe, a Boomi process, a Celigo flow, a webMethods.io workflow) — it does **not** change the destination folder/project naming below, which is still a `MIG_`-prefixed container by default.
 
-Boomi folder structure:
+Boomi folder structure (destination container, unaffected by the above):
 ```
 ClaudeCode/
   MIG_<ProjectName>/
